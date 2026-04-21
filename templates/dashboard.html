@@ -1,398 +1,251 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мій кабінет - VetFuture</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-            color: white;
-            padding: 15px 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 0 20px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .logo span {
-            color: #f39c12;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .logout-btn {
-            background: #f39c12;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .logout-btn:hover {
-            opacity: 0.8;
-        }
-
-        /* Main content */
-        .main {
-            margin-top: 80px;
-            padding: 20px 0;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            padding: 12px 25px;
-            background: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .tab-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .tab-btn.active {
-            background: #2ecc71;
-            color: white;
-        }
-
-        /* Tab content */
-        .tab-content {
-            display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Cards */
-        .card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .pet-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #2ecc71;
-        }
-
-        .appointment-card {
-            border-left: 4px solid #f39c12;
-        }
-
-        /* AI Chat */
-        .chat-area {
-            margin-top: 20px;
-        }
-
-        .chat-input {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }
-
-        .chat-input button {
-            padding: 12px 25px;
-            background: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        .ai-response {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .tabs { gap: 5px; }
-            .tab-btn { padding: 8px 15px; font-size: 12px; }
-            .header-content { flex-direction: column; gap: 10px; }
-            .main { margin-top: 120px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мій кабінет — VetFuture</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--g:#1FAB89;--gd:#0e8a6c;--gl:#e6f7f2;--gm:#b2dfd1;--text:#1a2332;--muted:#6b7e8f;--bg:#f2f6f4;--white:#fff;--border:#dce8e2}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .logo{font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--g);text-decoration:none}
+    .logo em{color:var(--text);font-style:normal;font-weight:400}
+    .btn-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:.2s}
+    .btn-logout:hover{border-color:#e74c3c;color:#e74c3c}
+    .page{display:none}.page.active{display:block}
+    .home-wrap{max-width:520px;margin:0 auto;padding:28px 20px 40px}
+    .greeting-card{background:linear-gradient(135deg,#0d3527 0%,#1FAB89 100%);border-radius:24px;padding:28px 24px;margin-bottom:24px;position:relative;overflow:hidden}
+    .greeting-card::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.06)}
+    .greeting-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;z-index:1}
+    .greeting-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:white}
+    .greeting-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:2px}
+    .greeting-ava{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid rgba(255,255,255,.2)}
+    .next-appt{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:14px 16px;position:relative;z-index:1}
+    .next-appt-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.55);margin-bottom:6px}
+    .next-appt-val{font-size:15px;font-weight:600;color:white}
+    .next-appt-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
+    .pets-strip{margin-bottom:24px}
+    .strip-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .strip-title{font-size:14px;font-weight:700;color:var(--text)}
+    .strip-link{font-size:13px;color:var(--g);text-decoration:none;font-weight:600}
+    .pets-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+    .pet-chip{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;cursor:pointer}
+    .pet-chip-ava{width:58px;height:58px;border-radius:18px;background:var(--gl);font-size:26px;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);transition:.2s}
+    .pet-chip:hover .pet-chip-ava{border-color:var(--g);background:var(--gm)}
+    .pet-chip-name{font-size:12px;font-weight:600;color:var(--text)}
+    .menu-section{margin-bottom:8px}
+    .menu-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:0 4px;margin-bottom:8px}
+    .menu-list{background:var(--white);border-radius:18px;border:1px solid var(--border);overflow:hidden}
+    .menu-item{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;text-decoration:none;color:var(--text)}
+    .menu-item:last-child{border-bottom:none}
+    .menu-item:hover{background:var(--gl)}
+    .menu-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .menu-icon.green{background:var(--gl)}.menu-icon.orange{background:#fff3e0}.menu-icon.blue{background:#e8f4fb}.menu-icon.purple{background:#f3e8ff}.menu-icon.red{background:#fdecea}
+    .menu-text{flex:1}
+    .menu-text strong{font-size:15px;font-weight:600;display:block}
+    .menu-text span{font-size:13px;color:var(--muted)}
+    .menu-arrow{color:var(--muted);font-size:18px}
+    .menu-badge{background:var(--g);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:4px}
+    .inner-wrap{max-width:600px;margin:0 auto;padding:24px 20px 40px}
+    .back-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--g);padding:0;margin-bottom:20px}
+    .back-btn:hover{color:var(--gd)}
+    .page-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-bottom:6px}
+    .page-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
+    .pet-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .pet-tab{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:40px;border:2px solid var(--border);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--text);transition:.15s}
+    .pet-tab:hover{border-color:var(--g)}
+    .pet-tab.active{border-color:var(--g);background:var(--g);color:white}
+    .card{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:18px 20px;margin-bottom:10px}
+    .card-row{display:flex;align-items:center;gap:14px}
+    .card-icon-box{width:46px;height:46px;border-radius:12px;background:var(--gl);font-size:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .card h3{font-size:15px;font-weight:600;margin-bottom:2px}
+    .card p{font-size:13px;color:var(--muted)}
+    .status-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-top:8px}
+    .status-pill.ok{background:var(--gl);color:var(--gd)}.status-pill.wait{background:#fff3e0;color:#e65100}
+    .chat-wrap{background:var(--white);border-radius:20px;border:1px solid var(--border);display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:400px;overflow:hidden}
+    .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+    .msg-row{display:flex;gap:10px;align-items:flex-end}
+    .msg-row.user{flex-direction:row-reverse}
+    .msg-bubble{max-width:78%;padding:11px 15px;border-radius:18px;font-size:14px;line-height:1.55}
+    .msg-row.ai .msg-bubble{background:var(--gl);color:var(--text);border-bottom-left-radius:4px}
+    .msg-row.user .msg-bubble{background:var(--g);color:white;border-bottom-right-radius:4px}
+    .msg-ava{width:30px;height:30px;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+    .typing{display:flex;gap:4px;padding:14px 18px;background:var(--gl);border-radius:18px;border-bottom-left-radius:4px;width:fit-content}
+    .typing span{width:7px;height:7px;background:var(--g);border-radius:50%;animation:bounce 1.2s infinite}
+    .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+    @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+    .chat-footer{border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;align-items:flex-end}
+    .chat-footer textarea{flex:1;resize:none;border:2px solid var(--border);border-radius:12px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;line-height:1.5;max-height:100px;min-height:42px;transition:.2s}
+    .chat-footer textarea:focus{border-color:var(--g)}
+    .btn-send{width:42px;height:42px;border-radius:10px;background:var(--g);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+    .btn-send:hover{background:var(--gd)}.btn-send:disabled{opacity:.5;cursor:not-allowed}
+    .chat-disclaimer{font-size:12px;color:var(--muted);text-align:center;padding:6px 16px 0}
+    .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+    .empty .eico{font-size:40px;margin-bottom:12px}
+    .loading{text-align:center;padding:40px;color:var(--muted)}
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="container header-content">
-            <div class="logo">Vet<span>Future</span></div>
-            <div class="user-info">
-                <span>👤 <span id="userPhone"></span></span>
-                <div class="logout-btn" onclick="logout()">Вийти</div>
-            </div>
+<header class="header">
+  <a href="/" class="logo">Vet<em>Future</em></a>
+  <button class="btn-logout" onclick="logout()">Вийти</button>
+</header>
+
+<div class="page active" id="page-home">
+  <div class="home-wrap">
+    <div class="greeting-card">
+      <div class="greeting-top">
+        <div>
+          <div class="greeting-name">Вітаємо! 👋</div>
+          <div class="greeting-sub" id="userPhone">Завантаження...</div>
         </div>
-    </header>
-
-    <div class="main">
-        <div class="container">
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="pets">🐾 Мої тварини</button>
-                <button class="tab-btn" data-tab="appointments">📅 Записи</button>
-                <button class="tab-btn" data-tab="lab-results">🔬 Аналізи</button>
-                <button class="tab-btn" data-tab="vaccinations">💉 Прививки</button>
-                <button class="tab-btn" data-tab="ai">🤖 AI-помічник</button>
-            </div>
-
-            <div id="pets" class="tab-content active">
-                <h2>🐕 Мої улюбленці</h2>
-                <div id="petsList"></div>
-            </div>
-
-            <div id="appointments" class="tab-content">
-                <h2>📅 Записи на прийом</h2>
-                <div id="appointmentsList"></div>
-            </div>
-
-            <div id="lab-results" class="tab-content">
-                <h2>🔬 Результати аналізів</h2>
-                <div id="labResultsList"></div>
-            </div>
-
-            <div id="vaccinations" class="tab-content">
-                <h2>💉 Календар прививок</h2>
-                <div id="vaccinationsList"></div>
-            </div>
-
-            <div id="ai" class="tab-content">
-                <h2>🤖 AI-помічник</h2>
-                <p>Запитайте про здоров'я вашого улюбленця</p>
-                <div class="chat-area">
-                    <div class="chat-input">
-                        <input type="text" id="question" placeholder="Наприклад: Що робити, якщо кіт не їсть?">
-                        <button onclick="askAI()">Запитати</button>
-                    </div>
-                    <div id="aiAnswer" class="ai-response"></div>
-                </div>
-            </div>
-        </div>
+        <div class="greeting-ava">🐾</div>
+      </div>
+      <div class="next-appt">
+        <div class="next-appt-label">Найближчий запис</div>
+        <div class="next-appt-val" id="nextApptVal">Завантаження...</div>
+        <div class="next-appt-sub" id="nextApptSub"></div>
+      </div>
     </div>
+    <div class="pets-strip">
+      <div class="strip-header">
+        <span class="strip-title">Мої тварини</span>
+        <a href="#" class="strip-link" onclick="showPage('pets');return false">Всі →</a>
+      </div>
+      <div class="pets-row" id="petsStrip"><div class="loading" style="padding:20px">Завантаження...</div></div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Медкарта</div>
+      <div class="menu-list">
+        <a class="menu-item" href="#" onclick="showPage('pets');return false">
+          <div class="menu-icon green">🐾</div>
+          <div class="menu-text"><strong>Мої тварини</strong><span>Профілі та деталі</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+        <a class="menu-item" href="#" onclick="showPage('appointments');return false">
+          <div class="menu-icon orange">📅</div>
+          <div class="menu-text"><strong>Записи на прийом</strong><span>Майбутні та минулі візити</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+        <a class="menu-item" href="#" onclick="showPage('lab');return false">
+          <div class="menu-icon blue">🔬</div>
+          <div class="menu-text"><strong>Результати аналізів</strong><span>Кров, сеча, інші дослідження</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+        <a class="menu-item" href="#" onclick="showPage('vax');return false">
+          <div class="menu-icon green">💉</div>
+          <div class="menu-text"><strong>Щеплення</strong><span>Календар вакцинації</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+      </div>
+    </div>
+    <div class="menu-section" style="margin-top:16px">
+      <div class="menu-section-label">Допомога</div>
+      <div class="menu-list">
+        <a class="menu-item" href="#" onclick="showPage('ai');return false">
+          <div class="menu-icon purple">🤖</div>
+          <div class="menu-text"><strong>AI-консультант</strong><span>Запитайте про здоров'я тварини</span></div>
+          <span class="menu-badge">24/7</span>
+          <span class="menu-arrow">›</span>
+        </a>
+        <a class="menu-item" href="tel:+380441234567">
+          <div class="menu-icon red">📞</div>
+          <div class="menu-text"><strong>Зателефонувати в клініку</strong><span>+380 (44) 123-45-67</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+        <a class="menu-item" href="https://t.me/VetFurure_bot" target="_blank">
+          <div class="menu-icon blue">💬</div>
+          <div class="menu-text"><strong>Telegram-бот</strong><span>@VetFurure_bot</span></div>
+          <span class="menu-arrow">›</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        let petsData = [];
-        
-        // Завантаження даних користувача
-        fetch('/api/me')
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) {
-                    window.location.href = '/login';
-                } else {
-                    document.getElementById('userPhone').innerText = data.phone;
-                }
-            });
-        
-        // Вкладки
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-                
-                // Завантажуємо дані при відкритті вкладки
-                if (btn.dataset.tab === 'pets') loadPets();
-                if (btn.dataset.tab === 'appointments') loadAppointments();
-                if (btn.dataset.tab === 'lab-results') loadLabResults();
-                if (btn.dataset.tab === 'vaccinations') loadVaccinations();
-            });
-        });
-        
-        function loadPets() {
-            fetch('/api/pets')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '';
-                    if (data.error) {
-                        html = `<div class="card">${data.error}</div>`;
-                    } else if (data.length === 0) {
-                        html = `<div class="card">У вас ще немає доданих тварин</div>`;
-                    } else {
-                        petsData = data;
-                        data.forEach(pet => {
-                            html += `
-                                <div class="card pet-card">
-                                    <div>
-                                        <strong>${pet.name}</strong><br>
-                                        ${pet.species} | ${pet.birth_date || 'дата не вказана'}
-                                    </div>
-                                    <button onclick="selectPet('${pet.guid}')">Детальніше</button>
-                                </div>
-                            `;
-                        });
-                    }
-                    document.getElementById('petsList').innerHTML = html;
-                });
-        }
-        
-        function loadAppointments() {
-            fetch('/api/appointments')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '';
-                    if (data.error) {
-                        html = `<div class="card">${data.error}</div>`;
-                    } else if (data.length === 0) {
-                        html = `<div class="card">Немає запланованих візитів</div>`;
-                    } else {
-                        data.forEach(apt => {
-                            html += `
-                                <div class="card appointment-card">
-                                    <strong>📌 ${apt.date}</strong><br>
-                                    Статус: ${apt.status === 'confirmed' ? '✅ Підтверджено' : '⏳ Очікує'}
-                                </div>
-                            `;
-                        });
-                    }
-                    document.getElementById('appointmentsList').innerHTML = html;
-                });
-        }
-        
-        function loadLabResults() {
-            // Якщо є вибрана тварина
-            if (petsData.length > 0 && petsData[0]) {
-                fetch(`/api/lab-results/${petsData[0].guid}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        let html = '';
-                        if (data.error) {
-                            html = `<div class="card">${data.error}</div>`;
-                        } else if (data.length === 0) {
-                            html = `<div class="card">Немає результатів аналізів</div>`;
-                        } else {
-                            data.forEach(result => {
-                                html += `
-                                    <div class="card">
-                                        <strong>${result.name}</strong> (${result.date})<br>
-                                        Результат: ${result.result}
-                                    </div>
-                                `;
-                            });
-                        }
-                        document.getElementById('labResultsList').innerHTML = html;
-                    });
-            } else {
-                document.getElementById('labResultsList').innerHTML = '<div class="card">Спочатку додайте тварину</div>';
-            }
-        }
-        
-        function loadVaccinations() {
-            if (petsData.length > 0 && petsData[0]) {
-                fetch(`/api/vaccinations/${petsData[0].guid}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        let html = '';
-                        if (data.error) {
-                            html = `<div class="card">${data.error}</div>`;
-                        } else if (data.length === 0) {
-                            html = `<div class="card">Немає даних про прививки</div>`;
-                        } else {
-                            data.forEach(vax => {
-                                html += `
-                                    <div class="card">
-                                        <strong>${vax.name}</strong><br>
-                                        Дата: ${vax.date}<br>
-                                        Наступна: ${vax.next_due}
-                                    </div>
-                                `;
-                            });
-                        }
-                        document.getElementById('vaccinationsList').innerHTML = html;
-                    });
-            } else {
-                document.getElementById('vaccinationsList').innerHTML = '<div class="card">Спочатку додайте тварину</div>';
-            }
-        }
-        
-        function selectPet(petGuid) {
-            alert('Обрано тварину. Тут буде детальна інформація');
-        }
-        
-        function askAI() {
-            let question = document.getElementById('question').value;
-            if (!question) return;
-            
-            document.getElementById('aiAnswer').innerHTML = '🤔 Думаю...';
-            
-            fetch('/api/ai-support', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question: question})
-            })
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('aiAnswer').innerHTML = data.answer || 'Вибачте, сталася помилка';
-            });
-        }
-        
-        function logout() {
-            fetch('/api/auth/logout', {method: 'POST'})
-                .then(() => window.location.href = '/');
-        }
-        
-        // Початкове завантаження
-        loadPets();
-    </script>
+<div class="page" id="page-pets">
+  <div class="inner-wrap">
+    <button class="back-btn" onclick="showPage('home')">← Назад</button>
+    <div class="page-title">Мої тварини</div>
+    <div class="page-sub">Тварини, зареєстровані в клініці</div>
+    <div id="petsListFull"><div class="loading">Завантаження...</div></div>
+  </div>
+</div>
+
+<div class="page" id="page-appointments">
+  <div class="inner-wrap">
+    <button class="back-btn" onclick="showPage('home')">← Назад</button>
+    <div class="page-title">Записи на прийом</div>
+    <div class="page-sub">Всі ваші візити</div>
+    <div id="appointmentsList"><div class="loading">Завантаження...</div></div>
+  </div>
+</div>
+
+<div class="page" id="page-lab">
+  <div class="inner-wrap">
+    <button class="back-btn" onclick="showPage('home')">← Назад</button>
+    <div class="page-title">Результати аналізів</div>
+    <div class="page-sub">Оберіть тварину</div>
+    <div class="pet-tabs" id="labPetTabs"></div>
+    <div id="labList"></div>
+  </div>
+</div>
+
+<div class="page" id="page-vax">
+  <div class="inner-wrap">
+    <button class="back-btn" onclick="showPage('home')">← Назад</button>
+    <div class="page-title">Щеплення</div>
+    <div class="page-sub">Оберіть тварину</div>
+    <div class="pet-tabs" id="vaxPetTabs"></div>
+    <div id="vaxList"></div>
+  </div>
+</div>
+
+<div class="page" id="page-ai">
+  <div class="inner-wrap">
+    <button class="back-btn" onclick="showPage('home')">← Назад</button>
+    <div class="page-title">AI-консультант</div>
+    <div class="page-sub">Запитайте про здоров'я та догляд</div>
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg-row ai">
+          <div class="msg-ava">🤖</div>
+          <div class="msg-bubble">Привіт! Я AI-консультант VetFuture. Чим можу допомогти? Запитуйте про симптоми, харчування, догляд або підготовку до візиту 🐾</div>
+        </div>
+      </div>
+      <div class="chat-footer">
+        <textarea id="chatInput" rows="1" placeholder="Написати повідомлення..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <button class="btn-send" onclick="sendAI()" id="btnSend">
+          <svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <div class="chat-disclaimer">AI не замінює лікаря. При серйозних симптомах зверніться до клініки.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let petsData=[];let chatHistory=[];
+  fetch('/api/me').then(r=>r.json()).then(d=>{if(d.error){window.location.href='/login';return;}document.getElementById('userPhone').textContent=d.phone;});
+  loadHomeData();
+  function showPage(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+n).classList.add('active');window.scrollTo(0,0);if(n==='pets')loadPetsFull();if(n==='appointments')loadAppointments();if(n==='lab')buildPetTabs('lab');if(n==='vax')buildPetTabs('vax');}
+  function loadHomeData(){fetch('/api/pets').then(r=>r.json()).then(d=>{petsData=Array.isArray(d)?d:[];renderPetsStrip();});fetch('/api/appointments').then(r=>r.json()).then(d=>{const el=document.getElementById('nextApptVal');const sub=document.getElementById('nextApptSub');if(!d.error&&d.length){const nx=d[0];const dt=new Date(nx.date);el.textContent=isNaN(dt)?nx.date:dt.toLocaleDateString('uk-UA',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});sub.textContent=nx.service||nx.doctor_name||'';}else{el.textContent='Немає запланованих візитів';sub.textContent='Запишіться онлайн →';}}).catch(()=>{document.getElementById('nextApptVal').textContent='Немає запланованих візитів';});}
+  function renderPetsStrip(){const el=document.getElementById('petsStrip');if(!petsData.length){el.innerHTML='<div style="color:var(--muted);font-size:14px;padding:10px 0">Тварини не знайдені</div>';return;}el.innerHTML=petsData.map(p=>`<div class="pet-chip" onclick="showPage('pets')"><div class="pet-chip-ava">${petEmoji(p.species)}</div><span class="pet-chip-name">${p.name}</span></div>`).join('');}
+  function loadPetsFull(){const el=document.getElementById('petsListFull');if(!petsData.length){el.innerHTML=empty('🐾','Тварини не знайдені');return;}el.innerHTML=petsData.map(p=>`<div class="card"><div class="card-row"><div class="card-icon-box">${petEmoji(p.species)}</div><div><h3>${p.name}</h3><p>${p.species||''}${p.birth_date?' · '+p.birth_date:''}</p></div></div></div>`).join('');}
+  function loadAppointments(){fetch('/api/appointments').then(r=>r.json()).then(d=>{const el=document.getElementById('appointmentsList');if(d.error||!d.length){el.innerHTML=empty('📅','Немає запланованих візитів');return;}el.innerHTML=d.map(a=>{const dt=new Date(a.date);const ds=isNaN(dt)?a.date:dt.toLocaleDateString('uk-UA',{day:'numeric',month:'long'});const ts=isNaN(dt)?'':dt.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});return`<div class="card"><div class="card-row"><div class="card-icon-box">📅</div><div><h3>${ds}${ts?' · '+ts:''}</h3><p>${a.service||a.doctor_name||'Прийом'}</p><span class="status-pill ${a.status==='confirmed'?'ok':'wait'}">${a.status==='confirmed'?'✓ Підтверджено':'⏳ Очікує'}</span></div></div></div>`;}).join('');});}
+  function buildPetTabs(t){const tabs=document.getElementById(t+'PetTabs');const list=document.getElementById(t+'List');if(!petsData.length){tabs.innerHTML='';list.innerHTML=empty('🐾','Спочатку завантажте список тварин');return;}tabs.innerHTML=petsData.map((p,i)=>`<button class="pet-tab ${i===0?'active':''}" onclick="loadPetSection('${p.guid}','${t}',this)">${petEmoji(p.species)} ${p.name}</button>`).join('');loadPetSection(petsData[0].guid,t,tabs.querySelector('.pet-tab'));}
+  function loadPetSection(guid,t,btn){const list=document.getElementById(t+'List');document.querySelectorAll('#'+t+'PetTabs .pet-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');list.innerHTML='<div class="loading">Завантаження...</div>';fetch(t==='lab'?`/api/lab-results/${guid}`:`/api/vaccinations/${guid}`).then(r=>r.json()).then(d=>{if(d.error){list.innerHTML=empty('⚠️',d.error);return;}if(!d.length){list.innerHTML=empty(t==='lab'?'🔬':'💉','Немає даних');return;}if(t==='lab'){list.innerHTML=d.map(r=>`<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${r.name}</strong><span style="font-size:12px;color:var(--muted)">${r.date}</span></div><p style="font-size:14px">${r.result}</p></div>`).join('');}else{list.innerHTML=d.map(v=>`<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${v.name}</strong><span style="font-size:12px;color:var(--muted)">📅 ${v.date}</span></div><p style="font-size:13px;color:var(--muted)">Наступна: <strong style="color:var(--g)">${v.next_due}</strong></p></div>`).join('');}});}
+  function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+  function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+  function addMsg(role,text){const c=document.getElementById('chatMessages');const row=document.createElement('div');row.className='msg-row '+(role==='user'?'user':'ai');row.innerHTML=`${role!=='user'?'<div class="msg-ava">🤖</div>':''}<div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>${role==='user'?'<div class="msg-ava" style="background:var(--g);color:white">👤</div>':''}`;c.appendChild(row);c.scrollTop=c.scrollHeight;}
+  function showTyping(){const c=document.getElementById('chatMessages');const row=document.createElement('div');row.className='msg-row ai';row.id='typing';row.innerHTML='<div class="msg-ava">🤖</div><div class="typing"><span></span><span></span><span></span></div>';c.appendChild(row);c.scrollTop=c.scrollHeight;}
+  function hideTyping(){document.getElementById('typing')?.remove();}
+  async function sendAI(){const input=document.getElementById('chatInput');const q=input.value.trim();if(!q)return;input.value='';input.style.height='auto';document.getElementById('btnSend').disabled=true;addMsg('user',q);chatHistory.push({role:'user',content:q});showTyping();try{const res=await fetch('/api/ai-support',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history:chatHistory.slice(0,-1)})});const data=await res.json();hideTyping();const ans=data.answer||'Помилка отримання відповіді';addMsg('assistant',ans);chatHistory.push({role:'assistant',content:ans});}catch(e){hideTyping();addMsg('assistant','Помилка зв\'язку. Спробуйте знову.');}document.getElementById('btnSend').disabled=false;}
+  function petEmoji(s){if(!s)return'🐾';s=s.toLowerCase();if(s.includes('кіт')||s.includes('cat'))return'🐱';if(s.includes('соб')||s.includes('dog'))return'🐶';if(s.includes('кролик'))return'🐰';return'🐾';}
+  function empty(ico,txt){return`<div class="empty"><div class="eico">${ico}</div><p>${txt}</p></div>`;}
+  function logout(){fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/');}
+</script>
 </body>
 </html>

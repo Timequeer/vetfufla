@@ -14,6 +14,7 @@ class Config:
     
     # --- Telegram бот ---
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    TELEGRAM_BOT_USERNAME = "VetFurure_bot"
     
     # --- Email (Gmail SMTP) ---
     MAIL_SERVER = "smtp.gmail.com"

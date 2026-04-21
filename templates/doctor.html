@@ -1,257 +1,673 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель лікаря - VetFuture</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель лікаря — VetFuture</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-        }
+    :root {
+      --blue: #2980b9;
+      --blue-dark: #1a5c8a;
+      --blue-light: #e8f4fb;
+      --blue-mid: #b3d9ef;
+      --green: #1FAB89;
+      --text: #1a2332;
+      --muted: #6b7e8f;
+      --bg: #f0f4f8;
+      --white: #ffffff;
+      --border: #dae3eb;
+      --sidebar-w: 250px;
+      --header-h: 64px;
+      --orange: #e67e22;
+      --orange-light: #fef3e2;
+    }
 
-        .header {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 15px 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 0 20px;
-        }
+    /* ---- Header ---- */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: var(--white); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 200;
+    }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .logo { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: var(--blue); }
+    .logo span { color: var(--text); font-weight: 400; }
 
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
+    .doctor-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--blue-light); border-radius: 40px;
+      padding: 6px 14px 6px 8px; font-size: 14px; font-weight: 500; color: var(--blue-dark);
+    }
 
-        .logo span {
-            color: #f39c12;
-        }
+    .btn-logout {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 14px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; cursor: pointer; transition: all 0.2s;
+    }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+    .btn-logout:hover { border-color: #c0392b; color: #c0392b; }
 
-        .logout-btn {
-            background: #f39c12;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-        }
+    /* ---- Layout ---- */
+    .layout { display: flex; margin-top: var(--header-h); min-height: calc(100vh - var(--header-h)); }
 
-        .main {
-            margin-top: 80px;
-            padding: 20px 0;
-        }
+    /* ---- Sidebar ---- */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--white);
+      border-right: 1px solid var(--border);
+      position: fixed; top: var(--header-h); bottom: 0; left: 0;
+      overflow-y: auto; padding: 20px 12px;
+    }
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
+    .sidebar-section {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); padding: 8px 12px 4px;
+    }
 
-        .tab-btn {
-            padding: 12px 25px;
-            background: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 15px; font-weight: 500; color: var(--text);
+      cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
+      border: none; background: none; width: 100%; text-align: left;
+    }
 
-        .tab-btn.active {
-            background: #3498db;
-            color: white;
-        }
+    .nav-item:hover { background: var(--blue-light); color: var(--blue-dark); }
+    .nav-item.active { background: var(--blue); color: white; }
+    .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
 
-        .tab-content {
-            display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
+    /* ---- Main ---- */
+    .main { flex: 1; margin-left: var(--sidebar-w); padding: 32px; }
 
-        .tab-content.active {
-            display: block;
-        }
+    .tab { display: none; }
+    .tab.active { display: block; }
 
-        .card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid #3498db;
-        }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; }
+    .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
 
-        .patient-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* ---- Cards ---- */
+    .card {
+      background: var(--white); border-radius: 16px;
+      border: 1px solid var(--border); padding: 20px 24px;
+      margin-bottom: 12px; transition: box-shadow 0.2s;
+    }
 
-        @media (max-width: 768px) {
-            .tab-btn { padding: 8px 15px; font-size: 12px; }
-            .main { margin-top: 120px; }
-        }
-    </style>
+    .card:hover { box-shadow: 0 4px 16px rgba(41,128,185,0.08); }
+
+    .patient-card { display: flex; align-items: center; gap: 16px; }
+
+    .patient-avatar {
+      width: 52px; height: 52px; border-radius: 12px;
+      background: var(--blue-light); font-size: 26px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .patient-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+    .patient-info p { font-size: 13px; color: var(--muted); }
+
+    .btn-history {
+      margin-left: auto;
+      background: var(--blue-light); color: var(--blue-dark);
+      border: none; border-radius: 8px; padding: 7px 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-history:hover { background: var(--blue); color: white; }
+
+    .appt-card { display: flex; align-items: center; gap: 16px; }
+
+    .appt-time {
+      background: var(--blue-light); color: var(--blue-dark);
+      border-radius: 10px; padding: 10px 14px;
+      text-align: center; flex-shrink: 0; min-width: 60px;
+    }
+
+    .appt-time .time { font-size: 18px; font-weight: 700; line-height: 1; }
+    .appt-time .date { font-size: 11px; color: var(--blue); margin-top: 2px; }
+
+    /* ---- Stats row ---- */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--white); border-radius: 16px; border: 1px solid var(--border);
+      padding: 20px; text-align: center;
+    }
+
+    .stat-card .num { font-size: 32px; font-weight: 700; color: var(--blue); font-family: 'Fraunces', serif; }
+    .stat-card .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ---- Schedule ---- */
+    .schedule-grid { display: grid; gap: 8px; }
+    .schedule-row {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--white); border-radius: 12px;
+      border: 1px solid var(--border); padding: 14px 20px;
+    }
+
+    .sched-day { font-weight: 600; width: 100px; color: var(--text); }
+    .sched-time { font-size: 14px; color: var(--muted); }
+    .sched-badge {
+      margin-left: auto; font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+    }
+
+    .sched-badge.work { background: #e6f7f2; color: #0e8a6c; }
+    .sched-badge.off { background: #f5f5f5; color: var(--muted); }
+
+    /* ---- AI Clinical Chat ---- */
+    .ai-wrap {
+      display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+      height: calc(100vh - var(--header-h) - 160px); min-height: 500px;
+    }
+
+    .chat-wrap {
+      background: var(--white); border-radius: 20px; border: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .chat-header-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), #1a5c8a);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+
+    .chat-header h3 { font-size: 16px; font-weight: 600; }
+    .chat-header p { font-size: 12px; color: var(--muted); }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .msg-row { display: flex; gap: 10px; align-items: flex-end; }
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .msg-bubble {
+      max-width: 75%; padding: 12px 16px;
+      border-radius: 18px; font-size: 14px; line-height: 1.6;
+    }
+
+    .msg-row.ai .msg-bubble {
+      background: var(--blue-light); color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-row.user .msg-bubble {
+      background: var(--blue); color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0; background: var(--blue-mid);
+    }
+
+    .typing {
+      display: flex; gap: 4px; padding: 14px 18px;
+      background: var(--blue-light); border-radius: 18px; border-bottom-left-radius: 4px;
+    }
+
+    .typing span {
+      width: 7px; height: 7px; background: var(--blue);
+      border-radius: 50%; animation: bounce 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .chat-footer {
+      border-top: 1px solid var(--border); padding: 14px 16px;
+      display: flex; gap: 10px; align-items: flex-end;
+    }
+
+    .chat-footer textarea {
+      flex: 1; resize: none;
+      border: 2px solid var(--border); border-radius: 12px;
+      padding: 10px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--text); outline: none;
+      line-height: 1.5; max-height: 120px; min-height: 42px;
+      transition: border-color 0.2s;
+    }
+
+    .chat-footer textarea:focus { border-color: var(--blue); }
+
+    .btn-send {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: var(--blue); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+
+    .btn-send:hover { background: var(--blue-dark); }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-send svg { width: 18px; height: 18px; }
+
+    /* Quick prompts panel */
+    .quick-panel {
+      background: var(--white); border-radius: 20px;
+      border: 1px solid var(--border); padding: 20px;
+      overflow-y: auto;
+    }
+
+    .quick-panel h4 {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px;
+    }
+
+    .quick-btn {
+      display: block; width: 100%;
+      text-align: left; padding: 10px 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      color: var(--text); cursor: pointer; line-height: 1.4;
+      transition: all 0.15s;
+    }
+
+    .quick-btn:hover { background: var(--blue-light); border-color: var(--blue-mid); }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); }
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .ai-wrap { grid-template-columns: 1fr; }
+      .quick-panel { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="container header-content">
-            <div class="logo">Vet<span>Future</span></div>
-            <div class="user-info">
-                <span>👨‍⚕️ <span id="doctorPhone"></span></span>
-                <div class="logout-btn" onclick="logout()">Вийти</div>
-            </div>
+
+<header class="header">
+  <a href="/" class="logo">Vet<span>Future</span></a>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="doctor-badge">
+      <span>👨‍⚕️</span>
+      <span id="doctorPhone">Лікар</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Вийти</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">Робочий стіл</div>
+    <button class="nav-item active" data-tab="overview">
+      <span class="icon">📊</span> Огляд
+    </button>
+    <button class="nav-item" data-tab="patients">
+      <span class="icon">🐾</span> Пацієнти
+    </button>
+    <button class="nav-item" data-tab="appointments">
+      <span class="icon">📅</span> Записи сьогодні
+    </button>
+    <button class="nav-item" data-tab="schedule">
+      <span class="icon">📆</span> Мій розклад
+    </button>
+    <div class="sidebar-section" style="margin-top:8px">Інструменти</div>
+    <button class="nav-item" data-tab="ai">
+      <span class="icon">🤖</span> AI-асистент
+    </button>
+  </nav>
+
+  <main class="main">
+
+    <!-- Огляд -->
+    <div class="tab active" id="tab-overview">
+      <div class="page-header">
+        <h1>Добрий день!</h1>
+        <p id="todayDate">Завантаження...</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="num" id="statToday">—</div>
+          <div class="lbl">Записів сьогодні</div>
         </div>
-    </header>
-
-    <div class="main">
-        <div class="container">
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="patients">🐾 Мої пацієнти</button>
-                <button class="tab-btn" data-tab="appointments">📅 Записи на сьогодні</button>
-                <button class="tab-btn" data-tab="schedule">📆 Розклад</button>
-            </div>
-
-            <div id="patients" class="tab-content active">
-                <h2>🐾 Список пацієнтів</h2>
-                <div id="patientsList"></div>
-            </div>
-
-            <div id="appointments" class="tab-content">
-                <h2>📅 Записи на сьогодні</h2>
-                <div id="appointmentsList"></div>
-            </div>
-
-            <div id="schedule" class="tab-content">
-                <h2>📆 Мій розклад</h2>
-                <div id="scheduleList"></div>
-            </div>
+        <div class="stat-card">
+          <div class="num" id="statPatients">—</div>
+          <div class="lbl">Активних пацієнтів</div>
         </div>
+        <div class="stat-card">
+          <div class="num" id="statPending">—</div>
+          <div class="lbl">Очікують підтвердження</div>
+        </div>
+      </div>
+      <div class="page-header" style="margin-top:8px">
+        <h1 style="font-size:20px">Найближчі записи</h1>
+      </div>
+      <div id="overviewAppts"><div class="loading">Завантаження...</div></div>
     </div>
 
-    <script>
-        fetch('/api/me')
-            .then(r => r.json())
-            .then(data => {
-                if (data.error || !data.is_doctor) {
-                    window.location.href = '/login';
-                } else {
-                    document.getElementById('doctorPhone').innerText = data.phone;
-                }
-            });
-        
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-                
-                if (btn.dataset.tab === 'patients') loadPatients();
-                if (btn.dataset.tab === 'appointments') loadTodayAppointments();
-                if (btn.dataset.tab === 'schedule') loadSchedule();
-            });
-        });
-        
-        function loadPatients() {
-            fetch('/api/pets')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '';
-                    if (data.error) {
-                        html = `<div class="card">${data.error}</div>`;
-                    } else if (data.length === 0) {
-                        html = `<div class="card">Немає пацієнтів</div>`;
-                    } else {
-                        data.forEach(patient => {
-                            html += `
-                                <div class="card patient-card">
-                                    <div>
-                                        <strong>${patient.name}</strong><br>
-                                        ${patient.species} | ${patient.birth_date || 'дата не вказана'}
-                                    </div>
-                                    <button onclick="viewHistory('${patient.guid}')">📋 Історія хвороби</button>
-                                </div>
-                            `;
-                        });
-                    }
-                    document.getElementById('patientsList').innerHTML = html;
-                });
+    <!-- Пацієнти -->
+    <div class="tab" id="tab-patients">
+      <div class="page-header">
+        <h1>Мої пацієнти</h1>
+        <p>Тварини, які перебувають на обліку</p>
+      </div>
+      <div id="patientsList"><div class="loading">Завантаження...</div></div>
+    </div>
+
+    <!-- Записи сьогодні -->
+    <div class="tab" id="tab-appointments">
+      <div class="page-header">
+        <h1>Записи на сьогодні</h1>
+        <p id="apptDate"></p>
+      </div>
+      <div id="appointmentsList"><div class="loading">Завантаження...</div></div>
+    </div>
+
+    <!-- Розклад -->
+    <div class="tab" id="tab-schedule">
+      <div class="page-header">
+        <h1>Мій розклад</h1>
+        <p>Графік прийому</p>
+      </div>
+      <div class="schedule-grid">
+        <div class="schedule-row"><span class="sched-day">Понеділок</span><span class="sched-time">10:00 – 18:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">Вівторок</span><span class="sched-time">10:00 – 18:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">Середа</span><span class="sched-time">10:00 – 18:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">Четвер</span><span class="sched-time">10:00 – 18:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">П'ятниця</span><span class="sched-time">10:00 – 18:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">Субота</span><span class="sched-time">10:00 – 14:00</span><span class="sched-badge work">Робочий</span></div>
+        <div class="schedule-row"><span class="sched-day">Неділя</span><span class="sched-time">—</span><span class="sched-badge off">Вихідний</span></div>
+      </div>
+    </div>
+
+    <!-- AI Асистент -->
+    <div class="tab" id="tab-ai">
+      <div class="page-header">
+        <h1>AI-асистент лікаря</h1>
+        <p>Розрахунок дозувань, протоколи, диференційна діагностика</p>
+      </div>
+      <div class="ai-wrap">
+
+        <div class="chat-wrap">
+          <div class="chat-header">
+            <div class="chat-header-icon">🧬</div>
+            <div>
+              <h3>Клінічний AI-асистент</h3>
+              <p>GPT-4o · Модель для клінічних завдань</p>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg-row ai">
+              <div class="msg-avatar">🧬</div>
+              <div class="msg-bubble">
+                Привіт! Я клінічний AI-асистент VetFuture.<br><br>
+                Можу допомогти з:<br>
+                • Розрахунком дозувань препаратів<br>
+                • Протоколами анестезії та лікування<br>
+                • Диференційною діагностикою<br>
+                • Інтерпретацією аналізів<br>
+                • Розрахунком інфузійної терапії<br><br>
+                Вкажіть вид, вагу тварини та клінічну задачу.
+              </div>
+            </div>
+          </div>
+          <div class="chat-footer">
+            <textarea id="chatInput" rows="1" placeholder="Напр: Собака, 12 кг, розрахуйте дозу цефтріаксону..."
+              oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+            <button class="btn-send" onclick="sendAI()" id="btnSend">
+              <svg viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick prompts -->
+        <div class="quick-panel">
+          <h4>Швидкі запити</h4>
+          <button class="quick-btn" onclick="quickPrompt(this)">💊 Розрахунок дози амоксициліну для кота 4 кг</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">💉 Протокол премедикації: собака 20 кг, планова операція</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">🩸 Інтерпретація: АЛТ 180, АСТ 95, білірубін 28 у кота</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">💧 Розрахунок інфузії при дегідратації 7%, кіт 3.5 кг</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">🔬 Диф. діагностика: анорексія + жовтяниця у кота</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">🐶 Дозування мелоксикаму для собаки 8 кг (НПЗЗ)</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">⚡ Протокол реанімації: зупинка серця, собака</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">🌡️ Антибіотики при пієлонефриті у кота, ПО введення</button>
+
+          <h4 style="margin-top:16px">Калькулятори</h4>
+          <button class="quick-btn" onclick="quickPrompt(this)">📐 Швидкість інфузії (мл/год) для підтримуючої терапії 5 кг кіт</button>
+          <button class="quick-btn" onclick="quickPrompt(this)">⚖️ Добова потреба в калоріях: собака 15 кг, стаціонар</button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  let chatHistory = [];
+
+  // Init
+  fetch('/api/me')
+    .then(r => r.json())
+    .then(data => {
+      if (data.error || !data.is_doctor) { window.location.href = '/login'; return; }
+      document.getElementById('doctorPhone').textContent = data.phone;
+    });
+
+  const now = new Date();
+  document.getElementById('todayDate').textContent =
+    now.toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('apptDate').textContent =
+    now.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+
+  loadOverview();
+
+  // ---- Navigation ----
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+
+      if (btn.dataset.tab === 'patients') loadPatients();
+      if (btn.dataset.tab === 'appointments') loadTodayAppointments();
+    });
+  });
+
+  // ---- Data ----
+  function loadOverview() {
+    fetch('/api/appointments')
+      .then(r => r.json())
+      .then(data => {
+        if (data.error || !data.length) {
+          document.getElementById('statToday').textContent = '0';
+          document.getElementById('statPending').textContent = '0';
+          document.getElementById('overviewAppts').innerHTML =
+            '<div class="empty-state"><p>Немає записів на сьогодні</p></div>';
+          return;
         }
-        
-        function loadTodayAppointments() {
-            fetch('/api/appointments')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '';
-                    if (data.error) {
-                        html = `<div class="card">${data.error}</div>`;
-                    } else if (data.length === 0) {
-                        html = `<div class="card">Немає записів на сьогодні</div>`;
-                    } else {
-                        data.forEach(apt => {
-                            html += `
-                                <div class="card">
-                                    <strong>⏰ ${apt.date}</strong><br>
-                                    Пацієнт: ${apt.pet_guid}<br>
-                                    Статус: ${apt.status}
-                                </div>
-                            `;
-                        });
-                    }
-                    document.getElementById('appointmentsList').innerHTML = html;
-                });
-        }
-        
-        function loadSchedule() {
-            document.getElementById('scheduleList').innerHTML = `
-                <div class="card">
-                    <strong>Понеділок</strong> 10:00 - 18:00<br>
-                    <strong>Вівторок</strong> 10:00 - 18:00<br>
-                    <strong>Середа</strong> 10:00 - 18:00<br>
-                    <strong>Четвер</strong> 10:00 - 18:00<br>
-                    <strong>П'ятниця</strong> 10:00 - 18:00<br>
-                    <strong>Субота</strong> 10:00 - 14:00<br>
-                    <strong>Неділя</strong> Вихідний
-                </div>
-            `;
-        }
-        
-        function viewHistory(patientGuid) {
-            alert(`Історія хвороби пацієнта ${patientGuid}\nТут буде детальна інформація про всі візити, аналізи та лікування.`);
-        }
-        
-        function logout() {
-            fetch('/api/auth/logout', {method: 'POST'})
-                .then(() => window.location.href = '/');
-        }
-        
-        loadPatients();
-    </script>
+        const today = new Date().toDateString();
+        const todayAppts = data.filter(a => new Date(a.date).toDateString() === today);
+        const pending = data.filter(a => a.status !== 'confirmed');
+        document.getElementById('statToday').textContent = todayAppts.length;
+        document.getElementById('statPending').textContent = pending.length;
+        document.getElementById('overviewAppts').innerHTML =
+          todayAppts.slice(0, 5).map(apt => appointmentCard(apt)).join('') ||
+          '<div class="empty-state"><p>Немає записів на сьогодні</p></div>';
+      });
+
+    fetch('/api/pets')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('statPatients').textContent = data.error ? '—' : data.length;
+      });
+  }
+
+  function loadPatients() {
+    fetch('/api/pets')
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('patientsList');
+        if (data.error) { el.innerHTML = emptyState('⚠️', data.error); return; }
+        if (!data.length) { el.innerHTML = emptyState('🐾', 'Немає пацієнтів'); return; }
+        el.innerHTML = data.map(p => `
+          <div class="card patient-card">
+            <div class="patient-avatar">${petEmoji(p.species)}</div>
+            <div class="patient-info">
+              <h3>${p.name}</h3>
+              <p>${p.species}${p.birth_date ? ' · ' + p.birth_date : ''}${p.owner_name ? ' · Власник: ' + p.owner_name : ''}</p>
+            </div>
+            <button class="btn-history" onclick="viewHistory('${p.guid}')">📋 Історія</button>
+          </div>
+        `).join('');
+      });
+  }
+
+  function loadTodayAppointments() {
+    fetch('/api/appointments')
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('appointmentsList');
+        if (data.error) { el.innerHTML = emptyState('⚠️', data.error); return; }
+        if (!data.length) { el.innerHTML = emptyState('📅', 'Немає записів на сьогодні'); return; }
+        el.innerHTML = data.map(apt => appointmentCard(apt)).join('');
+      });
+  }
+
+  function appointmentCard(apt) {
+    const d = new Date(apt.date);
+    const time = isNaN(d) ? apt.date : d.toLocaleTimeString('uk', {hour:'2-digit', minute:'2-digit'});
+    const date = isNaN(d) ? '' : d.toLocaleDateString('uk', {day:'numeric', month:'short'});
+    return `
+      <div class="card appt-card">
+        <div class="appt-time">
+          <div class="time">${time}</div>
+          <div class="date">${date}</div>
+        </div>
+        <div>
+          <strong>${apt.pet_name || apt.pet_guid}</strong>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${apt.service || 'Прийом'}</div>
+          <span style="display:inline-block;margin-top:4px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:${apt.status==='confirmed'?'#e6f7f2':'#fef3e2'};color:${apt.status==='confirmed'?'#0e8a6c':'#e67e22'}">
+            ${apt.status === 'confirmed' ? '✓ Підтверджено' : '⏳ Очікує'}
+          </span>
+        </div>
+      </div>`;
+  }
+
+  function viewHistory(guid) {
+    // TODO: відкрити модалку з повною медкартою з ENOTE
+    alert(`Медкарта пацієнта ${guid}\n\nТут буде повна історія хвороби, аналізи та призначення з ENOTE.`);
+  }
+
+  function petEmoji(species) {
+    if (!species) return '🐾';
+    const s = species.toLowerCase();
+    if (s.includes('кіт') || s.includes('cat')) return '🐱';
+    if (s.includes('соб') || s.includes('dog')) return '🐶';
+    return '🐾';
+  }
+
+  // ---- AI ----
+  function quickPrompt(btn) {
+    const text = btn.textContent.replace(/^[^\s]+\s/, '').trim();
+    document.getElementById('chatInput').value = text;
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('[data-tab="ai"]').classList.add('active');
+    document.getElementById('tab-ai').classList.add('active');
+    sendAI();
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAI(); }
+  }
+
+  function addMessage(role, text) {
+    const container = document.getElementById('chatMessages');
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'ai');
+    row.innerHTML = `
+      ${role !== 'user' ? '<div class="msg-avatar">🧬</div>' : ''}
+      <div class="msg-bubble">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+      ${role === 'user' ? '<div class="msg-avatar" style="background:var(--blue);color:white">👤</div>' : ''}`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function showTyping() {
+    const container = document.getElementById('chatMessages');
+    const row = document.createElement('div');
+    row.className = 'msg-row ai'; row.id = 'typing';
+    row.innerHTML = `<div class="msg-avatar">🧬</div><div class="typing"><span></span><span></span><span></span></div>`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function hideTyping() { document.getElementById('typing')?.remove(); }
+
+  async function sendAI() {
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    input.value = ''; input.style.height = 'auto';
+    document.getElementById('btnSend').disabled = true;
+
+    addMessage('user', question);
+    chatHistory.push({ role: 'user', content: question });
+    showTyping();
+
+    try {
+      const res = await fetch('/api/ai-doctor', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ question, history: chatHistory.slice(0, -1) })
+      });
+      const data = await res.json();
+      hideTyping();
+      const answer = data.answer || data.error || 'Помилка отримання відповіді';
+      addMessage('assistant', answer);
+      chatHistory.push({ role: 'assistant', content: answer });
+    } catch (e) {
+      hideTyping();
+      addMessage('assistant', 'Помилка зв\'язку. Спробуйте ще раз.');
+    }
+
+    document.getElementById('btnSend').disabled = false;
+    input.focus();
+  }
+
+  // ---- Utils ----
+  function emptyState(icon, text) {
+    return `<div class="empty-state"><div style="font-size:40px;margin-bottom:12px">${icon}</div><p>${text}</p></div>`;
+  }
+
+  function logout() {
+    fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/');
+  }
+</script>
 </body>
 </html>

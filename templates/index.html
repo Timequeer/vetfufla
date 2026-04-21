@@ -2,384 +2,703 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>VETFUTURE — сучасна ветеринарна клініка</title>
-  <!-- Google Fonts та базові стилі для чистоти -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VetFuture — Ветеринарна клініка Київ</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --g: #1FAB89;
+      --gd: #0e8a6c;
+      --gl: #e6f7f2;
+      --text: #1a2332;
+      --muted: #6b7e8f;
+      --bg: #f8faf9;
+      --white: #fff;
+      --border: #dce8e2;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #ffffff;
-      color: #1e2a3e;
-      line-height: 1.5;
-      scroll-behavior: smooth;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    /* Header */
+    /* ======= HEADER ======= */
     .header {
-      background-color: white;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header-inner {
-      display: flex;
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 64px; background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
       justify-content: space-between;
-      align-items: center;
-      padding: 16px 0;
-      flex-wrap: wrap;
-      gap: 16px;
+      padding: 0 28px; z-index: 500;
     }
 
     .logo {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #1FAB89 0%, #0F8B6B 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      font-family: 'Fraunces', serif;
+      font-size: 24px; font-weight: 700;
+      color: var(--g); text-decoration: none;
       letter-spacing: -0.5px;
     }
 
-    .nav {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      flex-wrap: wrap;
+    .logo em { color: var(--text); font-style: normal; font-weight: 400; }
+
+    .header-right { display: flex; align-items: center; gap: 16px; }
+
+    .btn-cabinet {
+      background: var(--g); color: white;
+      padding: 9px 22px; border-radius: 40px;
+      text-decoration: none; font-weight: 600;
+      font-size: 14px; transition: 0.2s;
+      display: flex; align-items: center; gap: 8px;
     }
 
-    .nav a {
-      text-decoration: none;
-      color: #2c3e50;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
+    .btn-cabinet:hover { background: var(--gd); transform: scale(1.03); }
 
-    .nav a:hover {
-      color: #1FAB89;
-    }
-
-    .btn-login {
-      background: #1FAB89;
-      color: white !important;
-      padding: 8px 24px;
-      border-radius: 40px;
+    /* Burger */
+    .burger {
+      width: 40px; height: 40px; border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: none; cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 5px;
       transition: 0.2s;
     }
 
-    .btn-login:hover {
-      background: #0e8a6c;
-      transform: scale(1.02);
+    .burger:hover { border-color: var(--g); background: var(--gl); }
+
+    .burger span {
+      display: block; width: 18px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all 0.3s;
     }
 
-    /* Hero */
+    .burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ======= DRAWER MENU ======= */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(26,35,50,0.4);
+      backdrop-filter: blur(2px);
+      z-index: 800; opacity: 0;
+      pointer-events: none; transition: opacity 0.3s;
+    }
+
+    .overlay.show { opacity: 1; pointer-events: all; }
+
+    .drawer {
+      position: fixed; top: 0; right: -320px; bottom: 0;
+      width: 300px; background: var(--white);
+      z-index: 900; transition: right 0.35s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.1);
+    }
+
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .drawer-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 20px; font-weight: 700; color: var(--g);
+    }
+
+    .drawer-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: none;
+      cursor: pointer; font-size: 18px; color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.2s;
+    }
+
+    .drawer-close:hover { border-color: #e74c3c; color: #e74c3c; }
+
+    .drawer-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+
+    .drawer-section {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted);
+      padding: 12px 12px 6px;
+    }
+
+    .drawer-link {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 12px; border-radius: 12px;
+      text-decoration: none; color: var(--text);
+      font-size: 15px; font-weight: 500;
+      transition: 0.15s; margin-bottom: 2px;
+    }
+
+    .drawer-link:hover { background: var(--gl); color: var(--gd); }
+    .drawer-link .di { font-size: 20px; width: 28px; text-align: center; }
+
+    .drawer-cabinet {
+      margin: 16px 12px;
+      display: block; text-align: center;
+      background: var(--g); color: white;
+      padding: 14px; border-radius: 14px;
+      text-decoration: none; font-weight: 600;
+      font-size: 15px; transition: 0.2s;
+    }
+
+    .drawer-cabinet:hover { background: var(--gd); }
+
+    /* ======= MAIN ======= */
+    main { padding-top: 64px; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ======= HERO ======= */
     .hero {
-      background: linear-gradient(120deg, #eef9f5 0%, #ffffff 100%);
-      padding: 80px 0;
+      background: linear-gradient(135deg, #0d3527 0%, #1a5c44 60%, #1FAB89 100%);
+      padding: 80px 0 72px; position: relative; overflow: hidden;
     }
 
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: center;
+    .hero::before {
+      content: '';
+      position: absolute; top: -100px; right: -100px;
+      width: 500px; height: 500px; border-radius: 50%;
+      background: rgba(255,255,255,0.04);
     }
 
-    .hero-title {
-      font-size: 48px;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 24px;
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -60px; left: 30%;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: rgba(255,255,255,0.03);
     }
 
-    .hero-title span {
-      color: #1FAB89;
+    .hero-inner {
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 48px; position: relative; z-index: 1;
     }
 
-    .hero-text {
-      font-size: 18px;
-      color: #4a5a6e;
-      margin-bottom: 32px;
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9);
+      padding: 6px 14px; border-radius: 40px; font-size: 13px;
+      font-weight: 500; margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
     }
 
-    .hero-buttons {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 52px; font-weight: 700;
+      color: white; line-height: 1.15; margin-bottom: 20px;
     }
 
-    .btn-primary {
-      background: #1FAB89;
-      color: white;
-      padding: 12px 32px;
-      border-radius: 40px;
-      text-decoration: none;
-      font-weight: 600;
-      display: inline-block;
+    .hero h1 em {
+      font-style: italic; color: rgba(255,255,255,0.7);
     }
 
-    .btn-outline {
-      border: 2px solid #1FAB89;
-      color: #1FAB89;
-      padding: 10px 30px;
-      border-radius: 40px;
-      text-decoration: none;
-      font-weight: 600;
+    .hero p {
+      font-size: 18px; color: rgba(255,255,255,0.75);
+      line-height: 1.65; margin-bottom: 36px; max-width: 520px;
     }
 
-    .hero-image {
-      font-size: 120px;
-      text-align: center;
-      background: #e0f2ec;
-      border-radius: 40px;
-      padding: 40px;
-    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
 
-    /* Секції */
-    .services, .promotions, .features, .doctors, .contacts {
-      padding: 80px 0;
-    }
-
-    .services {
-      background-color: #ffffff;
-    }
-
-    .promotions {
-      background: #eef9f5;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 36px;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .section-subtitle {
-      text-align: center;
-      color: #5a6e7c;
-      margin-bottom: 56px;
-    }
-
-    .services-grid, .promo-grid, .features-grid, .doctors-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 32px;
-    }
-
-    .service-card {
-      background: #f9fdfb;
-      padding: 32px 24px;
-      border-radius: 28px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    .btn-hero-primary {
+      background: white; color: var(--gd);
+      padding: 14px 32px; border-radius: 40px;
+      text-decoration: none; font-weight: 700; font-size: 15px;
       transition: 0.2s;
-      border: 1px solid #e0f0ea;
     }
 
-    .service-card:hover {
-      transform: translateY(-6px);
-      border-color: #b9dfd2;
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+    .btn-hero-outline {
+      border: 2px solid rgba(255,255,255,0.4); color: white;
+      padding: 12px 28px; border-radius: 40px;
+      text-decoration: none; font-weight: 600; font-size: 15px;
+      transition: 0.2s;
     }
 
-    .service-icon {
-      font-size: 48px;
-      margin-bottom: 20px;
+    .btn-hero-outline:hover { border-color: white; background: rgba(255,255,255,0.08); }
+
+    .hero-visual {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 32px; padding: 36px 40px;
+      text-align: center; backdrop-filter: blur(4px);
     }
 
-    .promo-card {
-      background: white;
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-      border-left: 6px solid #1FAB89;
-    }
+    .hero-visual div { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+    .hero-visual p { color: rgba(255,255,255,0.65); font-size: 14px; }
 
-    .feature-card {
-      text-align: center;
-      padding: 24px;
-    }
+    /* ======= SECTION COMMON ======= */
+    section { padding: 72px 0; }
 
-    .doctor-card {
-      text-align: center;
-      background: #ffffff;
-      padding: 24px;
-      border-radius: 32px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    .doctor-img {
-      font-size: 64px;
+    .sec-label {
+      display: inline-block;
+      background: var(--gl); color: var(--gd);
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; padding: 5px 14px; border-radius: 20px;
       margin-bottom: 12px;
     }
 
-    .contacts {
-      background: #1e2a3e;
-      color: white;
+    .sec-title {
+      font-family: 'Fraunces', serif;
+      font-size: 38px; font-weight: 700;
+      line-height: 1.2; margin-bottom: 10px;
     }
 
-    .contacts a {
-      color: #9fd3c7;
-      text-decoration: none;
+    .sec-sub { color: var(--muted); font-size: 16px; max-width: 540px; }
+
+    .sec-head { margin-bottom: 44px; }
+
+    /* ======= PROMOTIONS ======= */
+    #promotions { background: var(--white); }
+
+    .promo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
     }
 
-    .footer {
-      background: #0f1a24;
-      color: #9aaebf;
-      padding: 32px 0;
-      text-align: center;
-      font-size: 14px;
+    .promo-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 24px;
+      position: relative; overflow: hidden;
+      transition: 0.2s;
     }
 
+    .promo-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(31,171,137,0.1); }
+
+    .promo-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--g);
+    }
+
+    .promo-badge {
+      display: inline-block;
+      background: var(--g); color: white;
+      font-size: 22px; font-weight: 800;
+      padding: 4px 12px; border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .promo-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .promo-card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+    .promo-till {
+      display: inline-block; margin-top: 14px;
+      font-size: 12px; font-weight: 600;
+      color: var(--gd); background: var(--gl);
+      padding: 4px 10px; border-radius: 20px;
+    }
+
+    /* ======= EXCLUSIVE SERVICES ======= */
+    #exclusive { background: var(--bg); }
+
+    .exc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .exc-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px; padding: 32px 28px;
+      transition: 0.2s;
+    }
+
+    .exc-card:hover {
+      box-shadow: 0 8px 32px rgba(31,171,137,0.12);
+      border-color: var(--g);
+    }
+
+    .exc-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: var(--gl); font-size: 30px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .exc-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+
+    .exc-card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    .exc-new {
+      display: inline-block; margin-top: 16px;
+      background: #fff3e0; color: #e65100;
+      font-size: 12px; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px;
+    }
+
+    /* ======= ALL SERVICES ======= */
+    #services { background: var(--white); }
+
+    .svc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .svc-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px 20px;
+      text-align: center; transition: 0.2s; cursor: default;
+    }
+
+    .svc-card:hover { background: var(--gl); border-color: var(--g); }
+    .svc-card .svc-ico { font-size: 36px; margin-bottom: 12px; }
+    .svc-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .svc-card p { font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+    /* ======= DOCTORS ======= */
+    #doctors { background: var(--bg); }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .doc-card {
+      background: var(--white); border-radius: 24px;
+      border: 1px solid var(--border); padding: 32px 24px;
+      text-align: center; transition: 0.2s;
+    }
+
+    .doc-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
+
+    .doc-ava {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gl), var(--g));
+      font-size: 36px; display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 16px;
+      border: 3px solid var(--gl);
+    }
+
+    .doc-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .doc-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    .doc-spec {
+      display: inline-block; margin-top: 12px;
+      background: var(--gl); color: var(--gd);
+      font-size: 12px; font-weight: 600;
+      padding: 4px 12px; border-radius: 20px;
+    }
+
+    /* ======= CONTACTS ======= */
+    #contacts {
+      background: linear-gradient(135deg, #0d3527, #1a5c44);
+      padding: 72px 0;
+    }
+
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 40px;
+    }
+
+    .contact-block h4 {
+      font-family: 'Fraunces', serif;
+      font-size: 18px; color: white; margin-bottom: 16px;
+    }
+
+    .contact-block p, .contact-block a {
+      font-size: 14px; color: rgba(255,255,255,0.65);
+      line-height: 1.8; text-decoration: none; display: block;
+    }
+
+    .contact-block a:hover { color: rgba(255,255,255,0.9); }
+
+    /* ======= FOOTER ======= */
+    footer {
+      background: #0a1e17; padding: 24px;
+      text-align: center; font-size: 13px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ======= RESPONSIVE ======= */
     @media (max-width: 768px) {
-      .hero-grid {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-      .hero-buttons {
-        justify-content: center;
-      }
-      .nav {
-        gap: 20px;
-      }
-      .section-title {
-        font-size: 28px;
-      }
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .hero h1 { font-size: 36px; }
+      .sec-title { font-size: 28px; }
     }
   </style>
 </head>
 <body>
 
+<!-- ======= HEADER ======= -->
 <header class="header">
-  <div class="container header-inner">
-    <div class="logo">VETFUTURE</div>
-    <div class="nav">
-      <a href="/#services">Послуги</a>
-      <a href="/#promotions">Акції</a>
-      <a href="/#doctors">Лікарі</a>
-      <a href="/#contacts">Контакти</a>
-      <a href="/login" class="btn-login" id="loginLink">Особистий кабінет</a>
-    </div>
+  <a href="/" class="logo">Vet<em>Future</em></a>
+  <div class="header-right">
+    <a href="/dashboard" class="btn-cabinet" id="cabinetLink">🐾 Особистий кабінет</a>
+    <button class="burger" id="burgerBtn" onclick="toggleDrawer()" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<section class="hero">
-  <div class="container hero-grid">
-    <div>
-      <h1 class="hero-title">Шлях до здорового майбутнього <span>ваших улюбленців</span></h1>
-      <p class="hero-text">Сучасна ветеринарна клініка з AI-помічником, онлайн-записом та турботою про кожну тварину. Доказова медицина, прозорі ціни та щирі серця.</p>
-      <div class="hero-buttons">
-        <a href="/login" class="btn-primary">Записатись онлайн</a>
-        <a href="#services" class="btn-outline">Детальніше</a>
+<!-- ======= DRAWER MENU ======= -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-logo">VetFuture</span>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-nav">
+    <div class="drawer-section">Навігація</div>
+    <a href="#promotions" class="drawer-link" onclick="closeDrawer()"><span class="di">🎁</span> Акції</a>
+    <a href="#exclusive" class="drawer-link" onclick="closeDrawer()"><span class="di">⭐</span> Нові послуги</a>
+    <a href="#services" class="drawer-link" onclick="closeDrawer()"><span class="di">🩺</span> Всі послуги</a>
+    <a href="#doctors" class="drawer-link" onclick="closeDrawer()"><span class="di">👨‍⚕️</span> Спеціалісти</a>
+    <a href="#contacts" class="drawer-link" onclick="closeDrawer()"><span class="di">📍</span> Контакти</a>
+
+    <div class="drawer-section" style="margin-top:8px">Кабінет</div>
+    <a href="/dashboard" class="drawer-link" onclick="closeDrawer()"><span class="di">🐾</span> Мій кабінет</a>
+    <a href="/login" class="drawer-link" onclick="closeDrawer()"><span class="di">🔐</span> Вхід / Реєстрація</a>
+  </div>
+  <a href="/dashboard" class="drawer-cabinet" onclick="closeDrawer()">🐾 Відкрити кабінет</a>
+</div>
+
+<!-- ======= MAIN ======= -->
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <div class="hero-tag">🏥 Ветеринарна клініка · Київ</div>
+        <h1>Турбота про тих, хто не може <em>сказати де болить</em></h1>
+        <p>Сучасна діагностика, доказова медицина та AI-помічник. Ми лікуємо з любов'ю і відповідальністю.</p>
+        <div class="hero-btns">
+          <a href="/login" class="btn-hero-primary">Записатись онлайн</a>
+          <a href="#services" class="btn-hero-outline">Наші послуги</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div>🐕 🐈</div>
+        <p>Ваші улюбленці<br>в надійних руках</p>
       </div>
     </div>
-    <div class="hero-image">
-      🐕 🐈 🐾
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="services" id="services">
-  <div class="container">
-    <h2 class="section-title">Комплексна ветеринарна допомога</h2>
-    <p class="section-subtitle">Сучасне обладнання, вузькопрофільні фахівці та індивідуальний підхід</p>
-    <div class="services-grid">
-      <div class="service-card"><div class="service-icon">🩺</div><h3>Терапія</h3><p>Діагностика, лікування та профілактика захворювань</p></div>
-      <div class="service-card"><div class="service-icon">🔬</div><h3>Діагностика</h3><p>УЗД, рентген, лабораторні аналізи, ендоскопія</p></div>
-      <div class="service-card"><div class="service-icon">⚕️</div><h3>Хірургія</h3><p>Планові та екстрені операції, лапароскопія</p></div>
-      <div class="service-card"><div class="service-icon">🦷</div><h3>Стоматологія</h3><p>Лікування зубів, зняття зубного каменю</p></div>
-      <div class="service-card"><div class="service-icon">💊</div><h3>Стаціонар</h3><p>Цілодобовий догляд, інфузійна терапія</p></div>
-      <div class="service-card"><div class="service-icon">🤖</div><h3>AI-помічник</h3><p>Відповідає на запитання про здоров’я тварини 24/7</p></div>
+  <!-- АКЦІЇ -->
+  <section id="promotions">
+    <div class="container">
+      <div class="sec-head">
+        <div class="sec-label">🎁 Акції та пропозиції</div>
+        <h2 class="sec-title">Вигідні пропозиції цього місяця</h2>
+        <p class="sec-sub">Турбуйтеся про здоров'я улюбленця вигідно</p>
+      </div>
+      <div class="promo-grid">
+        <div class="promo-card">
+          <div class="promo-badge">-10%</div>
+          <h3>Перший візит</h3>
+          <p>Знижка 10% на первинний прийом терапевта для нових клієнтів клініки.</p>
+          <span class="promo-till">📅 До кінця місяця</span>
+        </div>
+        <div class="promo-card">
+          <div class="promo-badge">-15%</div>
+          <h3>Комплексна вакцинація</h3>
+          <p>При вакцинації декількох тварин однієї родини — знижка 15% на кожне щеплення.</p>
+          <span class="promo-till">📅 Постійно</span>
+        </div>
+        <div class="promo-card">
+          <div class="promo-badge">-20%</div>
+          <h3>Гігієна ротової порожнини</h3>
+          <p>Ультразвукове чищення зубів зі знижкою. Запобігайте захворюванням ясен.</p>
+          <span class="promo-till">📅 Квітень 2026</span>
+        </div>
+        <div class="promo-card">
+          <div class="promo-badge">FREE</div>
+          <h3>День відкритих дверей</h3>
+          <p>Безкоштовна консультація хірурга 28 квітня. Реєстрація обов'язкова.</p>
+          <span class="promo-till">📅 28 квітня</span>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="promotions" id="promotions">
-  <div class="container">
-    <h2 class="section-title">Акції та новини</h2>
-    <p class="section-subtitle">Вигідні пропозиції для здоров'я вашого улюбленця</p>
-    <div class="promo-grid">
-      <div class="promo-card"><h3>🐣 Перший візит – 10% знижка</h3><p>Для нових клієнтів на первинний прийом терапевта.</p></div>
-      <div class="promo-card"><h3>💉 Комплексна вакцинація – 15%</h3><p>При щепленні всіх тварин в родині.</p></div>
-      <div class="promo-card"><h3>🦷 Гігієна ротової порожнини – 20%</h3><p>Ультразвукове чищення зубів зі знижкою до кінця місяця.</p></div>
-      <div class="promo-card"><h3>📢 День відкритих дверей</h3><p>Безкоштовна консультація хірурга 28 квітня.</p></div>
+  <!-- ЕКСКЛЮЗИВНІ ПОСЛУГИ -->
+  <section id="exclusive">
+    <div class="container">
+      <div class="sec-head">
+        <div class="sec-label">⭐ Нові та ексклюзивні послуги</div>
+        <h2 class="sec-title">Сучасна діагностика<br>та лікування</h2>
+        <p class="sec-sub">Обладнання та методики, яких немає у більшості клінік Києва</p>
+      </div>
+      <div class="exc-grid">
+        <div class="exc-card">
+          <div class="exc-icon">🔭</div>
+          <h3>Гастроскопія</h3>
+          <p>Ендоскопічна діагностика шлунково-кишкового тракту без хірургічного втручання. Виявляємо виразки, новоутворення, сторонні тіла.</p>
+          <span class="exc-new">🆕 Нова послуга</span>
+        </div>
+        <div class="exc-card">
+          <div class="exc-icon">🎯</div>
+          <h3>Лапароскопія</h3>
+          <p>Мінімально інвазивна хірургія через мікророзрізи. Стерилізація, діагностика, видалення новоутворень з мінімальним стресом для тварини.</p>
+          <span class="exc-new">🆕 Нова послуга</span>
+        </div>
+        <div class="exc-card">
+          <div class="exc-icon">🫀</div>
+          <h3>Кардіологія</h3>
+          <p>ЕКГ, ехокардіографія, холтерівське моніторування. Діагностика та лікування захворювань серця у котів і собак.</p>
+          <span class="exc-new">⭐ Ексклюзивно</span>
+        </div>
+        <div class="exc-card">
+          <div class="exc-icon">🧠</div>
+          <h3>Неврологія</h3>
+          <p>Діагностика захворювань нервової системи, оцінка неврологічного статусу, лікування парезів та паралічів.</p>
+          <span class="exc-new">⭐ Ексклюзивно</span>
+        </div>
+        <div class="exc-card">
+          <div class="exc-icon">🤖</div>
+          <h3>AI-помічник 24/7</h3>
+          <p>Власний AI-асистент на базі GPT-4 відповідає на питання про здоров'я вашої тварини цілодобово в особистому кабінеті.</p>
+          <span class="exc-new">🆕 Унікально</span>
+        </div>
+        <div class="exc-card">
+          <div class="exc-icon">📊</div>
+          <h3>Онлайн-медкарта</h3>
+          <p>Всі аналізи, щеплення та записи доступні у вашому особистому кабінеті. Нагадування про ревакцинацію в Telegram.</p>
+          <span class="exc-new">📱 Онлайн</span>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="features">
-  <div class="container">
-    <h2 class="section-title">Чому обирають VetFuture</h2>
-    <div class="features-grid">
-      <div class="feature-card"><div class="service-icon">🏥</div><h3>Власний стаціонар</h3><p>Цілодобовий нагляд лікарів</p></div>
-      <div class="feature-card"><div class="service-icon">📱</div><h3>Нагадування про вакцинацію</h3><p>Автоматичні сповіщення в Telegram та Email</p></div>
-      <div class="feature-card"><div class="service-icon">🕒</div><h3>Зручний онлайн-запис</h3><p>Оберіть час без черг</p></div>
-      <div class="feature-card"><div class="service-icon">❤️</div><h3>Команда професіоналів</h3><p>Лікарі з міжнародним досвідом</p></div>
+  <!-- ВСІ ПОСЛУГИ -->
+  <section id="services">
+    <div class="container">
+      <div class="sec-head">
+        <div class="sec-label">🩺 Послуги</div>
+        <h2 class="sec-title">Комплексна ветеринарна допомога</h2>
+      </div>
+      <div class="svc-grid">
+        <div class="svc-card"><div class="svc-ico">🩺</div><h4>Терапія</h4><p>Діагностика та лікування</p></div>
+        <div class="svc-card"><div class="svc-ico">🔬</div><h4>Лабораторія</h4><p>Аналізи крові, сечі, ПЦР</p></div>
+        <div class="svc-card"><div class="svc-ico">📡</div><h4>УЗД та рентген</h4><p>Сучасна візуалізація</p></div>
+        <div class="svc-card"><div class="svc-ico">⚕️</div><h4>Хірургія</h4><p>Планові та екстрені операції</p></div>
+        <div class="svc-card"><div class="svc-ico">🦷</div><h4>Стоматологія</h4><p>Чищення, лікування зубів</p></div>
+        <div class="svc-card"><div class="svc-ico">💊</div><h4>Стаціонар</h4><p>Цілодобовий нагляд</p></div>
+        <div class="svc-card"><div class="svc-ico">💉</div><h4>Вакцинація</h4><p>Всі види щеплень</p></div>
+        <div class="svc-card"><div class="svc-ico">✂️</div><h4>Грумінг</h4><p>Стрижка та догляд</p></div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="doctors" id="doctors">
-  <div class="container">
-    <h2 class="section-title">Наші фахівці</h2>
-    <p class="section-subtitle">Лікарі, яким довіряють найцінніше</p>
-    <div class="doctors-grid">
-      <div class="doctor-card"><div class="doctor-img">👨‍⚕️</div><h3>Плюта Артем Сергійович</h3><p>Лікар реанімації та інтенсивної терапії</p></div>
-      <div class="doctor-card"><div class="doctor-img">👩‍⚕️</div><h3>Кошик Катерина Володимирівна</h3><p>Лікар терапевт, ендокринолог, візуальна діагностика</p></div>
-      <div class="doctor-card"><div class="doctor-img">👨‍⚕️</div><h3>Дмитро Олександрович</h3><p>Хірург, ортопед</p></div>
+  <!-- ЛІКАРІ -->
+  <section id="doctors">
+    <div class="container">
+      <div class="sec-head">
+        <div class="sec-label">👨‍⚕️ Спеціалісти</div>
+        <h2 class="sec-title">Лікарі, яким довіряють</h2>
+        <p class="sec-sub">Команда з досвідом та любов'ю до своєї справи</p>
+      </div>
+      <div class="doc-grid">
+        <div class="doc-card">
+          <div class="doc-ava">👨‍⚕️</div>
+          <h3>Плюта Артем Сергійович</h3>
+          <p>Лікар реанімації та інтенсивної терапії. Критичні стани, ІТ, екстрена допомога.</p>
+          <span class="doc-spec">Реанімація та ІТ</span>
+        </div>
+        <div class="doc-card">
+          <div class="doc-ava">👩‍⚕️</div>
+          <h3>Кошик Катерина Володимирівна</h3>
+          <p>Терапевт, ендокринолог, візуальна діагностика. Хвороби внутрішніх органів, УЗД.</p>
+          <span class="doc-spec">Терапія · Ендокринологія</span>
+        </div>
+        <div class="doc-card">
+          <div class="doc-ava">👨‍⚕️</div>
+          <h3>Дмитро Олександрович</h3>
+          <p>Хірург, ортопед. Планові операції, лапароскопія, ортопедична хірургія.</p>
+          <span class="doc-spec">Хірургія · Ортопедія</span>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="contacts" id="contacts">
-  <div class="container">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 40px;">
-      <div><h3>📍 Контакти</h3><p>м. Київ, вул. Зелена, 15</p><p>📞 +380 (44) 123-45-67</p><p>📱 +380 (67) 123-45-67</p><p>✉️ info@vetfuture.com.ua</p></div>
-      <div><h3>🕒 Графік роботи</h3><p>Пн-Пт: 09:00 – 20:00</p><p>Сб: 10:00 – 16:00</p><p>Нд: вихідний</p><p>🚑 Цілодобова екстрена допомога</p></div>
-      <div><h3>📌 Ми в соцмережах</h3><p>Instagram / Facebook / Telegram</p><p>🔗 Підписуйтесь на новини та акції</p></div>
+  <!-- КОНТАКТИ -->
+  <section id="contacts">
+    <div class="container">
+      <div class="contacts-grid">
+        <div class="contact-block">
+          <h4>📍 Адреса</h4>
+          <p>м. Київ, вул. Зелена, 15</p>
+          <p style="margin-top:8px">📞 +380 (44) 123-45-67</p>
+          <p>📱 +380 (67) 123-45-67</p>
+          <a href="mailto:info@vetfuture.com.ua">✉️ info@vetfuture.com.ua</a>
+        </div>
+        <div class="contact-block">
+          <h4>🕒 Графік роботи</h4>
+          <p>Пн–Пт: 09:00 – 20:00</p>
+          <p>Субота: 10:00 – 16:00</p>
+          <p>Неділя: вихідний</p>
+          <p style="margin-top:8px;color:#a8e6d0">🚑 Цілодобова екстрена допомога</p>
+        </div>
+        <div class="contact-block">
+          <h4>📌 Соцмережі</h4>
+          <a href="#">Instagram</a>
+          <a href="#">Facebook</a>
+          <a href="https://t.me/VetFurure_bot">Telegram-бот</a>
+          <p style="margin-top:8px">Підписуйтесь на новини та акції клініки</p>
+        </div>
+        <div class="contact-block">
+          <h4>🐾 Особистий кабінет</h4>
+          <p>Аналізи, щеплення, записи та AI-помічник — все онлайн.</p>
+          <a href="/login" style="display:inline-block;margin-top:16px;background:rgba(255,255,255,0.15);color:white;padding:10px 20px;border-radius:40px;font-weight:600;border:1px solid rgba(255,255,255,0.25)">Увійти в кабінет →</a>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<footer class="footer">
-  <div class="container">
-    <p>© 2026 VETFUTURE — Ветеринарна клініка з турботою про ваших улюбленців.</p>
-  </div>
+</main>
+
+<footer>
+  <p>© 2026 VetFuture — Ветеринарна клініка з турботою. Київ, вул. Зелена, 15</p>
 </footer>
 
 <script>
-  // Автоматична зміна кнопки входу, якщо користувач уже залогінений
-  fetch('/api/me')
-    .then(res => res.json())
-    .then(data => {
-      const link = document.getElementById('loginLink');
-      if (!data.error && data.id) {
-        if (data.is_doctor) {
-          link.href = '/doctor';
-          link.textContent = '👨‍⚕️ Кабінет лікаря';
-        } else {
-          link.href = '/dashboard';
-          link.textContent = '🐾 Мій кабінет';
-        }
-      } else {
-        link.href = '/login';
-        link.textContent = '🔐 Вхід / Реєстрація';
-      }
-    });
+  function toggleDrawer() {
+    const d = document.getElementById('drawer');
+    const o = document.getElementById('overlay');
+    const b = document.getElementById('burgerBtn');
+    d.classList.toggle('open');
+    o.classList.toggle('show');
+    b.classList.toggle('open');
+    document.body.style.overflow = d.classList.contains('open') ? 'hidden' : '';
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('burgerBtn').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Закрити по Escape
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // Оновлення кнопки кабінету
+  fetch('/api/me').then(r => r.json()).then(data => {
+    const link = document.getElementById('cabinetLink');
+    if (!data.error && data.id) {
+      link.href = data.is_doctor ? '/doctor' : '/dashboard';
+      link.textContent = data.is_doctor ? '👨‍⚕️ Кабінет лікаря' : '🐾 Мій кабінет';
+    }
+  });
 </script>
 </body>
 </html>
