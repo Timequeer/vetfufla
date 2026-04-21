@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель лікаря - VetFuture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #f39c12;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logout-btn {
+            background: #f39c12;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .main {
+            margin-top: 80px;
+            padding: 20px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .patient-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .tab-btn { padding: 8px 15px; font-size: 12px; }
+            .main { margin-top: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">Vet<span>Future</span></div>
+            <div class="user-info">
+                <span>👨‍⚕️ <span id="doctorPhone"></span></span>
+                <div class="logout-btn" onclick="logout()">Вийти</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main">
+        <div class="container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="patients">🐾 Мої пацієнти</button>
+                <button class="tab-btn" data-tab="appointments">📅 Записи на сьогодні</button>
+                <button class="tab-btn" data-tab="schedule">📆 Розклад</button>
+            </div>
+
+            <div id="patients" class="tab-content active">
+                <h2>🐾 Список пацієнтів</h2>
+                <div id="patientsList"></div>
+            </div>
+
+            <div id="appointments" class="tab-content">
+                <h2>📅 Записи на сьогодні</h2>
+                <div id="appointmentsList"></div>
+            </div>
+
+            <div id="schedule" class="tab-content">
+                <h2>📆 Мій розклад</h2>
+                <div id="scheduleList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/me')
+            .then(r => r.json())
+            .then(data => {
+                if (data.error || !data.is_doctor) {
+                    window.location.href = '/login';
+                } else {
+                    document.getElementById('doctorPhone').innerText = data.phone;
+                }
+            });
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+                
+                if (btn.dataset.tab === 'patients') loadPatients();
+                if (btn.dataset.tab === 'appointments') loadTodayAppointments();
+                if (btn.dataset.tab === 'schedule') loadSchedule();
+            });
+        });
+        
+        function loadPatients() {
+            fetch('/api/pets')
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    if (data.error) {
+                        html = `<div class="card">${data.error}</div>`;
+                    } else if (data.length === 0) {
+                        html = `<div class="card">Немає пацієнтів</div>`;
+                    } else {
+                        data.forEach(patient => {
+                            html += `
+                                <div class="card patient-card">
+                                    <div>
+                                        <strong>${patient.name}</strong><br>
+                                        ${patient.species} | ${patient.birth_date || 'дата не вказана'}
+                                    </div>
+                                    <button onclick="viewHistory('${patient.guid}')">📋 Історія хвороби</button>
+                                </div>
+                            `;
+                        });
+                    }
+                    document.getElementById('patientsList').innerHTML = html;
+                });
+        }
+        
+        function loadTodayAppointments() {
+            fetch('/api/appointments')
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    if (data.error) {
+                        html = `<div class="card">${data.error}</div>`;
+                    } else if (data.length === 0) {
+                        html = `<div class="card">Немає записів на сьогодні</div>`;
+                    } else {
+                        data.forEach(apt => {
+                            html += `
+                                <div class="card">
+                                    <strong>⏰ ${apt.date}</strong><br>
+                                    Пацієнт: ${apt.pet_guid}<br>
+                                    Статус: ${apt.status}
+                                </div>
+                            `;
+                        });
+                    }
+                    document.getElementById('appointmentsList').innerHTML = html;
+                });
+        }
+        
+        function loadSchedule() {
+            document.getElementById('scheduleList').innerHTML = `
+                <div class="card">
+                    <strong>Понеділок</strong> 10:00 - 18:00<br>
+                    <strong>Вівторок</strong> 10:00 - 18:00<br>
+                    <strong>Середа</strong> 10:00 - 18:00<br>
+                    <strong>Четвер</strong> 10:00 - 18:00<br>
+                    <strong>П'ятниця</strong> 10:00 - 18:00<br>
+                    <strong>Субота</strong> 10:00 - 14:00<br>
+                    <strong>Неділя</strong> Вихідний
+                </div>
+            `;
+        }
+        
+        function viewHistory(patientGuid) {
+            alert(`Історія хвороби пацієнта ${patientGuid}\nТут буде детальна інформація про всі візити, аналізи та лікування.`);
+        }
+        
+        function logout() {
+            fetch('/api/auth/logout', {method: 'POST'})
+                .then(() => window.location.href = '/');
+        }
+        
+        loadPatients();
+    </script>
+</body>
+</html>
