@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>⚙️ Налаштування</h1>
+
+<div class="settings-section">
+    <h2>🤖 Telegram</h2>
+    <p>Прив'яжіть Telegram бота, щоб отримувати сповіщення та код підтвердження</p>
+    
+    <div id="telegram-status">
+        <div id="status-message">Перевірка статусу...</div>
+    </div>
+    
+    <div id="telegram-bind-form" style="display: none;">
+        <div class="form-group">
+            <label>Ваш Telegram chat_id:</label>
+            <input type="text" id="chat-id" placeholder="Напишіть боту /start і вставте ID сюди" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Код підтвердження:</label>
+            <input type="text" id="bind-code" placeholder="Введіть код з Telegram" class="form-control">
+        </div>
+        <button onclick="bindTelegram()" class="btn btn-primary">Прив'язати</button>
+    </div>
+    
+    <div id="telegram-unbind-form" style="display: none;">
+        <p>Telegram вже прив'язано!</p>
+        <button onclick="unbindTelegram()" class="btn btn-danger">Відв'язати</button>
+    </div>
+</div>
+
+<style>
+    .settings-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-primary {
+        background: #2ecc71;
+        color: white;
+    }
+    .btn-danger {
+        background: #e74c3c;
+        color: white;
+    }
+    .success {
+        color: green;
+        padding: 10px;
+        background: #e8f5e9;
+        border-radius: 5px;
+    }
+    .info {
+        color: #3498db;
+        padding: 10px;
+        background: #e3f2fd;
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+    // Перевіряємо статус Telegram
+    fetch('/api/telegram/status')
+        .then(r => r.json())
+        .then(data => {
+            if (data.connected) {
+                document.getElementById('telegram-status').innerHTML = '<div class="success">✅ Telegram прив\'язано до ' + data.phone + '</div>';
+                document.getElementById('telegram-unbind-form').style.display = 'block';
+            } else {
+                document.getElementById('telegram-status').innerHTML = '<div class="info">❌ Telegram не прив\'язано</div>';
+                document.getElementById('telegram-bind-form').style.display = 'block';
+            }
+        });
+    
+    function bindTelegram() {
+        const chatId = document.getElementById('chat-id').value;
+        const code = document.getElementById('bind-code').value;
+        
+        fetch('/api/telegram/bind', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chat_id: chatId, code: code})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                alert('Помилка: ' + data.error);
+            } else {
+                alert('✅ Telegram прив\'язано!');
+                location.reload();
+            }
+        });
+    }
+    
+    function unbindTelegram() {
+        fetch('/api/telegram/unbind', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Помилка: ' + data.error);
+                } else {
+                    alert('Telegram відв\'язано');
+                    location.reload();
+                }
+            });
+    }
+</script>
+{% endblock %}

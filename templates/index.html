@@ -692,13 +692,29 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 
   // Оновлення кнопки кабінету
-  fetch('/api/me').then(r => r.json()).then(data => {
-    const link = document.getElementById('cabinetLink');
-    if (!data.error && data.id) {
-      link.href = data.is_doctor ? '/doctor' : '/dashboard';
-      link.textContent = data.is_doctor ? '👨‍⚕️ Кабінет лікаря' : '🐾 Мій кабінет';
-    }
-  });
+  // Оновлення кнопки кабінету
+fetch('/api/me')
+    .then(res => res.json())
+    .then(data => {
+        const link = document.getElementById('loginLink');
+        if (!data.error && data.id) {
+            if (data.is_doctor) {
+                link.href = '/doctor';
+                link.textContent = 'Кабінет лікаря';
+            } else {
+                link.href = '/dashboard';
+                link.textContent = 'Мій кабінет';
+            }
+        } else {
+            link.href = '/login';
+            link.textContent = 'Вхід';
+        }
+    })
+    .catch(() => {
+        const link = document.getElementById('loginLink');
+        link.href = '/login';
+        link.textContent = 'Вхід';
+    });
 </script>
 </body>
 </html>

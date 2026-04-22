@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>👑 Адмін-панель</h1>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="showTab('users')">Користувачі</button>
+    <button class="tab-btn" onclick="showTab('logs')">Логи</button>
+    <button class="tab-btn" onclick="showTab('doctors')">Призначити лікаря</button>
+</div>
+
+<div id="users" class="tab-content active">
+    <h2>Список користувачів</h2>
+    <div id="usersList"></div>
+</div>
+
+<div id="logs" class="tab-content">
+    <h2>Логи дій</h2>
+    <div id="logsList"></div>
+</div>
+
+<div id="doctors" class="tab-content">
+    <h2>Призначити лікаря</h2>
+    <input type="tel" id="doctorPhone" placeholder="+380XXXXXXXXX">
+    <input type="text" id="adminSecret" placeholder="Секретний код">
+    <button onclick="makeDoctor()">Призначити лікарем</button>
+    <div id="doctorResult"></div>
+</div>
+
+<script>
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tabName === 'users') loadUsers();
+        if (tabName === 'logs') loadLogs();
+    }
+    
+    function loadUsers() {
+        fetch('/api/admin/users')
+            .then(r => r.json())
+            .then(data => {
+                let html = '<table border="1"><tr><th>ID</th><th>Телефон</th><th>Лікар</th><th>Підтверджений</th></tr>';
+                data.forEach(u => {
+                    html += `<tr>
+                        <td>${u.id}</td>
+                        <td>${u.phone}</td>
+                        <td>${u.is_doctor ? '✅' : '❌'}</td>
+                        <td>${u.is_verified ? '✅' : '❌'}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('usersList').innerHTML = html;
+            });
+    }
+    
+    function loadLogs() {
+        fetch('/api/admin/logs')
+            .then(r => r.json())
+            .then(data => {
+                let html = '<table border="1"><tr><th>Користувач</th><th>Дія</th><th>IP</th><th>Час</th></tr>';
+                data.forEach(log => {
+                    html += `<tr>
+                        <td>${log.user_phone || 'Анонім'}</td>
+                        <td>${log.action}</td>
+                        <td>${log.ip_address || '-'}</td>
+                        <td>${new Date(log.timestamp).toLocaleString()}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('logsList').innerHTML = html;
+            });
+    }
+    
+    function makeDoctor() {
+        let phone = document.getElementById('doctorPhone').value;
+        let secret = document.getElementById('adminSecret').value;
+        
+        fetch('/api/admin/make-doctor', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: phone, secret: secret})
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('doctorResult').innerHTML = data.message || data.error;
+        });
+    }
+    
+    loadUsers();
+</script>
+
+<style>
+    .tabs { margin-bottom: 20px; }
+    .tab-btn { padding: 10px 20px; margin-right: 5px; cursor: pointer; }
+    .tab-btn.active { background: #2ecc71; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 8px; text-align: left; }
+</style>
+{% endblock %}

@@ -4,7 +4,6 @@ import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import current_app
 from models import User, NotificationSetting, db
-from enote_client import ENoteClient
 
 def send_telegram(chat_id, text, bot_token):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -28,15 +27,12 @@ def send_email(to_email, subject, body, mail_config):
 
 def check_and_notify(app):
     with app.app_context():
-        # Получаем всех пользователей с активными уведомлениями
         settings = NotificationSetting.query.filter_by(is_active=True).all()
-        # Здесь должна быть логика: для каждого юзера получить его животных из Енота,
-        # проверить предстоящие записи (на завтра) и даты ревакцинации.
-        # Пока заглушка – просто выводим в консоль
-        print(f"[SCHEDULER] Checking notifications for {len(settings)} settings")
-        # TODO: реальная проверка через enote_client
+        print(f"[SCHEDULER] Перевірка сповіщень для {len(settings)} налаштувань")
+        # TODO: реальна перевірка записів та вакцинацій через ENOTE
 
 def start_scheduler(app):
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=lambda: check_and_notify(app), trigger="interval", hours=1)
     scheduler.start()
+    print("✅ Планувальник сповіщень запущено")

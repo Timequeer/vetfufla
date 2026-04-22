@@ -10,6 +10,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=True)
     enote_guid = db.Column(db.String(36), nullable=True)
     is_doctor = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False)   # Нова колонка
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     notifications = db.relationship("NotificationSetting", backref="user", lazy=True)
@@ -19,7 +20,6 @@ class User(db.Model):
         return f"<User {self.phone}>"
 
 class UserPet(db.Model):
-    """Кешируем GUID животных пользователя для быстрого доступа"""
     __tablename__ = "user_pets"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -31,8 +31,8 @@ class NotificationSetting(db.Model):
     __tablename__ = "notification_settings"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    channel = db.Column(db.String(20), nullable=False)   # telegram, email, viber
-    contact = db.Column(db.String(120), nullable=False)  # chat_id / email / phone
+    channel = db.Column(db.String(20), nullable=False)
+    contact = db.Column(db.String(120), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
 class AuthCode(db.Model):

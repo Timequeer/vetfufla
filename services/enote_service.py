@@ -9,7 +9,7 @@ class ENoteClient:
         self.token = None
 
     def _auth(self):
-        # TODO: реальная авторизация в Еноте (получение токена)
+        # TODO: реальна авторизація в Еноті
         self.token = "fake-token"
         return True
 
@@ -18,7 +18,6 @@ class ENoteClient:
             self._auth()
         headers = {"Authorization": f"Bearer {self.token}"}
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        # Заглушка – возвращаем тестовые данные
         return self._mock_response(endpoint)
 
     def _mock_response(self, endpoint):
@@ -33,9 +32,9 @@ class ENoteClient:
                 {"id": 2, "pet_guid": "pet2", "doctor_guid": "doc1", "date": "2026-05-21T14:00:00", "status": "pending"}
             ]
         if "lab_results" in endpoint:
-            return [{"id": 1, "name": "Общий анализ крови", "date": "2026-04-10", "result": "норма"}]
+            return [{"id": 1, "name": "Загальний аналіз крові", "date": "2026-04-10", "result": "норма"}]
         if "vaccinations" in endpoint:
-            return [{"id": 1, "name": "Бешенство", "date": "2025-06-01", "next_due": "2026-06-01"}]
+            return [{"id": 1, "name": "Сказ", "date": "2025-06-01", "next_due": "2026-06-01"}]
         return []
 
     def get_pets_by_owner_guid(self, owner_guid):

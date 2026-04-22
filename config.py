@@ -24,3 +24,6 @@ class Config:
     
     # --- OpenAI API ---
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    
+    # Список телефонів адміністраторів (хто має доступ до /admin)
+    ADMIN_PHONES = ["+380666365496"]  # додай свої номери
