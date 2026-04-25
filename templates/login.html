@@ -13,15 +13,18 @@
         <button id="verifyBtn" class="w-full bg-green-600 text-white p-2 rounded-xl">Увійти</button>
     </div>
     <div id="message" class="mt-4 text-center text-sm"></div>
+    <div id="pollingStatus" class="mt-2 text-center text-xs text-gray-500"></div>
     <p class="text-sm text-gray-500 mt-6">
         📱 Для отримання коду підтвердження, будь ласка, перейдіть у нашого Telegram-бота 
         <a href="https://t.me/VetFurure_bot" target="_blank" class="text-red-600 font-medium">@VetFurure_bot</a>,
         надішліть команду <code>/start</code> та введіть свій номер телефону у форматі +380XXXXXXXXX.
-        Потім поверніться сюди та натисніть "Отримати код".
+        Після цього код з'явиться автоматично.
     </p>
 </div>
 <script>
     let currentPhone = '';
+    let pollingInterval = null;
+    let pollingActive = false;
 
     document.getElementById('sendCodeBtn').onclick = function() {
         const phone = document.getElementById('phone').value.trim();
@@ -31,6 +34,12 @@
         }
         currentPhone = phone;
         showMessage('Надсилання...', 'info');
+        
+        // Зупиняємо попереднє очікування, якщо було
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingActive = false;
+        document.getElementById('pollingStatus').innerHTML = '';
+
         fetch('/api/auth/send-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -39,16 +48,60 @@
         .then(r => r.json())
         .then(data => {
             if (data.error) {
-                showMessage(data.error, 'error');
+                if (data.error.includes('Спочатку отримайте код')) {
+                    // Коду ще немає, починаємо чекати
+                    showMessage('⏳ Очікуємо код з Telegram...', 'info');
+                    startPolling(phone);
+                } else {
+                    showMessage(data.error, 'error');
+                }
             } else {
+                // Код вже є (наприклад, для вже зареєстрованого користувача)
                 showMessage('✅ ' + (data.message || 'Код надіслано'), 'success');
                 document.getElementById('codeStep').style.display = 'block';
+                document.getElementById('sendCodeBtn').style.display = 'none';
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingActive = false;
+                document.getElementById('pollingStatus').innerHTML = '';
             }
         })
-        .catch(err => {
-            showMessage('Помилка: ' + err, 'error');
-        });
+        .catch(err => showMessage('Помилка: ' + err, 'error'));
     };
+
+    function startPolling(phone) {
+        if (pollingActive) return;
+        pollingActive = true;
+        let attempts = 0;
+        const maxAttempts = 40; // 40 * 3 = 120 секунд (2 хвилини)
+        pollingInterval = setInterval(() => {
+            attempts++;
+            document.getElementById('pollingStatus').innerHTML = `Перевірка наявності коду... (${attempts})`;
+            fetch('/api/auth/send-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    // Успіх! Код з'явився
+                    clearInterval(pollingInterval);
+                    pollingActive = false;
+                    document.getElementById('pollingStatus').innerHTML = '';
+                    showMessage('✅ ' + (data.message || 'Код надіслано'), 'success');
+                    document.getElementById('codeStep').style.display = 'block';
+                    document.getElementById('sendCodeBtn').style.display = 'none';
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(pollingInterval);
+                    pollingActive = false;
+                    document.getElementById('pollingStatus').innerHTML = '';
+                    showMessage('Час очікування вичерпано. Спробуйте ще раз.', 'error');
+                    document.getElementById('sendCodeBtn').style.display = 'block';
+                }
+            })
+            .catch(() => {});
+        }, 3000); // кожні 3 секунди
+    }
 
     document.getElementById('verifyBtn').onclick = function() {
         const code = document.getElementById('code').value.trim();
@@ -80,7 +133,7 @@
         const div = document.getElementById('message');
         div.innerHTML = msg;
         div.className = 'mt-4 text-center text-sm ' + (type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-600'));
-        setTimeout(() => div.innerHTML = '', 5000);
+        setTimeout(() => { if (div.innerHTML === msg) div.innerHTML = ''; }, 8000);
     }
 </script>
 {% endblock %}
