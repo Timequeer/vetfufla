@@ -27,3 +27,6 @@ class Config:
     
     # Список телефонів адміністраторів (хто має доступ до /admin)
     ADMIN_PHONES = ["+380666365496"]  # додай свої номери
+    
+    # Секретний код для призначення лікарів
+    ADMIN_SECRET = os.getenv("ADMIN_SECRET", "SuperSecret123!")

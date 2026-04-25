@@ -38,7 +38,8 @@ class NotificationSetting(db.Model):
 class AuthCode(db.Model):
     __tablename__ = "auth_codes"
     id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(20), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)      # номер телефону користувача
     code = db.Column(db.String(6), nullable=False)
+    chat_id = db.Column(db.String(20), nullable=True)     # Telegram chat_id для прив'язки
     expires_at = db.Column(db.DateTime, nullable=False)
     used = db.Column(db.Boolean, default=False)

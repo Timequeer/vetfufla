@@ -3,6 +3,8 @@ from models import db, User, NotificationSetting
 from services.enote_service import ENoteClient
 from services.ai_service import ask_gpt
 from config import Config
+from datetime import datetime
+from models import AuthCode
 
 api_bp = Blueprint('api', __name__)
 
@@ -110,14 +112,8 @@ def telegram_status():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Не авторизовано"}), 401
-    
     user = User.query.get(user_id)
-    setting = NotificationSetting.query.filter_by(
-        user_id=user.id, 
-        channel="telegram", 
-        is_active=True
-    ).first()
-    
+    setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram", is_active=True).first()
     return jsonify({
         "connected": setting is not None,
         "phone": user.phone if setting else None
@@ -130,42 +126,33 @@ def bind_telegram():
         return jsonify({"error": "Не авторизовано"}), 401
     
     data = request.get_json()
-    chat_id = data.get("chat_id")
     code = data.get("code")
+    if not code:
+        return jsonify({"error": "Введіть код"}), 400
     
-    if not chat_id or not code:
-        return jsonify({"error": "Вкажіть chat_id та код"}), 400
+    # Шукаємо код у таблиці AuthCode (де phone – це chat_id)
+    auth_code = AuthCode.query.filter_by(code=code, used=False).first()
+    if not auth_code or auth_code.expires_at < datetime.utcnow():
+        return jsonify({"error": "Невірний або прострочений код"}), 401
     
-    # Перевіряємо код
-    if code != "123456":
-        return jsonify({"error": "Невірний код"}), 401
+    chat_id = auth_code.phone
+    auth_code.used = True
+    db.session.commit()
     
     user = User.query.get(user_id)
-    
-    setting = NotificationSetting.query.filter_by(
-        user_id=user.id, 
-        channel="telegram"
-    ).first()
-    
+    setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
     if not setting:
-        setting = NotificationSetting(
-            user_id=user.id,
-            channel="telegram",
-            contact=chat_id,
-            is_active=True
-        )
+        setting = NotificationSetting(user_id=user.id, channel="telegram", contact=chat_id, is_active=True)
         db.session.add(setting)
     else:
         setting.contact = chat_id
         setting.is_active = True
-    
     db.session.commit()
     
-    # Відправляємо привітання
     from services.telegram import get_bot
     bot = get_bot()
     if bot:
-        bot.send_message(chat_id, f"✅ Telegram успішно прив'язано до акаунту {user.phone}")
+        bot.send_message(chat_id, f"✅ Telegram прив'язано до акаунту {user.phone}")
     
     return jsonify({"message": "Telegram успішно прив'язано!"}), 200
 
@@ -174,16 +161,9 @@ def unbind_telegram():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Не авторизовано"}), 401
-    
     user = User.query.get(user_id)
-    
-    setting = NotificationSetting.query.filter_by(
-        user_id=user.id, 
-        channel="telegram"
-    ).first()
-    
+    setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
     if setting:
         setting.is_active = False
         db.session.commit()
-    
     return jsonify({"message": "Telegram відв'язано"}), 200

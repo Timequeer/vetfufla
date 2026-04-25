@@ -1,52 +1,118 @@
 from flask import Blueprint, render_template, request, jsonify, session
-from models import db, User, AuthCode
+from models import db, User, AuthCode, NotificationSetting
 from datetime import datetime, timedelta
 import random
 import string
+import re
 from services.logger_service import log_action
+from services.telegram import get_bot
 
 auth_bp = Blueprint('auth', __name__)
 
 def generate_code(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
+def normalize_phone(phone: str) -> str:
+    if not phone:
+        return phone
+    digits = re.sub(r'\D', '', phone)
+    if digits.startswith('0') and len(digits) == 10:
+        digits = '38' + digits
+    if digits.startswith('380') and len(digits) == 12:
+        digits = '+' + digits
+    if phone.startswith('+380') and len(digits) == 13:
+        return phone
+    if digits.startswith('38') and len(digits) == 12:
+        digits = '+' + digits
+    return digits
+
 def send_code_to_user(phone: str, code: str):
     print(f"[DEV] Код для {phone}: {code}")
+    user = User.query.filter_by(phone=phone).first()
+    if user:
+        tg_setting = NotificationSetting.query.filter_by(
+            user_id=user.id, channel="telegram", is_active=True
+        ).first()
+        if tg_setting and tg_setting.contact:
+            bot = get_bot()
+            if bot:
+                bot.send_message(tg_setting.contact, f"🔐 Ваш код для входу: {code}")
+                print(f"[TELEGRAM] Код надіслано в Telegram для {phone}")
+                return
+    print(f"[DEV] Код виведено в консоль (Telegram не налаштовано для {phone})")
 
-# Сторінка логіну
 @auth_bp.route('/login')
 def login_page():
     return render_template('login.html')
 
-# Надсилання коду
 @auth_bp.route('/api/auth/send-code', methods=['POST'])
 def send_code():
-    data = request.get_json()
-    phone = data.get("phone")
-    if not phone:
+    print("=== send_code called ===")
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return jsonify({"error": "Неправильний формат запиту"}), 400
+    if not data:
+        return jsonify({"error": "Відсутні дані"}), 400
+    raw_phone = data.get("phone")
+    if not raw_phone:
         return jsonify({"error": "Вкажіть номер телефону"}), 400
-    code = generate_code()
-    auth_code = AuthCode(
-        phone=phone,
-        code=code,
-        expires_at=datetime.now() + timedelta(minutes=5)
-    )
-    db.session.add(auth_code)
-    db.session.commit()
-    send_code_to_user(phone, code)
-    return jsonify({"message": "Код відправлено"}), 200
+    phone = normalize_phone(raw_phone)
+    print(f"[SEND-CODE] Номер після нормалізації: {phone}")
 
-# Перевірка коду
+    # Видаляємо прострочені коди (час UTC)
+    AuthCode.query.filter(AuthCode.phone == phone, AuthCode.expires_at < datetime.utcnow()).delete()
+    db.session.commit()
+
+    auth_code = AuthCode.query.filter_by(phone=phone, used=False).first()
+    print(f"[SEND-CODE] Активний код: {auth_code.code if auth_code else 'None'}")
+    if auth_code and auth_code.expires_at > datetime.utcnow():
+        print("[SEND-CODE] Активний код є, повертаємо відповідь")
+        return jsonify({"message": "Код вже був надісланий. Введіть його."}), 200
+
+    # Якщо коду немає, то перевіряємо, чи користувач зареєстрований і чи має Telegram
+    user = User.query.filter_by(phone=phone).first()
+    print(f"[SEND-CODE] Користувач: {user.phone if user else 'None'}")
+    if user:
+        tg_setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram", is_active=True).first()
+        print(f"[SEND-CODE] Telegram прив'язка: {tg_setting.contact if tg_setting else 'None'}")
+        if tg_setting and tg_setting.contact:
+            code = generate_code()
+            new_code = AuthCode(
+                phone=phone,
+                code=code,
+                expires_at=datetime.utcnow() + timedelta(minutes=5),
+                used=False
+            )
+            db.session.add(new_code)
+            db.session.commit()
+            bot = get_bot()
+            if bot:
+                bot.send_message(tg_setting.contact, f"🔐 Ваш код для входу: {code}")
+                return jsonify({"message": "Код надіслано в Telegram"}), 200
+            else:
+                return jsonify({"error": "Помилка бота"}), 500
+    # Якщо користувача немає і активного коду теж немає
+    return jsonify({"error": "Спочатку отримайте код у Telegram-бота @VetFurure_bot (команда /start, потім введіть номер)"}), 400
+
 @auth_bp.route('/api/auth/verify-code', methods=['POST'])
 def verify_code():
     data = request.get_json()
-    phone = data.get("phone")
+    if not data:
+        return jsonify({"error": "Відсутні дані"}), 400
+    raw_phone = data.get("phone")
     code = data.get("code")
+    if not raw_phone or not code:
+        return jsonify({"error": "Вкажіть номер телефону та код"}), 400
+    phone = normalize_phone(raw_phone)
+    
     auth_code = AuthCode.query.filter_by(phone=phone, code=code, used=False).first()
     if not auth_code:
         return jsonify({"error": "Невірний код"}), 401
-    if datetime.now() > auth_code.expires_at:
+    if datetime.utcnow() > auth_code.expires_at:   # змінено
         return jsonify({"error": "Код застарів, запросіть новий"}), 401
+    # ... решта без змін
+
     auth_code.used = True
     db.session.commit()
 
@@ -59,10 +125,19 @@ def verify_code():
     else:
         print(f"[INFO] Існуючий користувач: {phone}, is_doctor={user.is_doctor}, is_verified={user.is_verified}")
 
+    if auth_code.chat_id:
+        setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
+        if not setting:
+            setting = NotificationSetting(user_id=user.id, channel="telegram", contact=auth_code.chat_id, is_active=True)
+            db.session.add(setting)
+        else:
+            setting.contact = auth_code.chat_id
+            setting.is_active = True
+        db.session.commit()
+        print(f"[INFO] Прив'язано Telegram для {phone}")
+
     session["user_id"] = user.id
     session.permanent = True
-    
-    # ✅ Логуємо успішний вхід (ТУТ - ПІСЛЯ ТОГО, ЯК user ВИЗНАЧЕНО)
     log_action(user.id, user.phone, "Успішний вхід", "verify_code")
 
     return jsonify({
@@ -77,23 +152,18 @@ def verify_code():
         }
     }), 200
 
-# Вихід
 @auth_bp.route('/api/auth/logout', methods=['POST'])
 def logout():
     user_id = session.get("user_id")
     phone = None
-    
     if user_id:
         user = User.query.get(user_id)
         if user:
             phone = user.phone
-            # ✅ Логуємо вихід (до очищення сесії)
             log_action(user.id, phone, "Вихід з системи", "logout")
-    
     session.clear()
     return jsonify({"message": "Вихід виконано"}), 200
 
-# Дані поточного користувача
 @auth_bp.route('/api/me', methods=['GET'])
 def get_me():
     user_id = session.get("user_id")
@@ -112,32 +182,24 @@ def get_me():
         "enote_guid": user.enote_guid
     }), 200
 
-# Захищений ендпоінт для призначення лікаря
 @auth_bp.route('/api/admin/make-doctor', methods=['POST'])
 def make_doctor():
     from config import Config
-    
     data = request.get_json()
-    phone = data.get("phone")
+    raw_phone = data.get("phone")
     secret = data.get("secret")
-    
     if secret != Config.ADMIN_SECRET:
         return jsonify({"error": "Невірний секретний код"}), 403
-    
-    if not phone:
+    if not raw_phone:
         return jsonify({"error": "Вкажіть номер телефону"}), 400
-    
+    phone = normalize_phone(raw_phone)
     user = User.query.filter_by(phone=phone).first()
     if not user:
         return jsonify({"error": "Користувача з таким номером не знайдено"}), 404
-    
     user.is_doctor = True
     user.is_verified = True
     db.session.commit()
-    
-    # ✅ Логуємо призначення лікаря
     log_action(user.id, user.phone, "Призначений лікарем (адміном)", "make_doctor")
-    
     return jsonify({
         "message": f"Користувач {phone} тепер лікар",
         "user": {
@@ -146,69 +208,3 @@ def make_doctor():
             "is_verified": user.is_verified
         }
     }), 200
-
-@auth_bp.route('/api/telegram/link', methods=['POST'])
-def link_telegram():
-    """Прив'язує Telegram chat_id до користувача"""
-    from services.logger_service import log_action
-    
-    data = request.get_json()
-    chat_id = str(data.get("chat_id"))
-    phone = data.get("phone")
-    code = data.get("code")
-    
-    if not chat_id or not phone or not code:
-        return jsonify({"error": "Вкажіть chat_id, телефон та код"}), 400
-    
-    # Перевіряємо код
-    auth_code = AuthCode.query.filter_by(phone=phone, code=code, used=False).first()
-    if not auth_code:
-        return jsonify({"error": "Невірний код"}), 401
-    if datetime.now() > auth_code.expires_at:
-        return jsonify({"error": "Код застарів"}), 401
-    
-    auth_code.used = True
-    db.session.commit()
-    
-    # Знаходимо або створюємо користувача
-    user = User.query.filter_by(phone=phone).first()
-    if not user:
-        user = User(phone=phone)
-        db.session.add(user)
-        db.session.commit()
-    
-    # Зберігаємо Telegram chat_id
-    setting = NotificationSetting.query.filter_by(
-        user_id=user.id, 
-        channel="telegram"
-    ).first()
-    
-    if not setting:
-        setting = NotificationSetting(
-            user_id=user.id,
-            channel="telegram",
-            contact=chat_id,
-            is_active=True
-        )
-        db.session.add(setting)
-    else:
-        setting.contact = chat_id
-        setting.is_active = True
-    
-    db.session.commit()
-    
-    # Надсилаємо привітання в Telegram
-    bot = get_bot()
-    if bot:
-        bot.send_message(chat_id, f"""
-✅ <b>Telegram успішно прив'язано!</b>
-
-Ваш акаунт: {phone}
-Роль: {"Лікар" if user.is_doctor else "Клієнт"}
-
-Тепер ви отримуватимете коди підтвердження та сповіщення прямо сюди.
-        """)
-    
-    log_action(user.id, phone, f"Прив'язав Telegram (chat_id={chat_id})", "link_telegram")
-    
-    return jsonify({"message": "Telegram успішно прив'язано!"}), 200

@@ -1,535 +1,86 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вхід — VetFuture</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --green: #1FAB89;
-      --green-dark: #0e8a6c;
-      --green-light: #e6f7f2;
-      --text: #1a2332;
-      --muted: #6b7e8f;
-      --border: #dce8e2;
-      --white: #ffffff;
-      --tg: #229ED9;
-    }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #f0f7f4;
-      min-height: 100vh;
-      display: flex;
-      align-items: stretch;
-    }
-
-    /* ---- Left panel ---- */
-    .left-panel {
-      width: 42%;
-      background: linear-gradient(160deg, #0e3d2e 0%, #1a5c44 50%, #1FAB89 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 48px 52px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .left-panel::before {
-      content: '';
-      position: absolute;
-      top: -120px; right: -120px;
-      width: 400px; height: 400px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 50%;
-    }
-
-    .left-panel::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -80px;
-      width: 300px; height: 300px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 50%;
-    }
-
-    .brand {
-      font-family: 'Fraunces', serif;
-      font-size: 32px;
-      font-weight: 700;
-      color: white;
-      letter-spacing: -0.5px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .brand span { color: rgba(255,255,255,0.5); font-weight: 400; }
-
-    .left-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .left-paw {
-      font-size: 72px;
-      margin-bottom: 28px;
-      display: block;
-    }
-
-    .left-title {
-      font-family: 'Fraunces', serif;
-      font-size: 38px;
-      font-weight: 600;
-      color: white;
-      line-height: 1.25;
-      margin-bottom: 16px;
-    }
-
-    .left-sub {
-      color: rgba(255,255,255,0.65);
-      font-size: 16px;
-      line-height: 1.6;
-    }
-
-    .left-footer {
-      color: rgba(255,255,255,0.4);
-      font-size: 13px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ---- Right panel ---- */
-    .right-panel {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-    }
-
-    .form-box {
-      width: 100%;
-      max-width: 420px;
-    }
-
-    .form-box h2 {
-      font-family: 'Fraunces', serif;
-      font-size: 30px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-    }
-
-    .form-box p.sub {
-      color: var(--muted);
-      font-size: 15px;
-      margin-bottom: 32px;
-    }
-
-    /* Channel selector */
-    .channel-selector {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .channel-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 2px solid var(--border);
-      background: var(--white);
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text);
-      transition: all 0.2s;
-    }
-
-    .channel-btn:hover { border-color: var(--green); }
-
-    .channel-btn.active.sms {
-      border-color: var(--green);
-      background: var(--green-light);
-      color: var(--green-dark);
-    }
-
-    .channel-btn.active.tg {
-      border-color: var(--tg);
-      background: #e8f4fb;
-      color: #1a7aaa;
-    }
-
-    .channel-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
-
-    /* TG notice */
-    .tg-notice {
-      display: none;
-      background: #e8f4fb;
-      border: 1px solid #b3d9ef;
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      color: #1a5a80;
-      line-height: 1.5;
-    }
-
-    .tg-notice.show { display: block; }
-
-    .tg-notice a {
-      color: var(--tg);
-      font-weight: 600;
-      text-decoration: none;
-    }
-
-    .tg-notice a:hover { text-decoration: underline; }
-
-    /* Input */
-    .input-group {
-      margin-bottom: 16px;
-    }
-
-    .input-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
-      color: var(--text);
-      background: var(--white);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .input-group input:focus { border-color: var(--green); }
-    .input-group input::placeholder { color: #a8b8c4; }
-
-    /* Code row */
-    .code-row {
-      display: none;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .code-row.show { display: flex; }
-
-    .code-row input {
-      flex: 1;
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 20px;
-      letter-spacing: 6px;
-      text-align: center;
-      color: var(--text);
-      background: var(--white);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .code-row input:focus { border-color: var(--green); }
-
-    /* Buttons */
-    .btn-main {
-      width: 100%;
-      padding: 15px;
-      background: var(--green);
-      color: white;
-      border: none;
-      border-radius: 14px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-    }
-
-    .btn-main:hover { background: var(--green-dark); transform: translateY(-1px); }
-    .btn-main:active { transform: translateY(0); }
-    .btn-main:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    .btn-back {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 12px;
-      padding: 4px 0;
-      transition: color 0.2s;
-    }
-
-    .btn-back:hover { color: var(--text); }
-
-    /* Message */
-    .msg {
-      display: none;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-
-    .msg.error { display: block; background: #fdecea; color: #c0392b; border: 1px solid #f5c6c0; }
-    .msg.success { display: block; background: var(--green-light); color: var(--green-dark); border: 1px solid #a8ddd0; }
-
-    .timer {
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .timer span { color: var(--green); font-weight: 600; }
-
-    /* Steps */
-    .step { display: none; }
-    .step.active { display: block; }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      body { flex-direction: column; }
-      .left-panel { width: 100%; padding: 32px 24px 36px; min-height: unset; }
-      .left-paw { font-size: 48px; margin-bottom: 16px; }
-      .left-title { font-size: 28px; }
-      .left-footer { display: none; }
-    }
-  </style>
-</head>
-<body>
-
-<div class="left-panel">
-  <div class="brand">Vet<span>Future</span></div>
-  <div class="left-content">
-    <span class="left-paw">🐾</span>
-    <h1 class="left-title">Особистий кабінет для вас і вашого улюбленця</h1>
-    <p class="left-sub">Записи на прийом, результати аналізів, нагадування про вакцинацію та AI-помічник — все в одному місці.</p>
-  </div>
-  <div class="left-footer">© 2026 VetFuture · Київ</div>
-</div>
-
-<div class="right-panel">
-  <div class="form-box">
-
-    <!-- STEP 1: вибір методу + телефон -->
-    <div class="step active" id="step1">
-      <h2>Вхід у кабінет</h2>
-      <p class="sub">Введіть номер телефону та оберіть, як отримати код</p>
-
-      <div id="msg1" class="msg"></div>
-
-      <div class="input-group">
-        <label>Номер телефону</label>
-        <input type="tel" id="phone" placeholder="+380 XX XXX XX XX" autocomplete="tel">
-      </div>
-
-      <div class="channel-selector">
-        <button class="channel-btn sms active" id="btnSMS" onclick="selectChannel('sms')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-            <line x1="12" y1="18" x2="12.01" y2="18"/>
-          </svg>
-          SMS
-        </button>
-        <button class="channel-btn tg" id="btnTG" onclick="selectChannel('telegram')">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.7 8c-.12.58-.46.72-.93.45l-2.57-1.89-1.24 1.19c-.14.14-.25.25-.51.25l.18-2.59 4.66-4.21c.2-.18-.04-.28-.31-.1L7.4 15.4l-2.53-.79c-.55-.17-.56-.55.12-.82l9.88-3.81c.46-.17.86.11.77.82z"/>
-          </svg>
-          Telegram
-        </button>
-      </div>
-
-      <div class="tg-notice" id="tgNotice">
-        📱 Для отримання коду через Telegram — спочатку напишіть <a href="https://t.me/VetFurure_bot" target="_blank">@VetFurure_bot</a> команду <b>/start</b> і введіть свій номер телефону. Після цього код прийде автоматично.
-      </div>
-
-      <button class="btn-main" id="btnSend" onclick="sendCode()">Надіслати код</button>
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow">
+    <h2 class="text-2xl font-bold text-red-600 mb-4">Вхід до кабінету</h2>
+    <div>
+        <label class="block text-sm font-medium mb-1">Номер телефону</label>
+        <input type="tel" id="phone" placeholder="+380XXXXXXXXX" class="w-full border rounded-xl p-2 mb-3">
+        <button id="sendCodeBtn" class="w-full bg-red-600 text-white p-2 rounded-xl">Отримати код</button>
     </div>
-
-    <!-- STEP 2: введення коду -->
-    <div class="step" id="step2">
-      <h2>Введіть код</h2>
-      <p class="sub" id="step2sub">Ми надіслали 6-значний код</p>
-
-      <div id="msg2" class="msg"></div>
-
-      <div class="code-row show">
-        <input type="text" id="code" maxlength="6" placeholder="——————" oninput="this.value=this.value.replace(/\D/g,'')">
-      </div>
-
-      <button class="btn-main" id="btnVerify" onclick="verifyCode()">Підтвердити</button>
-
-      <div class="timer" id="timer"></div>
-
-      <div style="text-align:center">
-        <button class="btn-back" onclick="goBack()">← Змінити номер</button>
-      </div>
+    <div id="codeStep" style="display:none; margin-top:1rem;">
+        <label class="block text-sm font-medium mb-1">Код підтвердження</label>
+        <input type="text" id="code" class="w-full border rounded-xl p-2 mb-3">
+        <button id="verifyBtn" class="w-full bg-green-600 text-white p-2 rounded-xl">Увійти</button>
     </div>
-
-  </div>
+    <div id="message" class="mt-4 text-center text-sm"></div>
+    <p class="text-sm text-gray-500 mt-6">
+        📱 Для отримання коду підтвердження, будь ласка, перейдіть у нашого Telegram-бота 
+        <a href="https://t.me/VetFurure_bot" target="_blank" class="text-red-600 font-medium">@VetFurure_bot</a>,
+        надішліть команду <code>/start</code> та введіть свій номер телефону у форматі +380XXXXXXXXX.
+        Потім поверніться сюди та натисніть "Отримати код".
+    </p>
 </div>
-
 <script>
-  let selectedChannel = 'sms';
-  let phoneValue = '';
-  let timerInterval = null;
+    let currentPhone = '';
 
-  function selectChannel(ch) {
-    selectedChannel = ch;
-    document.getElementById('btnSMS').classList.toggle('active', ch === 'sms');
-    document.getElementById('btnTG').classList.toggle('active', ch === 'telegram');
-    document.getElementById('tgNotice').classList.toggle('show', ch === 'telegram');
-  }
-
-  function showMsg(id, text, type) {
-    const el = document.getElementById(id);
-    el.textContent = text;
-    el.className = 'msg ' + type;
-  }
-
-  function clearMsg(id) {
-    const el = document.getElementById(id);
-    el.className = 'msg';
-    el.textContent = '';
-  }
-
-  function sendCode() {
-    clearMsg('msg1');
-    phoneValue = document.getElementById('phone').value.trim();
-    if (!phoneValue) return showMsg('msg1', 'Введіть номер телефону', 'error');
-
-    const btn = document.getElementById('btnSend');
-    btn.disabled = true;
-    btn.textContent = 'Надсилаємо...';
-
-    fetch('/api/auth/send-code', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ phone: phoneValue, channel: selectedChannel })
-    })
-    .then(r => r.json())
-    .then(data => {
-      btn.disabled = false;
-      btn.textContent = 'Надіслати код';
-      if (data.error) {
-        showMsg('msg1', data.error, 'error');
-      } else {
-        // Переходимо на крок 2
-        document.getElementById('step1').classList.remove('active');
-        document.getElementById('step2').classList.add('active');
-        const sub = selectedChannel === 'telegram'
-          ? `Код надіслано в Telegram на номер ${phoneValue}`
-          : `SMS надіслано на ${phoneValue}`;
-        document.getElementById('step2sub').textContent = sub;
-        startTimer(300);
-        document.getElementById('code').focus();
-      }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.textContent = 'Надіслати код';
-      showMsg('msg1', 'Помилка мережі. Спробуйте знову.', 'error');
-    });
-  }
-
-  function verifyCode() {
-    clearMsg('msg2');
-    const code = document.getElementById('code').value.trim();
-    if (code.length !== 6) return showMsg('msg2', 'Введіть 6-значний код', 'error');
-
-    const btn = document.getElementById('btnVerify');
-    btn.disabled = true;
-    btn.textContent = 'Перевіряємо...';
-
-    fetch('/api/auth/verify-code', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ phone: phoneValue, code: code })
-    })
-    .then(r => r.json())
-    .then(data => {
-      btn.disabled = false;
-      btn.textContent = 'Підтвердити';
-      if (data.error) {
-        showMsg('msg2', data.error, 'error');
-      } else {
-        clearInterval(timerInterval);
-        if (data.user.is_doctor) {
-          window.location.href = '/doctor';
-        } else {
-          window.location.href = '/dashboard';
+    document.getElementById('sendCodeBtn').onclick = function() {
+        const phone = document.getElementById('phone').value.trim();
+        if (!phone) {
+            showMessage('Введіть номер телефону', 'error');
+            return;
         }
-      }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.textContent = 'Підтвердити';
-      showMsg('msg2', 'Помилка мережі. Спробуйте знову.', 'error');
-    });
-  }
+        currentPhone = phone;
+        showMessage('Надсилання...', 'info');
+        fetch('/api/auth/send-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phone })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                showMessage(data.error, 'error');
+            } else {
+                showMessage('✅ ' + (data.message || 'Код надіслано'), 'success');
+                document.getElementById('codeStep').style.display = 'block';
+            }
+        })
+        .catch(err => {
+            showMessage('Помилка: ' + err, 'error');
+        });
+    };
 
-  function goBack() {
-    clearInterval(timerInterval);
-    document.getElementById('step2').classList.remove('active');
-    document.getElementById('step1').classList.add('active');
-    document.getElementById('code').value = '';
-    clearMsg('msg2');
-  }
+    document.getElementById('verifyBtn').onclick = function() {
+        const code = document.getElementById('code').value.trim();
+        if (!code) {
+            showMessage('Введіть код', 'error');
+            return;
+        }
+        showMessage('Перевірка...', 'info');
+        fetch('/api/auth/verify-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: currentPhone, code: code })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                showMessage(data.error, 'error');
+            } else {
+                showMessage('Вхід успішний!', 'success');
+                setTimeout(() => {
+                    window.location.href = data.user.is_doctor ? '/doctor' : '/dashboard';
+                }, 1000);
+            }
+        })
+        .catch(err => showMessage('Помилка: ' + err, 'error'));
+    };
 
-  function startTimer(seconds) {
-    const el = document.getElementById('timer');
-    let remaining = seconds;
-    el.innerHTML = `Повторно надіслати через <span>${formatTime(remaining)}</span>`;
-    timerInterval = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(timerInterval);
-        el.innerHTML = `<button class="btn-back" onclick="goBack()">Надіслати код повторно</button>`;
-      } else {
-        el.innerHTML = `Повторно надіслати через <span>${formatTime(remaining)}</span>`;
-      }
-    }, 1000);
-  }
-
-  function formatTime(s) {
-    return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-  }
-
-  // Enter key support
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      if (document.getElementById('step1').classList.contains('active')) sendCode();
-      else verifyCode();
+    function showMessage(msg, type) {
+        const div = document.getElementById('message');
+        div.innerHTML = msg;
+        div.className = 'mt-4 text-center text-sm ' + (type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-600'));
+        setTimeout(() => div.innerHTML = '', 5000);
     }
-  });
 </script>
-</body>
-</html>
+{% endblock %}

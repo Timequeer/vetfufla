@@ -9,7 +9,6 @@ def dashboard():
         return redirect("/login")
     user = User.query.get(session["user_id"])
     if not user:
-        session.clear()
         return redirect("/login")
     if user.is_doctor:
         return redirect("/doctor")

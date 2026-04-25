@@ -1,123 +1,60 @@
 {% extends "base.html" %}
+{% block title %}Налаштування — VetFuture{% endblock %}
 {% block content %}
-<h1>⚙️ Налаштування</h1>
-
-<div class="settings-section">
-    <h2>🤖 Telegram</h2>
-    <p>Прив'яжіть Telegram бота, щоб отримувати сповіщення та код підтвердження</p>
-    
-    <div id="telegram-status">
-        <div id="status-message">Перевірка статусу...</div>
-    </div>
-    
-    <div id="telegram-bind-form" style="display: none;">
-        <div class="form-group">
-            <label>Ваш Telegram chat_id:</label>
-            <input type="text" id="chat-id" placeholder="Напишіть боту /start і вставте ID сюди" class="form-control">
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-red-600 mb-6">⚙️ Налаштування</h1>
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4">🤖 Telegram</h2>
+        <p id="tgStatus" class="mb-4">Перевірка статусу...</p>
+        <div id="tgBindForm">
+            <p class="text-gray-600 mb-2">
+                Прив'яжіть Telegram, щоб отримувати коди входу та сповіщення.
+            </p>
+            <ol class="list-decimal list-inside text-gray-600 text-sm mb-4">
+                <li>Відкрийте <a href="https://t.me/VetFurure_bot" target="_blank" class="text-red-600">@VetFurure_bot</a> та надішліть команду <code class="bg-gray-100 px-1">/start</code>.</li>
+                <li>Бот надішле вам 6-значний код. Скопіюйте його.</li>
+                <li>Введіть код у поле нижче та натисніть <strong>Прив'язати</strong>.</li>
+            </ol>
+            <div class="mt-3">
+                <input type="text" id="bindCode" placeholder="Код з Telegram" class="border rounded-xl p-2 w-full mb-2">
+                <button onclick="bindTelegram()" class="bg-red-600 text-white px-4 py-2 rounded-xl">Прив'язати</button>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Код підтвердження:</label>
-            <input type="text" id="bind-code" placeholder="Введіть код з Telegram" class="form-control">
+        <div id="tgUnbindForm" style="display:none;">
+            <p>Telegram вже прив'язано. <button onclick="unbindTelegram()" class="bg-gray-300 px-3 py-1 rounded-full text-sm">Відв'язати</button></p>
         </div>
-        <button onclick="bindTelegram()" class="btn btn-primary">Прив'язати</button>
-    </div>
-    
-    <div id="telegram-unbind-form" style="display: none;">
-        <p>Telegram вже прив'язано!</p>
-        <button onclick="unbindTelegram()" class="btn btn-danger">Відв'язати</button>
     </div>
 </div>
-
-<style>
-    .settings-section {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .form-group {
-        margin-bottom: 15px;
-    }
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-    .btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    .btn-primary {
-        background: #2ecc71;
-        color: white;
-    }
-    .btn-danger {
-        background: #e74c3c;
-        color: white;
-    }
-    .success {
-        color: green;
-        padding: 10px;
-        background: #e8f5e9;
-        border-radius: 5px;
-    }
-    .info {
-        color: #3498db;
-        padding: 10px;
-        background: #e3f2fd;
-        border-radius: 5px;
-    }
-</style>
-
 <script>
-    // Перевіряємо статус Telegram
     fetch('/api/telegram/status')
         .then(r => r.json())
         .then(data => {
             if (data.connected) {
-                document.getElementById('telegram-status').innerHTML = '<div class="success">✅ Telegram прив\'язано до ' + data.phone + '</div>';
-                document.getElementById('telegram-unbind-form').style.display = 'block';
+                document.getElementById('tgStatus').innerHTML = '✅ Прив\'язано до ' + data.phone;
+                document.getElementById('tgBindForm').style.display = 'none';
+                document.getElementById('tgUnbindForm').style.display = 'block';
             } else {
-                document.getElementById('telegram-status').innerHTML = '<div class="info">❌ Telegram не прив\'язано</div>';
-                document.getElementById('telegram-bind-form').style.display = 'block';
+                document.getElementById('tgStatus').innerHTML = '❌ Не прив\'язано';
             }
         });
-    
     function bindTelegram() {
-        const chatId = document.getElementById('chat-id').value;
-        const code = document.getElementById('bind-code').value;
-        
+        const code = document.getElementById('bindCode').value;
+        if (!code) { alert('Введіть код'); return; }
         fetch('/api/telegram/bind', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({chat_id: chatId, code: code})
+            body: JSON.stringify({code: code})
         })
         .then(r => r.json())
         .then(data => {
-            if (data.error) {
-                alert('Помилка: ' + data.error);
-            } else {
-                alert('✅ Telegram прив\'язано!');
-                location.reload();
-            }
+            if (data.error) alert(data.error);
+            else { alert(data.message); location.reload(); }
         });
     }
-    
     function unbindTelegram() {
         fetch('/api/telegram/unbind', {method: 'POST'})
             .then(r => r.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Помилка: ' + data.error);
-                } else {
-                    alert('Telegram відв\'язано');
-                    location.reload();
-                }
-            });
+            .then(data => { alert(data.message); location.reload(); });
     }
 </script>
 {% endblock %}

@@ -17,7 +17,6 @@ def doctor_panel():
         return redirect("/login")
     user = User.query.get(session["user_id"])
     if not user:
-        session.clear()
         return redirect("/login")
     if not user.is_doctor or not user.is_verified:
         return redirect("/dashboard")
