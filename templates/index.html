@@ -1,30 +1,6 @@
 {% extends "base.html" %}
 {% block title %}VetFuture — Ветеринарна клініка майбутнього{% endblock %}
 {% block content %}
-<style>
-    /* Спеціальні стилі для цієї сторінки */
-    .doctor-card {
-        flex: 0 0 auto;
-        width: 260px;
-    }
-    @media (max-width: 768px) {
-        .doctor-card {
-            width: 220px !important;
-        }
-        .doctor-card img {
-            width: 80px !important;
-            height: 80px !important;
-        }
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .table-responsive table {
-            min-width: 560px;
-        }
-    }
-</style>
-
 <!-- Hero -->
 <section class="relative bg-gray-500 text-white py-16 md:py-24 lg:py-32 section-fade">
     <div class="max-w-5xl mx-auto px-4 text-center">
@@ -40,7 +16,7 @@
     </div>
 </section>
 
-<!-- Про клініку -->
+<!-- Про клініку (коротко) -->
 <section id="about" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
@@ -53,8 +29,8 @@
                     <h3 class="text-xl font-semibold text-red-600 mb-2">Наші переваги</h3>
                     <ul class="list-disc list-inside text-gray-600 text-base space-y-1">
                         <li>Сучасне обладнання</li>
-                        <li>Цілодобовий стаціонар</li>
                         <li>Досвідчені лікарі</li>
+                        <li>Цілодобовий стаціонар</li>
                         <li>Індивідуальний підхід</li>
                     </ul>
                 </div>
@@ -66,16 +42,20 @@
     </div>
 </section>
 
-<!-- Послуги та ціни (інтерактив) -->
+<!-- Інтерактивний блок "Послуги та ціни" (кнопки + динамічний вміст) -->
 <section id="services" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Послуги та ціни</h2>
+
+        <!-- Кнопки послуг -->
         <div class="flex flex-wrap justify-center gap-3 mb-8">
-            <button data-service="therapy" class="service-btn px-4 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Терапія та діагностика</button>
-            <button data-service="surgery" class="service-btn px-4 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Хірургія</button>
-            <button data-service="vaccination" class="service-btn px-4 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Вакцинація та чіпування</button>
-            <button data-service="inpatient" class="service-btn px-4 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Стаціонар</button>
+            <button data-service="therapy" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Терапія та діагностика</button>
+            <button data-service="surgery" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Хірургія</button>
+            <button data-service="vaccination" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Вакцинація та чіпування</button>
+            <button data-service="inpatient" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium">Стаціонар</button>
         </div>
+
+        <!-- Динамічна область -->
         <div id="service-content" class="bg-white rounded-xl shadow-md p-6 md:p-8 transition-all duration-300">
             <div id="service-loading" class="hidden flex justify-center items-center py-12">
                 <div class="animate-pulse flex space-x-2">
@@ -89,7 +69,7 @@
     </div>
 </section>
 
-<!-- Стаціонар детально (окремий блок) -->
+<!-- Стаціонар детально (окремий блок, можна об'єднати з попереднім, але залишаю для наочності) -->
 <section class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
@@ -108,55 +88,55 @@
     </div>
 </section>
 
-<!-- Лікарі (карусель) -->
+<!-- Карусель лікарів -->
 <section id="doctors" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші фахівці</h2>
         <div class="relative">
             <div class="overflow-hidden">
                 <div id="doctorCarousel" class="flex transition-transform duration-300 ease-out gap-5 md:gap-6">
-                    <!-- Картки лікарів (вручну) -->
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <!-- Картки лікарів (статичні, всі сім) -->
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Плюта Катерина Володимірівна</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Головний лікар VetFuture</p>
-                        <div class="popup-content"><img src="/static/images/doctor1-detail.jpg"><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Плюта Артем Сергійович</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Керівник клініки, лікар реанімації</p>
-                        <div class="popup-content"><img src="/static/images/doctor2-detail.jpg"><p>Досвід у відділенні реанімації "Зоолюкс".</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Жулега Дар'я Константинівна</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                        <div class="popup-content"><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Юсіна Алевтина Тимурівна</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Лікар-ординатор</p>
-                        <div class="popup-content"><p>Асистент хірурга, допомога в стаціонарі.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Асистент хірурга, допомога в стаціонарі.</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Киричук Ангеліна</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                        <div class="popup-content"><p>Діагностика, лікування терапевтичних захворювань.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Діагностика, лікування терапевтичних захворювань.</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Козленко Владислава</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                        <div class="popup-content"><p>Проведення оперативних втручань.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Проведення оперативних втручань.</p></div>
                     </div>
-                    <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
                         <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                         <h3 class="text-base md:text-xl font-semibold">Шевченко Анна</h3>
                         <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                        <div class="popup-content"><p>Спеціалізація: м’які тканини, онкологія.</p></div>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Спеціалізація: м’які тканини, онкологія.</p></div>
                     </div>
                 </div>
             </div>
@@ -169,7 +149,7 @@
     </div>
 </section>
 
-<!-- Карта та контакти -->
+<!-- Карта Google Maps (iframe) та додаткові контакти -->
 <section id="map" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6">Як нас знайти</h2>
@@ -183,172 +163,19 @@
     </div>
 </section>
 
-<script>
-    // Дані для інтерактивних послуг
-    const servicesData = {
-        therapy: {
-            title: "Терапія та діагностика",
-            price: "від 350 грн",
-            desc: "Комплексне обстеження, лабораторні аналізи, УЗД, рентген, ЕКГ. Лікування внутрішніх хвороб за сучасними протоколами.",
-            img: "/static/images/therapy.jpg"
-        },
-        surgery: {
-            title: "Хірургія",
-            price: "від 1200 грн",
-            desc: `<div class="table-responsive">
-                <table class="min-w-full border-collapse border border-gray-300 text-sm sm:text-base">
-                    <thead>
-                        <tr class="bg-gray-100"><th class="border p-2">Послуга</th><th class="border p-2">Коти</th><th class="border p-2">Собаки до 5 кг</th><th class="border p-2">5-10 кг</th><th class="border p-2">10-20 кг</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="border p-2">Кастрація</td><td class="border p-2">2000</td><td class="border p-2">2700</td><td class="border p-2">3100</td><td class="border p-2">3900</td></tr>
-                        <tr><td class="border p-2">Стерилізація</td><td class="border p-2">2500</td><td class="border p-2">3200</td><td class="border p-2">3700</td><td class="border p-2">4500</td></tr>
-                        <tr><td class="border p-2">Видалення новоутворень</td><td class="border p-2">від 1500</td><td class="border p-2">від 2000</td><td class="border p-2">від 3000</td><td class="border p-2">від 4500</td></tr>
-                        <tr><td class="border p-2">Ортопедія</td><td colspan="4" class="border p-2">від 5000 (ціна залежить від складності)</td></tr>
-                    </tbody>
-                </table>
-            </div><p class="mt-2 text-gray-600">Лапароскопія, післяопераційний догляд, стаціонар.</p>`,
-            img: "/static/images/surgery.jpg"
-        },
-        vaccination: {
-            title: "Вакцинація та чіпування",
-            price: "від 500 грн",
-            desc: "Комплексні щеплення (Nobivac, Eurican), чіпування з реєстрацією в міжнародній базі, ветеринарний паспорт.",
-            img: "/static/images/vaccination.jpg"
-        },
-        inpatient: {
-            title: "Стаціонар",
-            price: "від 800 грн / доба",
-            desc: "Цілодобовий моніторинг, інфузійна терапія, підтримка життєво важливих функцій.",
-            img: "/static/images/inpatient-service.jpg"
-        }
-    };
+<!-- Контакти (дубль, але можна залишити) -->
+<section id="contacts" class="py-12 md:py-16 bg-gray-50 section-fade">
+    <div class="max-w-6xl mx-auto px-4 text-center">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 mb-6">Контакти</h2>
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div><i class="fas fa-map-marker-alt text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">м. Київ, вул. Гната Хоткевича, 8</p></div>
+            <div><i class="fas fa-phone-alt text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">+380 (44) 123-45-67</p></div>
+            <div><i class="fas fa-envelope text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">info@vetfuture.com</p></div>
+        </div>
+    </div>
+</section>
 
-    const serviceBtns = document.querySelectorAll('.service-btn');
-    const loader = document.getElementById('service-loading');
-    const display = document.getElementById('service-display');
-
-    function showService(id) {
-        loader.classList.remove('hidden');
-        display.classList.add('hidden');
-        setTimeout(() => {
-            const data = servicesData[id];
-            if (data) {
-                display.innerHTML = `
-                    <div class="grid md:grid-cols-2 gap-6 items-center">
-                        <div>
-                            <h3 class="text-2xl font-bold text-red-600 mb-2">${data.title}</h3>
-                            <span class="inline-block bg-red-100 text-red-800 font-semibold px-3 py-1 rounded-full text-lg mb-3">${data.price}</span>
-                            <div class="text-gray-700 leading-relaxed">${data.desc}</div>
-                        </div>
-                        <div>
-                            <img src="${data.img}" alt="${data.title}" class="w-full max-w-md mx-auto rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
-                        </div>
-                    </div>
-                `;
-            } else {
-                display.innerHTML = '<p class="text-center text-gray-500">Інформація оновлюється</p>';
-            }
-            loader.classList.add('hidden');
-            display.classList.remove('hidden');
-        }, 350);
-    }
-
-    serviceBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const service = btn.getAttribute('data-service');
-            showService(service);
-            serviceBtns.forEach(b => b.classList.remove('bg-red-600', 'text-white'));
-            btn.classList.add('bg-red-600', 'text-white');
-        });
-    });
-    if (serviceBtns.length) {
-        serviceBtns[0].classList.add('bg-red-600', 'text-white');
-        showService('therapy');
-    }
-
-    // Карусель лікарів
-    const carousel = document.getElementById('doctorCarousel');
-    const prevBtn = document.getElementById('prevDoctor');
-    const nextBtn = document.getElementById('nextDoctor');
-    const dotsContainer = document.getElementById('doctorDots');
-    const cards = document.querySelectorAll('.doctor-card');
-    let currentIndex = 0;
-    let itemsPerView = 3;
-    function updateCarousel() {
-        if (!carousel || !cards.length) return;
-        const gap = window.innerWidth >= 768 ? 24 : 20;
-        const cardWidth = cards[0].offsetWidth + gap;
-        const visibleWidth = carousel.parentElement.offsetWidth;
-        itemsPerView = Math.max(1, Math.floor(visibleWidth / cardWidth));
-        const maxIndex = cards.length - itemsPerView;
-        if (currentIndex > maxIndex) currentIndex = Math.max(0, maxIndex);
-        const offset = -(currentIndex * cardWidth);
-        carousel.style.transform = `translateX(${offset}px)`;
-        // dots
-        if (dotsContainer) {
-            const totalDots = Math.ceil(cards.length / itemsPerView);
-            dotsContainer.innerHTML = '';
-            for (let i = 0; i < totalDots; i++) {
-                const dot = document.createElement('button');
-                dot.className = `w-2 h-2 rounded-full mx-1 ${i === currentIndex ? 'bg-red-600' : 'bg-gray-300'}`;
-                dot.addEventListener('click', () => {
-                    currentIndex = i;
-                    updateCarousel();
-                });
-                dotsContainer.appendChild(dot);
-            }
-        }
-    }
-    window.addEventListener('resize', () => setTimeout(updateCarousel, 100));
-    if (cards.length) setTimeout(updateCarousel, 200);
-    nextBtn?.addEventListener('click', () => {
-        if (cards.length) {
-            const maxIndex = cards.length - itemsPerView;
-            if (currentIndex < maxIndex) { currentIndex++; updateCarousel(); }
-        }
-    });
-    prevBtn?.addEventListener('click', () => {
-        if (currentIndex > 0) { currentIndex--; updateCarousel(); }
-    });
-
-    // Попапи (додаткова ініціалізація для безпеки)
-    function initPopups() {
-        const popups = document.querySelectorAll('.popup-card');
-        popups.forEach(card => {
-            card.removeEventListener('mouseenter', card._mouseEnter);
-            card.removeEventListener('mouseleave', card._mouseLeave);
-            let timer;
-            card._mouseEnter = () => {
-                timer = setTimeout(() => {
-                    if (card.matches(':hover') && window.innerWidth > 767) card.classList.add('show-popup');
-                }, 700);
-            };
-            card._mouseLeave = () => { clearTimeout(timer); card.classList.remove('show-popup'); };
-            card.addEventListener('mouseenter', card._mouseEnter);
-            card.addEventListener('mouseleave', card._mouseLeave);
-            card.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.popup-card').forEach(p => { if (p !== card) p.classList.remove('show-popup'); });
-                card.classList.toggle('show-popup');
-            });
-        });
-        document.addEventListener('click', () => document.querySelectorAll('.popup-card').forEach(p => p.classList.remove('show-popup')));
-    }
-    document.addEventListener('DOMContentLoaded', initPopups);
-
-    // PWA банер
-    function closePwaBanner() {
-        document.getElementById('pwaBanner').style.display = 'none';
-        localStorage.setItem('pwaBannerClosed', 'true');
-    }
-    if (!localStorage.getItem('pwaBannerClosed')) {
-        const banner = document.getElementById('pwaBanner');
-        if (banner) banner.style.display = 'block';
-    }
-</script>
-
-<!-- PWA банер (HTML) -->
+<!-- Рекламний банер (PWA) -->
 <div id="pwaBanner" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50" style="display: none;">
     <div class="flex justify-between items-start">
         <div class="flex-1">
@@ -362,4 +189,187 @@
         <button onclick="closePwaBanner()" class="text-gray-400 hover:text-gray-600 text-xl leading-5">×</button>
     </div>
 </div>
+
+<script>
+    // ---------- Інтерактивні послуги ----------
+    const servicesData = {
+        therapy: {
+            title: "Терапія та діагностика",
+            desc: "Комплексне обстеження: лабораторні аналізи, УЗД, рентген, ЕКГ. Лікування внутрішніх хвороб із використанням сучасних протоколів.",
+            price: "від 350 грн",
+            img: "/static/images/therapy.jpg"
+        },
+        surgery: {
+            title: "Хірургія",
+            desc: "Планові та екстрені операції: стерилізація, видалення новоутворень, ортопедичні втручання, лапароскопія.",
+            price: "від 1200 грн",
+            img: "/static/images/surgery.jpg"
+        },
+        vaccination: {
+            title: "Вакцинація та чіпування",
+            desc: "Комплексні щеплення (Nobivac, Eurican), чіпування з реєстрацією в міжнародній базі, ветеринарний паспорт.",
+            price: "від 500 грн",
+            img: "/static/images/vaccination.jpg"
+        },
+        inpatient: {
+            title: "Стаціонар",
+            desc: "Цілодобовий моніторинг, інфузійна терапія, підтримка життєво важливих функцій. Окремі палати з комфортними умовами.",
+            price: "від 800 грн / доба",
+            img: "/static/images/inpatient-service.jpg"
+        }
+    };
+
+    const loader = document.getElementById('service-loading');
+    const display = document.getElementById('service-display');
+
+    function showService(serviceId) {
+        // Показати скелетон (loading)
+        loader.classList.remove('hidden');
+        display.classList.add('hidden');
+        // Імітація затримки для плавності (можна прибрати)
+        setTimeout(() => {
+            const data = servicesData[serviceId];
+            if (data) {
+                display.innerHTML = `
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div class="order-2 md:order-1">
+                            <h3 class="text-2xl font-bold text-red-600 mb-3">${data.title}</h3>
+                            <div class="mb-3">
+                                <span class="inline-block bg-red-100 text-red-800 font-semibold px-3 py-1 rounded-full text-lg">${data.price}</span>
+                            </div>
+                            <p class="text-gray-700 text-base leading-relaxed">${data.desc}</p>
+                        </div>
+                        <div class="order-1 md:order-2">
+                            <img src="${data.img}" alt="${data.title}" class="w-full rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
+                        </div>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = `<p class="text-center text-gray-500">Інформація оновлюється</p>`;
+            }
+            loader.classList.add('hidden');
+            display.classList.remove('hidden');
+        }, 400); // невелика затримка для ефекту завантаження
+    }
+
+    // Активна кнопка
+    const btns = document.querySelectorAll('.service-btn');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const service = btn.getAttribute('data-service');
+            showService(service);
+            // Адаптивна підсвітка (не обов'язково, але приємно)
+            btns.forEach(b => b.classList.remove('bg-red-600', 'text-white'));
+            btn.classList.add('bg-red-600', 'text-white');
+        });
+    });
+    // За замовчуванням показати Терапію
+    if (btns.length) {
+        btns[0].classList.add('bg-red-600', 'text-white');
+        showService('therapy');
+    }
+
+    // ---------- Карусель лікарів ----------
+    const carousel = document.getElementById('doctorCarousel');
+    const prevBtn = document.getElementById('prevDoctor');
+    const nextBtn = document.getElementById('nextDoctor');
+    const dotsContainer = document.getElementById('doctorDots');
+    const cards = document.querySelectorAll('.doctor-card');
+    let currentIndex = 0;
+    let itemsPerView = 1;
+    let maxIndex = 0;
+
+    function updateCarousel() {
+        const cardWidth = cards[0]?.offsetWidth + 24; // ширина + gap (gap-5 md:gap-6 = 1.25rem = 20px, але краще обчислювати)
+        const gap = window.innerWidth >= 768 ? 24 : 20;
+        const totalWidth = cards.length * (cardWidth);
+        const visibleWidth = carousel.parentElement.offsetWidth;
+        itemsPerView = Math.floor(visibleWidth / cardWidth);
+        if (itemsPerView < 1) itemsPerView = 1;
+        const maxIdx = Math.max(0, cards.length - itemsPerView);
+        if (currentIndex > maxIdx) currentIndex = maxIdx;
+        const offset = -(currentIndex * (cardWidth));
+        carousel.style.transform = `translateX(${offset}px)`;
+        updateDots();
+    }
+
+    function updateDots() {
+        if (!dotsContainer) return;
+        const totalDots = Math.ceil(cards.length / itemsPerView);
+        dotsContainer.innerHTML = '';
+        for (let i = 0; i < totalDots; i++) {
+            const dot = document.createElement('button');
+            dot.className = `w-2 h-2 rounded-full mx-1 ${i === currentIndex ? 'bg-red-600' : 'bg-gray-300'}`;
+            dot.addEventListener('click', () => {
+                currentIndex = i;
+                updateCarousel();
+            });
+            dotsContainer.appendChild(dot);
+        }
+    }
+
+    function nextSlide() {
+        const maxIdx = Math.max(0, cards.length - itemsPerView);
+        if (currentIndex < maxIdx) {
+            currentIndex++;
+            updateCarousel();
+        }
+    }
+    function prevSlide() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCarousel();
+        }
+    }
+
+    nextBtn?.addEventListener('click', nextSlide);
+    prevBtn?.addEventListener('click', prevSlide);
+    window.addEventListener('resize', () => {
+        updateCarousel();
+    });
+    // Ініціалізація каруселі
+    if (cards.length) {
+        setTimeout(() => updateCarousel(), 100);
+    }
+
+    // Повторна ініціалізація попапів (для динамічних елементів, але тут їх немає, просто для гарантії)
+    function initPopups() {
+        const popups = document.querySelectorAll('.popup-card');
+        popups.forEach(card => {
+            card.removeEventListener('mouseenter', card._mouseEnter);
+            card.removeEventListener('mouseleave', card._mouseLeave);
+            let timer;
+            const mouseEnter = () => {
+                timer = setTimeout(() => {
+                    if (card.matches(':hover') && window.innerWidth > 767) {
+                        card.classList.add('show-popup');
+                    }
+                }, 700);
+            };
+            const mouseLeave = () => { clearTimeout(timer); card.classList.remove('show-popup'); };
+            card.addEventListener('mouseenter', mouseEnter);
+            card.addEventListener('mouseleave', mouseLeave);
+            card._mouseEnter = mouseEnter;
+            card._mouseLeave = mouseLeave;
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.popup-card').forEach(p => { if (p !== card) p.classList.remove('show-popup'); });
+                card.classList.toggle('show-popup');
+            });
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.popup-card').forEach(p => p.classList.remove('show-popup'));
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initPopups);
+
+    // Банер PWA
+    function closePwaBanner() {
+        document.getElementById('pwaBanner').style.display = 'none';
+        localStorage.setItem('pwaBannerClosed', 'true');
+    }
+    if (!localStorage.getItem('pwaBannerClosed')) {
+        document.getElementById('pwaBanner').style.display = 'block';
+    }
+</script>
 {% endblock %}
