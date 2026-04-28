@@ -43,3 +43,4 @@ class AuthCode(db.Model):
     chat_id = db.Column(db.String(20), nullable=True)     # Telegram chat_id для прив'язки
     expires_at = db.Column(db.DateTime, nullable=False)
     used = db.Column(db.Boolean, default=False)
+    attempts = db.Column(db.Integer, default=0) 

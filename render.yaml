@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: vetfuture
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vetfuture-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: ENOTE_BASE_URL
+        sync: false
+      - key: ENOTE_LOGIN
+        sync: false
+      - key: ENOTE_PASSWORD
+        sync: false
+
+databases:
+  - name: vetfuture-db
+    plan: free

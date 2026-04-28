@@ -1,13 +1,40 @@
-@"
+# Secrets
 .env
+*.env
+*.env.*
+!env.example
+
+# Python
 __pycache__/
+*.py[cod]
 *.pyc
-*.db
-instance/
+*.pyo
+*.pyd
+.Python
 venv/
 .venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
-"@ | Out-File -FilePath .gitignore -Encoding utf8
+
+# Logs
+*.log
+
+# Render
+*.yaml
+!render.yaml

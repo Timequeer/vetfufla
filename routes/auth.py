@@ -106,25 +106,44 @@ def verify_code():
         return jsonify({"error": "Вкажіть номер телефону та код"}), 400
     phone = normalize_phone(raw_phone)
     
-    auth_code = AuthCode.query.filter_by(phone=phone, code=code, used=False).first()
+    # Знаходимо активний код для цього номера
+    auth_code = AuthCode.query.filter_by(phone=phone, used=False).first()
+    
     if not auth_code:
-        return jsonify({"error": "Невірний код"}), 401
-    if datetime.utcnow() > auth_code.expires_at:   # змінено
-        return jsonify({"error": "Код застарів, запросіть новий"}), 401
-    # ... решта без змін
-
+        time.sleep(1)
+        return jsonify({"error": "Невірний або застарілий код"}), 401
+    
+    # Перевірка блокування за спробами
+    if auth_code.attempts >= 3:
+        auth_code.used = True
+        db.session.commit()
+        time.sleep(1)
+        return jsonify({"error": "Код заблоковано, запросіть новий"}), 401
+    
+    # Перевірка часу життя
+    if datetime.utcnow() > auth_code.expires_at:
+        auth_code.used = True
+        db.session.commit()
+        time.sleep(1)
+        return jsonify({"error": "Невірний або застарілий код"}), 401
+    
+    # Перевірка власне коду
+    if auth_code.code != code:
+        auth_code.attempts += 1
+        db.session.commit()
+        time.sleep(1)
+        return jsonify({"error": "Невірний або застарілий код"}), 401
+    
+    # Успішна верифікація
     auth_code.used = True
     db.session.commit()
-
+    
     user = User.query.filter_by(phone=phone).first()
     if not user:
         user = User(phone=phone, is_doctor=False, is_verified=False)
         db.session.add(user)
         db.session.commit()
-        print(f"[INFO] Створено нового користувача: {phone}")
-    else:
-        print(f"[INFO] Існуючий користувач: {phone}, is_doctor={user.is_doctor}, is_verified={user.is_verified}")
-
+    
     if auth_code.chat_id:
         setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
         if not setting:
@@ -134,12 +153,11 @@ def verify_code():
             setting.contact = auth_code.chat_id
             setting.is_active = True
         db.session.commit()
-        print(f"[INFO] Прив'язано Telegram для {phone}")
-
+    
     session["user_id"] = user.id
     session.permanent = True
     log_action(user.id, user.phone, "Успішний вхід", "verify_code")
-
+    
     return jsonify({
         "message": "Успішний вхід",
         "user": {
@@ -151,18 +169,6 @@ def verify_code():
             "enote_guid": user.enote_guid
         }
     }), 200
-
-@auth_bp.route('/api/auth/logout', methods=['POST'])
-def logout():
-    user_id = session.get("user_id")
-    phone = None
-    if user_id:
-        user = User.query.get(user_id)
-        if user:
-            phone = user.phone
-            log_action(user.id, phone, "Вихід з системи", "logout")
-    session.clear()
-    return jsonify({"message": "Вихід виконано"}), 200
 
 @auth_bp.route('/api/me', methods=['GET'])
 def get_me():

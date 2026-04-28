@@ -9,7 +9,7 @@ from routes.admin import admin_bp
 from services.notification_service import start_scheduler
 from services.telegram.bot import init_bot
 from services.telegram.handlers import handle_webhook
-
+import traceback
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -29,29 +29,25 @@ app.register_blueprint(doctor_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(admin_bp)
 
-# ---------- ВСІ МАРШРУТИ ПОВИННІ БУТИ ТУТ (ПЕРЕД ЗАПУСКОМ) ----------
-
-# Головна сторінка
+# ---------- ВСІ МАРШРУТИ ----------
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Webhook для Telegram бота
 @app.route('/webhook', methods=['POST'])
 def telegram_webhook():
+    print("[WEBHOOK] Request received")
     try:
         update = request.get_json()
-        print(f"[WEBHOOK] Отримано: {update}")
-        
-        # Викликаємо обробник
+        print(f"[WEBHOOK] Update: {update}")
         handle_webhook(update)
-        
-        return jsonify({"status": "ok", "message": "Webhook received"}), 200
+        return "ok", 200
     except Exception as e:
-        print(f"[WEBHOOK] Помилка: {e}")
-        return jsonify({"status": "error"}), 500
+        print("[WEBHOOK] ❌ ERROR:")
+        traceback.print_exc()
+        # Важливо: завжди повертаємо 200, щоб Telegram не повторював
+        return "ok", 200
 
-# Тестовий маршрут для перевірки вебхука
 @app.route('/webhook', methods=['GET'])
 def webhook_test():
     return "Webhook endpoint works! Send POST requests here.", 200
@@ -60,10 +56,9 @@ def webhook_test():
 start_scheduler(app)
 
 # ---------- ЗАПУСК СЕРВЕРА ----------
+with app.app_context():
+    db.create_all()
+    print("✅ Таблиці створено або вже існують")
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        print("✅ Таблиці створено")
-        print("✅ Telegram бот готовий")
-        print("✅ Сервер запускається...")
     app.run(debug=True, port=5000)
