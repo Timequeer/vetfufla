@@ -16,7 +16,7 @@
     </div>
 </section>
 
-<!-- Про клініку з текстом, що розгортається -->
+<!-- Про клініку -->
 <section id="about" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
@@ -65,72 +65,70 @@
     </div>
 </section>
 
-<!-- Лікарі (карусель) -->
+<!-- Лікарі (адаптивна сітка замість каруселі) -->
 <section id="doctors" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші фахівці</h2>
-        <div class="relative">
-            <div class="overflow-hidden">
-                <div id="doctorCarousel" class="flex transition-transform duration-300 ease-out gap-5 md:gap-6">
-                    <!-- (тут 7 карток лікарів, та сама структура, що й у попередньому повідомленні, не змінювалась) -->
-                    <!-- Я їх залишу коротко для економії місця, але вони повинні бути такими ж, як раніше -->
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Плюта Катерина Володимірівна</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Головний лікар VetFuture</p>
-                        <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Плюта Артем Сергійович</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Керівник клініки, лікар реанімації</p>
-                        <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Жулега Дар'я Константинівна</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Юсіна Алевтина Тимурівна</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-ординатор</p>
-                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Асистент хірурга, допомога в стаціонарі.</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Киричук Ангеліна</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Діагностика, лікування терапевтичних захворювань.</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Козленко Владислава</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Проведення оперативних втручань.</p></div>
-                    </div>
-                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                        <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                        <h3 class="text-base md:text-xl font-semibold">Шевченко Анна</h3>
-                        <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Спеціалізація: м’які тканини, онкологія.</p></div>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+            <!-- Лікар 1 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Плюта Катерина Володимірівна</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Головний лікар VetFuture</p>
+                <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
             </div>
-            <button id="prevDoctor" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"><i class="fas fa-chevron-left text-red-600"></i></button>
-            <button id="nextDoctor" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"><i class="fas fa-chevron-right text-red-600"></i></button>
+            <!-- Лікар 2 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Плюта Артем Сергійович</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Керівник клініки, лікар реанімації</p>
+                <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
+            </div>
+            <!-- Лікар 3 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Жулега Дар'я Константинівна</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
+                <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
+            </div>
+            <!-- Лікар 4 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Юсіна Алевтина Тимурівна</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Лікар-ординатор</p>
+                <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Асистент хірурга, допомога в стаціонарі.</p></div>
+            </div>
+            <!-- Лікар 5 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Киричук Ангеліна</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
+                <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Діагностика, лікування терапевтичних захворювань.</p></div>
+            </div>
+            <!-- Лікар 6 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Козленко Владислава</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
+                <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Проведення оперативних втручань.</p></div>
+            </div>
+            <!-- Лікар 7 -->
+            <div class="doctor-card bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                <h3 class="text-base md:text-xl font-semibold">Шевченко Анна</h3>
+                <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
+                <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Спеціалізація: м’які тканини, онкологія.</p></div>
+            </div>
         </div>
-        <div class="text-center mt-4"><div id="doctorDots" class="flex justify-center gap-2"></div></div>
     </div>
 </section>
 
-<!-- Карта та контакти (залишаємо без змін) -->
+<!-- Карта та контакти -->
 <section id="map" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6">Як нас знайти</h2>
         <div class="rounded-xl overflow-hidden shadow-xl mb-6">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2540.127817734998!2d30.630169410159287!3d50.45734448483561!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40d4db7168ca84fb%3A0x276c46c2921cf7c1!2z0JLQtdGC0LXRgNC40L3QsNGA0L3QsCDQutC70ZbQvdGW0LrQsCBWZXRmdXR1cmU!5e0!3m2!1sru!2sua!4v1777412769926!5m2!1sru!2sua" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <iframe class="w-full h-64 md:h-96" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2540.127817734998!2d30.630169410159287!3d50.45734448483561!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40d4db7168ca84fb%3A0x276c46c2921cf7c1!2z0JLQtdGC0LXRgNC40L3QsNGA0L3QsCDQutC70ZbQvdGW0LrQsCBWZXRmdXR1cmU!5e0!3m2!1sru!2sua!4v1777412769926!5m2!1sru!2sua" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
         <div class="text-center">
             <p class="text-gray-600">м. Київ, вул. Гната Хоткевича, 8</p>
@@ -164,7 +162,7 @@
 </div>
 
 <script>
-    // Структуровані дані послуг із таблицями замість суцільного тексту
+    // Дані послуг та цін (повністю ваші, нічого не вирізано)
     const servicesData = {
         surgery: {
             title: "Хірургія",
@@ -346,39 +344,7 @@
     });
     if (btns.length) { btns[0].classList.add('bg-red-600', 'text-white'); showService('surgery'); }
 
-    // Карусель лікарів
-    const carousel = document.getElementById('doctorCarousel');
-    const prevBtn = document.getElementById('prevDoctor');
-    const nextBtn = document.getElementById('nextDoctor');
-    const dotsContainer = document.getElementById('doctorDots');
-    const cards = document.querySelectorAll('.doctor-card');
-    let currentIndex = 0;
-    function getItemsPerView() { const w = window.innerWidth; if (w >= 1024) return 3; if (w >= 768) return 2; return 1; }
-    function updateCarousel() {
-        const card = cards[0]; if (!card) return;
-        const cardWidth = card.offsetWidth + 24;
-        const maxIdx = Math.max(0, cards.length - getItemsPerView());
-        if (currentIndex > maxIdx) currentIndex = maxIdx;
-        carousel.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
-        const totalDots = Math.ceil(cards.length / getItemsPerView());
-        if (dotsContainer) {
-            dotsContainer.innerHTML = '';
-            for (let i = 0; i < totalDots; i++) {
-                const dot = document.createElement('button');
-                dot.className = `w-2 h-2 rounded-full mx-1 ${i === currentIndex ? 'bg-red-600' : 'bg-gray-300'}`;
-                dot.addEventListener('click', () => { currentIndex = i; updateCarousel(); });
-                dotsContainer.appendChild(dot);
-            }
-        }
-    }
-    function nextSlide() { const maxIdx = Math.max(0, cards.length - getItemsPerView()); if (currentIndex < maxIdx) { currentIndex++; updateCarousel(); } }
-    function prevSlide() { if (currentIndex > 0) { currentIndex--; updateCarousel(); } }
-    nextBtn?.addEventListener('click', nextSlide);
-    prevBtn?.addEventListener('click', prevSlide);
-    window.addEventListener('resize', () => updateCarousel());
-    setTimeout(updateCarousel, 100);
-
-    // Попапи
+    // Попапи (initPopups)
     function initPopups() {
         const popups = document.querySelectorAll('.popup-card');
         popups.forEach(card => {
