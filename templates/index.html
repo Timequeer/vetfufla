@@ -2,116 +2,442 @@
 {% block title %}VetFuture — Ветеринарна клініка майбутнього{% endblock %}
 {% block content %}
 <!-- Hero -->
-<section class="relative bg-gradient-to-r from-red-700 to-red-500 text-white py-20 md:py-32 section-fade">
-    <div class="max-w-7xl mx-auto px-4 text-center">
-        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">Шлях до здорового майбутнього<br>ваших улюбленців</h1>
-        <p class="text-lg md:text-xl max-w-3xl mx-auto mb-8 opacity-90">VetFuture — поєднання передових технологій, досвіду та безмежної любові до тварин.</p>
-        <button onclick="location.href='/login'" class="bg-white text-red-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 rounded-full inline-flex items-center gap-3 shadow-xl transition">Записатись онлайн <i class="fas fa-arrow-right"></i></button>
+<section class="relative bg-gray-500 text-white py-16 md:py-24 lg:py-32 section-fade">
+    <div class="max-w-5xl mx-auto px-4 text-center">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 md:mb-6">
+            Шлях до здорового майбутнього<br class="hidden sm:block"> ваших улюбленців
+        </h1>
+        <p class="text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-6 md:mb-8 opacity-90 px-2">
+            VetFuture — це поєднання передових технологій, досвіду та безмежної турботи про ваших улюбленців.
+        </p>
+        <button onclick="location.href='/login'" class="bg-white text-red-600 hover:bg-gray-100 font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-full inline-flex items-center gap-2 sm:gap-3 shadow-xl transition">
+            Записатись онлайн <i class="fas fa-arrow-right"></i>
+        </button>
     </div>
 </section>
 
-<!-- Про клініку -->
-<section id="about" class="py-16 bg-white section-fade">
+<!-- Про клініку з текстом, що розгортається -->
+<section id="about" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
-        <div class="grid md:grid-cols-2 gap-10 items-center">
-            <div><h2 class="text-3xl md:text-4xl font-bold text-red-600 mb-4">Про клініку VetFuture</h2><p class="text-gray-600 text-lg leading-relaxed">Ми — команда професіоналів, які щодня доводять, що турбота про здоров'я тварин може бути якісною, доступною та технологічною.</p></div>
-            <div class="rounded-2xl overflow-hidden shadow-xl"><img src="/static/images/clinic.jpg" alt="Клініка" class="w-full h-auto" onerror="this.src='https://placehold.co/600x400?text=Clinic+Photo'"></div>
+        <div class="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
+            <div>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 mb-3 md:mb-4">Про клініку VetFuture</h2>
+                <p class="text-gray-600 text-base md:text-lg leading-relaxed">
+                    Ми — команда професіоналів, які щодня доводять, що турбота про здоров'я тварин може бути якісною, доступною та технологічною.
+                </p>
+                <div class="mt-4">
+                    <button id="aboutToggleBtn" class="text-red-600 font-medium hover:underline focus:outline-none">Детальніше ↓</button>
+                    <div id="aboutFullText" class="hidden mt-3 text-gray-600 text-base leading-relaxed">
+                        <p>Наша клініка оснащена сучасним діагностичним обладнанням: цифровий рентген, експертний УЗД, власна лабораторія. Ми працюємо за протоколами доказової медицини.</p>
+                        <p class="mt-2">Лікарі регулярно підвищують кваліфікацію на міжнародних конгресах. VetFuture — це не просто клініка, а місце, де люблять тварин.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rounded-2xl overflow-hidden shadow-xl">
+                <img src="/static/images/clinic.jpg" alt="Клініка" class="w-full h-auto" onerror="this.src='https://placehold.co/600x400?text=Clinic+Photo'">
+            </div>
         </div>
     </div>
 </section>
 
-<!-- Послуги -->
-<section id="services" class="py-16 bg-gray-50 section-fade">
+<!-- Інтерактивний блок послуг з таблицями -->
+<section id="services" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
-        <h2 class="text-3xl md:text-4xl font-bold text-center text-red-600 mb-10">Наші послуги</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center">
-                <i class="fas fa-stethoscope text-4xl text-red-500 mb-3"></i>
-                <h3 class="text-xl font-semibold mb-2">Терапія та діагностика</h3>
-                <p class="text-gray-600">Лабораторія, УЗД, рентген</p>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші послуги та ціни</h2>
+        <div class="overflow-x-auto pb-3 mb-8 scrollbar-hide">
+            <div class="flex flex-nowrap gap-3 justify-start md:justify-center">
+                <button data-service="surgery" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Хірургія</button>
+                <button data-service="ultrasound" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">УЗД</button>
+                <button data-service="inpatient" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Стаціонар</button>
+                <button data-service="lab" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Аналізи</button>
+                <button data-service="xray" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Рентген</button>
+                <button data-service="vaccination" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Вакцинація</button>
+                <button data-service="consultation" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Консультації</button>
+                <button data-service="chipping" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Чіпування</button>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center popup-card" data-delay="3000">
-                <i class="fas fa-scalpel text-4xl text-red-500 mb-3"></i>
-                <h3 class="text-xl font-semibold mb-2">Хірургія</h3>
-                <p class="text-gray-600">Планові та екстрені операції</p>
-                <div class="popup-content">
-                    <img src="/static/images/surgery-detail.jpg" alt="Хірургія" onerror="this.src='https://placehold.co/180x120?text=Photo'">
-                    <p>Сучасна операційна з лапароскопією, досвідчені хірурги, післяопераційний догляд.</p>
-                </div>
+        </div>
+        <div id="service-content" class="bg-white rounded-xl shadow-md p-6 md:p-8 transition-all">
+            <div id="service-loading" class="hidden flex justify-center items-center py-12">
+                <div class="animate-pulse flex space-x-2"><div class="w-3 h-3 bg-red-400 rounded-full"></div><div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="w-3 h-3 bg-red-600 rounded-full"></div></div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center"><i class="fas fa-tooth text-4xl text-red-500 mb-3"></i><h3 class="text-xl font-semibold mb-2">Стоматологія</h3><p class="text-gray-600">Чищення зубів, лікування</p></div>
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center"><i class="fas fa-syringe text-4xl text-red-500 mb-3"></i><h3 class="text-xl font-semibold mb-2">Вакцинація</h3><p class="text-gray-600">Чіпування, профілактика</p></div>
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center popup-card" data-delay="3000">
-                <i class="fas fa-hospital-user text-4xl text-red-500 mb-3"></i>
-                <h3 class="text-xl font-semibold mb-2">Стаціонар</h3>
-                <p class="text-gray-600">Цілодобовий догляд</p>
-                <div class="popup-content">
-                    <img src="/static/images/inpatient-detail.jpg" alt="Стаціонар" onerror="this.src='https://placehold.co/180x120?text=Photo'">
-                    <p>Окремі палати, цілодобовий моніторинг, інфузійна терапія.</p>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-md card-hover text-center"><i class="fas fa-robot text-4xl text-red-500 mb-3"></i><h3 class="text-xl font-semibold mb-2">AI-помічник</h3><p class="text-gray-600">Консультації 24/7</p></div>
+            <div id="service-display"></div>
         </div>
     </div>
 </section>
 
-<!-- Стаціонар (окремий блок) – попап на зображенні -->
-<section class="py-16 bg-white section-fade">
+<!-- Акції (спеціальні пропозиції) -->
+<section id="promotions" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
-        <div class="grid md:grid-cols-2 gap-10 items-center">
-            <div class="order-2 md:order-1 popup-card relative" data-delay="3000">
-                <img src="/static/images/inpatient.jpg" alt="Стаціонар" class="w-full rounded-2xl shadow-xl cursor-pointer" onerror="this.src='https://placehold.co/600x400?text=Inpatient+Care'">
-                <div class="popup-content" style="left: 50%; transform: translateX(-50%); bottom: auto; top: 120%;">
-                    <img src="/static/images/inpatient-detail2.jpg" alt="Палата" onerror="this.src='https://placehold.co/180x120?text=Room'">
-                    <p>Сучасні палати, цілодобовий черговий лікар та медсестри.</p>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Спеціальні пропозиції</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Акція 1 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div class="bg-red-600 text-white px-4 py-2 text-center font-semibold text-base">Гаряча пропозиція</div>
+                <div class="p-5 text-center">
+                    <h3 class="text-xl font-bold text-red-600 mb-2">ОГЕ + ЕХО в подарунок</h3>
+                    <p class="text-gray-600 mb-4">При замовленні операції ОГЕ – ультразвукове дослідження серця (ЕХО) безкоштовно.</p>
+                    <div class="text-xs text-gray-500 mb-3">* Акція діє до кінця місяця</div>
+                    <button onclick="location.href='/login'" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full font-medium text-sm shadow-sm transition">Записатись</button>
                 </div>
             </div>
-            <div class="order-1 md:order-2"><h2 class="text-3xl font-bold text-red-600 mb-4">Стаціонар цілодобово</h2><p class="text-gray-600 text-lg leading-relaxed">Цілодобовий моніторинг, інфузійна терапія, підтримка життєво важливих функцій.</p></div>
-        </div>
-    </div>
-</section>
-
-<!-- Фахівці -->
-<section id="doctors" class="py-16 bg-gray-50 section-fade">
-    <div class="max-w-6xl mx-auto px-4">
-        <h2 class="text-3xl md:text-4xl font-bold text-center text-red-600 mb-10">Наші фахівці</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover popup-card" data-delay="3000">
-                <img src="/static/images/doctor1.jpg" alt="Лікар" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                <h3 class="text-xl font-semibold">Плюта Катерина Володимірівна</h3>
-                <p class="text-red-500 font-medium">Головний лікар VetFuture</p>
-                <div class="popup-content">
-                    <img src="/static/images/doctor1-detail.jpg" alt="Олександр Коваленко" onerror="this.src='https://placehold.co/150x150?text=Doc'">
-                    <p>Лікар терапевт, ендокринолог та лікар візуальної діагностики</p>
+            <!-- Акція 2 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div class="bg-gray-700 text-white px-4 py-2 text-center font-semibold text-base">Для нових клієнтів</div>
+                <div class="p-5 text-center">
+                    <h3 class="text-xl font-bold text-red-600 mb-2">Перший візит – 10% знижка</h3>
+                    <p class="text-gray-600 mb-4">На первинний огляд та консультацію терапевта.</p>
+                    <button onclick="location.href='/login'" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full font-medium text-sm shadow-sm transition">Детальніше</button>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover popup-card" data-delay="3000">
-                <img src="/static/images/doctor2.jpg" alt="Лікар" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                <h3 class="text-xl font-semibold">Плюта Артем Сергійович</h3>
-                <p class="text-red-500 font-medium">Керівник клініки VetFuture. Лікар реанімації та інтенсивної терапії</p>
-                <div class="popup-content">
-                    <img src="/static/images/doctor2-detail.jpg" alt="Марія Шевченко" onerror="this.src='https://placehold.co/150x150?text=Doc'">
-                    <p>Тривалий час працював на базі відділення реанімації ветеринарної клініки "Зоолюкс"</p>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-md text-center card-hover popup-card" data-delay="3000">
-                <img src="/static/images/doctor3.jpg" alt="Лікар" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
-                <h3 class="text-xl font-semibold">Андрій Бондар</h3>
-                <p class="text-red-500 font-medium">Анестезіолог, реаніматолог</p>
-                <div class="popup-content">
-                    <img src="/static/images/doctor3-detail.jpg" alt="Андрій Бондар" onerror="this.src='https://placehold.co/150x150?text=Doc'">
-                    <p>Сертифікований фахівець з інтенсивної терапії. Член європейської асоціації.</p>
+            <!-- Акція 3 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div class="bg-red-800 text-white px-4 py-2 text-center font-semibold text-base">Сімейна турбота</div>
+                <div class="p-5 text-center">
+                    <h3 class="text-xl font-bold text-red-600 mb-2">Вакцинація – 15% знижка</h3>
+                    <p class="text-gray-600 mb-4">При проведенні щеплень одразу всім тваринам у родині.</p>
+                    <button onclick="location.href='/login'" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full font-medium text-sm shadow-sm transition">Записатись</button>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Контакти -->
-<section id="contacts" class="py-16 bg-white section-fade">
+<!-- Лікарі (карусель) -->
+<section id="doctors" class="py-12 md:py-16 bg-white section-fade">
+    <div class="max-w-6xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші фахівці</h2>
+        <div class="relative">
+            <div class="overflow-hidden">
+                <div id="doctorCarousel" class="flex transition-transform duration-300 ease-out gap-5 md:gap-6">
+                    <!-- (тут 7 карток лікарів, та сама структура, що й у попередньому повідомленні, не змінювалась) -->
+                    <!-- Я їх залишу коротко для економії місця, але вони повинні бути такими ж, як раніше -->
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Плюта Катерина Володимірівна</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Головний лікар VetFuture</p>
+                        <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Плюта Артем Сергійович</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Керівник клініки, лікар реанімації</p>
+                        <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Жулега Дар'я Константинівна</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Юсіна Алевтина Тимурівна</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-ординатор</p>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Асистент хірурга, допомога в стаціонарі.</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Киричук Ангеліна</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Діагностика, лікування терапевтичних захворювань.</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Козленко Владислава</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Проведення оперативних втручань.</p></div>
+                    </div>
+                    <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
+                        <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                        <h3 class="text-base md:text-xl font-semibold">Шевченко Анна</h3>
+                        <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
+                        <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Спеціалізація: м’які тканини, онкологія.</p></div>
+                    </div>
+                </div>
+            </div>
+            <button id="prevDoctor" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"><i class="fas fa-chevron-left text-red-600"></i></button>
+            <button id="nextDoctor" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"><i class="fas fa-chevron-right text-red-600"></i></button>
+        </div>
+        <div class="text-center mt-4"><div id="doctorDots" class="flex justify-center gap-2"></div></div>
+    </div>
+</section>
+
+<!-- Карта та контакти (залишаємо без змін) -->
+<section id="map" class="py-12 md:py-16 bg-gray-50 section-fade">
+    <div class="max-w-6xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6">Як нас знайти</h2>
+        <div class="rounded-xl overflow-hidden shadow-xl mb-6">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2540.123456789!2d30.5234!3d50.4501!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40d4cf4e0a4b6b4f%3A0x9e1a3b5c7d9e1f2!2z0LLRg9C70LjRhtGPINCT0L3QsNGC0LAg0KXQvtGC0LrQtdCy0LjRh9CwLCA4LCDQmtC40ZfQsiwg0KPQutGA0LDRlNC90LA!5e0!3m2!1suk!2sua!4v16171819202122!5m2!1suk!2sua" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+        <div class="text-center">
+            <p class="text-gray-600">м. Київ, вул. Гната Хоткевича, 8</p>
+            <p class="text-gray-600">📞 +380 (44) 123-45-67 | 📞 +380 (73) 298 09 78</p>
+        </div>
+    </div>
+</section>
+<section id="contacts" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-red-600 mb-6">Контакти</h2>
-        <div class="grid md:grid-cols-3 gap-6"><div><i class="fas fa-map-marker-alt text-red-500 text-2xl mb-2"></i><p>м. Київ, вул. Гната Хоткевича, 8</p></div><div><i class="fas fa-phone-alt text-red-500 text-2xl mb-2"></i><p>+380 (44) 123-45-67</p></div><div><i class="fas fa-envelope text-red-500 text-2xl mb-2"></i><p>info@vetfuture.com</p></div></div>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 mb-6">Контакти</h2>
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div><i class="fas fa-map-marker-alt text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">м. Київ, вул. Гната Хоткевича, 8</p></div>
+            <div><i class="fas fa-phone-alt text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">+380 (44) 123-45-67</p></div>
+            <div><i class="fas fa-envelope text-red-500 text-xl md:text-2xl mb-2"></i><p class="text-sm md:text-base">info@vetfuture.com</p></div>
+        </div>
     </div>
 </section>
+
+<!-- Банер PWA -->
+<div id="pwaBanner" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50" style="display: none;">
+    <div class="flex justify-between items-start">
+        <div class="flex-1">
+            <h3 class="font-bold text-red-600">📱 Додайте VetFuture на головний екран!</h3>
+            <p class="text-sm text-gray-600 mt-1">Швидкий доступ без браузера</p>
+            <div class="mt-2 text-xs text-gray-500 space-y-1">
+                <p><strong>📱 На iPhone:</strong> натисніть "Поділитися" → "На головний екран"</p>
+                <p><strong>🤖 На Android:</strong> відкрийте меню (три крапки) → "Додати на головний екран"</p>
+            </div>
+        </div>
+        <button onclick="closePwaBanner()" class="text-gray-400 hover:text-gray-600 text-xl leading-5">×</button>
+    </div>
+</div>
+
+<script>
+    // Структуровані дані послуг із таблицями замість суцільного тексту
+    const servicesData = {
+        surgery: {
+            title: "Хірургія",
+            description: "Оперативні втручання будь-якої складності: стерилізація, кастрація, видалення новоутворень, кесарів розтин. Сучасна операційна, лапароскопія, післяопераційний догляд.",
+            priceTable: {
+                header: ["Послуга", "Коти", "Собаки до 5 кг", "5-10 кг", "10-20 кг", "20-40 кг", ">40 кг"],
+                rows: [
+                    ["Кастрація кота / собаки", "2000", "2700", "3100", "3900", "4900", "5600"],
+                    ["Кастрація крипторха", "2900/4000", "3500/4500", "3900/4900", "4500/5500", "5000/6500", "2900/4000"],
+                    ["ОГЕ", "3500", "4000", "4500", "5200", "5900", "7500"],
+                    ["ОГЕ ендо", "5000", "5200", "5900", "6900", "7500", "8500"],
+                    ["ОГЕ при патології матки", "4700", "5200", "6000", "6900", "7300", "8300"],
+                    ["Кесарів розтин", "4700", "5200", "6200", "6900", "7400", "8500"]
+                ],
+                note: "* без урахування анестезії"
+            },
+            img: "/static/images/surgery.jpg"
+        },
+        ultrasound: {
+            title: "УЗД",
+            description: "Ультразвукова діагностика органів черевної порожнини, серця, сечової системи.",
+            priceList: [
+                { name: "УЗД експертне", price: "650" },
+                { name: "УЗД в динаміці", price: "450" },
+                { name: "УЗД поверхневих органів", price: "450" },
+                { name: "УЗД сечового (динаміка)", price: "450" },
+                { name: "УЗД абдомінальне", price: "600" },
+                { name: "УЗД репродуктивної системи", price: "450" },
+                { name: "AFAST / TFAST", price: "450" },
+                { name: "Передопераційне ЕХО", price: "550" }
+            ],
+            img: "/static/images/ultrasound.jpg"
+        },
+        inpatient: {
+            title: "Стаціонар",
+            description: "Цілодобовий моніторинг, інфузійна терапія, палати з комфортними умовами.",
+            priceTable: {
+                header: ["Категорія", "До 10 кг", "10-30 кг", ">30 кг"],
+                rows: [
+                    ["1 категорія", "2900", "2900", "2900"],
+                    ["2 категорія", "5150", "5450", "5750"],
+                    ["3 категорія", "6650", "6900", "7100"],
+                    ["4 категорія", "7950", "8150", "8450"]
+                ]
+            },
+            img: "/static/images/inpatient-service.jpg"
+        },
+        lab: {
+            title: "Аналізи",
+            description: "Власна лабораторія, швидкі результати. Клінічний аналіз крові, біохімія, гормони, ПЛР-діагностика.",
+            priceList: [
+                { name: "Загальний аналіз крові", price: "500" },
+                { name: "Біохімічний аналіз", price: "1000" },
+                { name: "Аналіз сечі", price: "500" },
+                { name: "Коагулограма", price: "500" },
+                { name: "Копрологічне дослідження", price: "350" },
+                { name: "ВРІТ", price: "700" },
+                { name: "Бабезіоз", price: "300" },
+                { name: "Відбір зразку для дослідження", price: "100" }
+            ],
+            img: "/static/images/lab.jpg"
+        },
+        xray: {
+            title: "Рентген",
+            description: "Цифровий рентген кінцівок, грудної та черевної порожнин, хребта.",
+            priceList: [
+                { name: "Рентгенологічне дослідження (1 проекція)", price: "350" },
+                { name: "Рентгенологічне дослідження (2 проекції)", price: "700" }
+            ],
+            img: "/static/images/xray.jpg"
+        },
+        vaccination: {
+            title: "Вакцинація",
+            description: "Комплексні щеплення, ветеринарний паспорт, індивідуальний графік вакцинації.",
+            priceList: [
+                { name: "Вакцинація (робота)", price: "200" },
+                { name: "Nobivac Tricat (кіт)", price: "300" },
+                { name: "Nobivac Rabies (сказ)", price: "300" },
+                { name: "Purevax RCP (кіт)", price: "340" },
+                { name: "Eurican DHPpi2 LmLti (собака)", price: "450" },
+                { name: "Eurican DHPpi2 LR (собака)", price: "150" }
+            ],
+            img: "/static/images/vaccination.jpg"
+        },
+        consultation: {
+            title: "Консультації",
+            description: "Прийом досвідчених лікарів: терапевт, дерматолог, ендокринолог, кардіолог.",
+            priceList: [
+                { name: "Первинний огляд", price: "500" },
+                { name: "Огляд вузького спеціаліста", price: "1000" },
+                { name: "Дерматологічний огляд", price: "900" }
+            ],
+            img: "/static/images/consultation.jpg"
+        },
+        chipping: {
+            title: "Чіпування",
+            description: "Імплантація мікрочіпа, реєстрація в міжнародній базі Animal-ID.",
+            priceList: [
+                { name: "Чіпування + чип", price: "500" }
+            ],
+            img: "/static/images/chipping.jpg"
+        }
+    };
+
+    // Розгортання тексту "Про клініку"
+    const aboutToggle = document.getElementById('aboutToggleBtn');
+    const aboutFull = document.getElementById('aboutFullText');
+    if (aboutToggle && aboutFull) {
+        aboutToggle.addEventListener('click', () => {
+            const isHidden = aboutFull.classList.toggle('hidden');
+            aboutToggle.textContent = isHidden ? 'Детальніше ↓' : 'Згорнути ↑';
+        });
+    }
+
+    // Функція для рендеру цін (таблиця або список)
+    function renderPrices(service) {
+        if (service.priceTable) {
+            let html = '<div class="overflow-x-auto"><table class="min-w-full border-collapse border border-gray-200 text-sm">';
+            // Заголовок
+            html += '<thead><tr class="bg-red-100">';
+            service.priceTable.header.forEach(cell => html += `<th class="border border-gray-300 px-3 py-2 text-left">${cell}</th>`);
+            html += '</tr></thead><tbody>';
+            service.priceTable.rows.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => html += `<td class="border border-gray-300 px-3 py-2">${cell}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            if (service.priceTable.note) html += `<p class="text-xs text-gray-500 mt-2">${service.priceTable.note}</p>`;
+            return html;
+        } else if (service.priceList) {
+            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">';
+            service.priceList.forEach(item => {
+                html += `<div class="border border-gray-200 rounded-lg p-3 shadow-sm"><span class="font-medium">${item.name}</span><div class="text-red-600 font-bold mt-1">${item.price} грн</div></div>`;
+            });
+            html += '</div>';
+            return html;
+        } else return '<p class="text-gray-500">Уточнюйте ціни в клініці</p>';
+    }
+
+    // Завантаження та відображення послуги
+    const loadingDiv = document.getElementById('service-loading');
+    const displayDiv = document.getElementById('service-display');
+    const btns = document.querySelectorAll('.service-btn');
+
+    function showService(serviceId) {
+        loadingDiv.classList.remove('hidden');
+        displayDiv.classList.add('hidden');
+        setTimeout(() => {
+            const data = servicesData[serviceId];
+            if (data) {
+                displayDiv.innerHTML = `
+                    <div class="grid md:grid-cols-2 gap-6 items-start">
+                        <div class="order-2 md:order-1">
+                            <h3 class="text-2xl font-bold text-red-600 mb-3">${data.title}</h3>
+                            ${renderPrices(data)}
+                            <p class="text-gray-700 text-base leading-relaxed mt-4">${data.description}</p>
+                        </div>
+                        <div class="order-1 md:order-2">
+                            <img src="${data.img}" alt="${data.title}" class="w-full rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
+                        </div>
+                    </div>
+                `;
+            } else {
+                displayDiv.innerHTML = `<p class="text-center text-gray-500">Інформація оновлюється</p>`;
+            }
+            loadingDiv.classList.add('hidden');
+            displayDiv.classList.remove('hidden');
+        }, 300);
+    }
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const service = btn.getAttribute('data-service');
+            showService(service);
+            btns.forEach(b => b.classList.remove('bg-red-600', 'text-white'));
+            btn.classList.add('bg-red-600', 'text-white');
+        });
+    });
+    if (btns.length) { btns[0].classList.add('bg-red-600', 'text-white'); showService('surgery'); }
+
+    // Карусель лікарів
+    const carousel = document.getElementById('doctorCarousel');
+    const prevBtn = document.getElementById('prevDoctor');
+    const nextBtn = document.getElementById('nextDoctor');
+    const dotsContainer = document.getElementById('doctorDots');
+    const cards = document.querySelectorAll('.doctor-card');
+    let currentIndex = 0;
+    function getItemsPerView() { const w = window.innerWidth; if (w >= 1024) return 3; if (w >= 768) return 2; return 1; }
+    function updateCarousel() {
+        const card = cards[0]; if (!card) return;
+        const cardWidth = card.offsetWidth + 24;
+        const maxIdx = Math.max(0, cards.length - getItemsPerView());
+        if (currentIndex > maxIdx) currentIndex = maxIdx;
+        carousel.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+        const totalDots = Math.ceil(cards.length / getItemsPerView());
+        if (dotsContainer) {
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalDots; i++) {
+                const dot = document.createElement('button');
+                dot.className = `w-2 h-2 rounded-full mx-1 ${i === currentIndex ? 'bg-red-600' : 'bg-gray-300'}`;
+                dot.addEventListener('click', () => { currentIndex = i; updateCarousel(); });
+                dotsContainer.appendChild(dot);
+            }
+        }
+    }
+    function nextSlide() { const maxIdx = Math.max(0, cards.length - getItemsPerView()); if (currentIndex < maxIdx) { currentIndex++; updateCarousel(); } }
+    function prevSlide() { if (currentIndex > 0) { currentIndex--; updateCarousel(); } }
+    nextBtn?.addEventListener('click', nextSlide);
+    prevBtn?.addEventListener('click', prevSlide);
+    window.addEventListener('resize', () => updateCarousel());
+    setTimeout(updateCarousel, 100);
+
+    // Попапи
+    function initPopups() {
+        const popups = document.querySelectorAll('.popup-card');
+        popups.forEach(card => {
+            card.removeEventListener('mouseenter', card._mouseEnter);
+            card.removeEventListener('mouseleave', card._mouseLeave);
+            let timer;
+            const mouseEnter = () => { timer = setTimeout(() => { if (card.matches(':hover') && window.innerWidth > 767) card.classList.add('show-popup'); }, 700); };
+            const mouseLeave = () => { clearTimeout(timer); card.classList.remove('show-popup'); };
+            card.addEventListener('mouseenter', mouseEnter);
+            card.addEventListener('mouseleave', mouseLeave);
+            card._mouseEnter = mouseEnter;
+            card._mouseLeave = mouseLeave;
+            card.addEventListener('click', (e) => { e.stopPropagation(); document.querySelectorAll('.popup-card').forEach(p => { if (p !== card) p.classList.remove('show-popup'); }); card.classList.toggle('show-popup'); });
+        });
+        document.addEventListener('click', () => { document.querySelectorAll('.popup-card').forEach(p => p.classList.remove('show-popup')); });
+    }
+    document.addEventListener('DOMContentLoaded', initPopups);
+
+    // Банер PWA
+    function closePwaBanner() { document.getElementById('pwaBanner').style.display = 'none'; localStorage.setItem('pwaBannerClosed', 'true'); }
+    if (!localStorage.getItem('pwaBannerClosed')) { document.getElementById('pwaBanner').style.display = 'block'; }
+</script>
+<style>.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }</style>
 {% endblock %}

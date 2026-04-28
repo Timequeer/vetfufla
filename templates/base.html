@@ -4,106 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>{% block title %}VetFuture — Ветеринарна клініка майбутнього{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/static/images/logo-192.png">
     <style>
-        body { font-family: 'DM Sans', sans-serif; }
-        .section-fade {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-        }
-        .section-fade.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
-        }
-        /* Попапи */
-        .popup-card {
-            position: relative;
-            cursor: pointer;
-        }
-        .popup-content {
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            padding: 12px;
-            min-width: 280px;
-            max-width: 320px;
-            z-index: 100;
-            display: none;
-            border: 1px solid #e5e7eb;
-            pointer-events: none;
-            white-space: normal;
-            text-align: left;
-            transition: opacity 0.2s;
-            transition-delay: 0.5s;
-        }
-        .popup-card.show-popup .popup-content {
-            display: block;
-        }
-        .popup-content.bottom {
-            bottom: auto;
-            top: 110%;
-        }
-        .popup-content img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-        .popup-content p {
-            font-size: 14px;
-            color: #4b5563;
-        }
+        body { font-family: 'DM Sans', sans-serif; padding-top: 60px; }
+        @media (max-width: 768px) { body { padding-top: 50px; } }
+        .section-fade { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+        .section-fade.visible { opacity: 1; transform: translateY(0); }
+        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01); }
+        .popup-card { position: relative; cursor: pointer; }
+        .popup-content { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 12px; min-width: 280px; max-width: 320px; z-index: 100; display: none; border: 1px solid #e5e7eb; pointer-events: none; white-space: normal; text-align: left; transition: opacity 0.2s; transition-delay: 0.5s; }
+        .popup-card.show-popup .popup-content { display: block; }
+        .popup-content.bottom { bottom: auto; top: 110%; }
+        .popup-content img { max-width: 100%; border-radius: 8px; margin-bottom: 8px; }
+        .popup-content p { font-size: 14px; color: #4b5563; }
+        html, body { overflow-x: hidden; overflow-y: auto !important; height: auto !important; position: static !important; }
+        main { min-height: calc(100vh - 120px); }
+        html { scroll-padding-top: 60px; scroll-behavior: smooth; }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+    function initPopups() {
+        const popups = document.querySelectorAll('.popup-card');
+        popups.forEach(card => {
+            // Видаляємо старі обробники, щоб не дублювати
+            card.removeEventListener('mouseenter', card._mouseEnter);
+            card.removeEventListener('mouseleave', card._mouseLeave);
+            let timer;
+            const mouseEnter = () => {
+                timer = setTimeout(() => {
+                    if (card.matches(':hover') && window.innerWidth > 767) {
+                        card.classList.add('show-popup');
+                    }
+                }, 700);
+            };
+            const mouseLeave = () => { clearTimeout(timer); card.classList.remove('show-popup'); };
+            card.addEventListener('mouseenter', mouseEnter);
+            card.addEventListener('mouseleave', mouseLeave);
+            card._mouseEnter = mouseEnter;
+            card._mouseLeave = mouseLeave;
+            // Для мобільних – клік
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.popup-card').forEach(p => { if (p !== card) p.classList.remove('show-popup'); });
+                card.classList.toggle('show-popup');
+            });
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.popup-card').forEach(p => p.classList.remove('show-popup'));
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initPopups);
+</script>
+
 <body class="bg-white text-gray-800">
 
 <header id="mainHeader" class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-1 flex items-center justify-between gap-2">
         <div class="flex items-center">
-            <img src="/static/images/logo.svg" alt="VetFuture Logo" class="h-12 w-auto">
+            <img src="/static/images/logo1.png" alt="VetFuture Symbol" class="h-8 md:h-10 w-auto">
         </div>
-        <nav class="hidden md:flex space-x-6 text-gray-700 font-medium">
+        <div class="flex-1 flex justify-center">
+            <img src="/static/images/logo2.png" alt="VetFuture Text Logo" class="w-1/2 md:w-2/3 h-auto max-w-[120px] md:max-w-[200px]">
+        </div>
+        <nav class="hidden md:flex space-x-4 text-gray-700 font-medium text-sm">
             <a href="/" class="hover:text-red-600 transition">Головна</a>
             <a href="/#about" class="hover:text-red-600 transition">Про клініку</a>
             <a href="/#services" class="hover:text-red-600 transition">Послуги</a>
             <a href="/#doctors" class="hover:text-red-600 transition">Фахівці</a>
             <a href="/#contacts" class="hover:text-red-600 transition">Контакти</a>
         </nav>
-        <div class="flex items-center gap-2">
+        <div class="hidden md:flex items-center gap-2">
             {% if session.get('user_id') %}
-                <a href="/dashboard" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-medium flex items-center gap-2">
+                <a href="/dashboard" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full font-medium text-sm flex items-center gap-1">
                     <i class="fas fa-user-circle"></i> Кабінет
                 </a>
-                <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full font-medium">
+                <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-full font-medium text-sm">
                     Вийти
                 </button>
             {% else %}
-                <a href="/login" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full font-medium flex items-center gap-2">
+                <a href="/login" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-full font-medium text-sm flex items-center gap-1">
                     <i class="fas fa-sign-in-alt"></i> Вхід
                 </a>
             {% endif %}
         </div>
+        <button id="menuBtn" class="md:hidden text-gray-700 focus:outline-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-200 py-3 px-4 shadow-lg absolute top-full left-0 right-0 z-40">
+        <nav class="flex flex-col space-y-2 text-gray-700 font-medium">
+            <a href="/" class="hover:text-red-600 transition py-1">Головна</a>
+            <a href="/#about" class="hover:text-red-600 transition py-1">Про клініку</a>
+            <a href="/#services" class="hover:text-red-600 transition py-1">Послуги</a>
+            <a href="/#doctors" class="hover:text-red-600 transition py-1">Фахівці</a>
+            <a href="/#contacts" class="hover:text-red-600 transition py-1">Контакти</a>
+            <div class="border-t my-1"></div>
+            {% if session.get('user_id') %}
+                <a href="/dashboard" class="bg-red-600 hover:bg-red-700 text-white text-center py-1 rounded-full font-medium text-sm">Кабінет</a>
+                <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 rounded-full font-medium text-sm w-full">Вийти</button>
+            {% else %}
+                <a href="/login" class="bg-red-600 hover:bg-red-700 text-white py-1 rounded-full font-medium text-sm text-center">Вхід</a>
+            {% endif %}
+        </nav>
     </div>
 </header>
+
+<script>
+    // Бургер меню
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        mobileMenu.querySelectorAll('a, button').forEach(el => el.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+    }
+</script>
 
 <main>
     {% block content %}{% endblock %}
 </main>
 
-<footer class="bg-gray-800 text-white py-8 mt-12">
+<footer class="bg-gray-800 text-white py-6 mt-8">
     <div class="max-w-7xl mx-auto px-4 text-center text-sm">
         <p>&copy; 2026 VetFuture — Ветеринарна клініка майбутнього. Всі права захищено.</p>
         <p class="mt-2 text-gray-400">📞 +380 (44) 123-45-67 | ✉️ info@vetfuture.com</p>
@@ -116,62 +144,16 @@
     const header = document.getElementById('mainHeader');
     window.addEventListener('scroll', () => {
         const currentScroll = window.pageYOffset;
-        if (currentScroll > lastScroll && currentScroll > 100) {
-            header.style.transform = 'translateY(-100%)';
-        } else {
-            header.style.transform = 'translateY(0)';
-        }
+        if (currentScroll > lastScroll && currentScroll > 100) header.style.transform = 'translateY(-100%)';
+        else header.style.transform = 'translateY(0)';
         lastScroll = currentScroll;
     });
 
-    function logout() {
-        fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/');
-    }
+    function logout() { fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/'); }
 
-    // Плавна поява секцій
     document.addEventListener('DOMContentLoaded', function() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-        }, { threshold: 0.15 });
+        const observer = new IntersectionObserver((entries) => entries.forEach(entry => entry.target.classList.add('visible')), { threshold: 0.15 });
         document.querySelectorAll('.section-fade').forEach(section => observer.observe(section));
-    });
-
-    // Логіка попапів з затримкою (для десктопа) та по кліку для мобільних
-    document.addEventListener('DOMContentLoaded', function() {
-        let hoverTimer;
-        const popups = document.querySelectorAll('.popup-card');
-        popups.forEach(card => {
-            card.addEventListener('mouseenter', function(e) {
-                hoverTimer = setTimeout(() => {
-                    if (card.matches(':hover') && window.innerWidth > 767) {
-                        card.classList.add('show-popup');
-                    }
-                }, 700); // затримка 0.7 сек
-            });
-            card.addEventListener('mouseleave', function() {
-                clearTimeout(hoverTimer);
-                card.classList.remove('show-popup');
-            });
-        });
-        // Для тач-пристроїв
-        popups.forEach(card => {
-            card.addEventListener('click', function(e) {
-                e.stopPropagation();
-                popups.forEach(p => { if (p !== card) p.classList.remove('show-popup'); });
-                card.classList.toggle('show-popup');
-            });
-        });
-        document.addEventListener('click', () => {
-            popups.forEach(p => p.classList.remove('show-popup'));
-        });
-        // Коригування позиції попапів
-        window.addEventListener('resize', function() {
-            document.querySelectorAll('.popup-card .popup-content').forEach(p => {
-                const rect = p.getBoundingClientRect();
-                if (rect.top < 0) p.classList.add('bottom');
-                else p.classList.remove('bottom');
-            });
-        });
     });
 </script>
 {% block extra_js %}{% endblock %}
