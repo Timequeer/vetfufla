@@ -65,6 +65,30 @@
     </div>
 </section>
 
+<!-- Акції -->
+<section class="py-12 md:py-16 bg-white section-fade">
+    <div class="max-w-6xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Акції та пропозиції</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
+                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Знижка 10% на перший візит</h3>
+                <p class="text-gray-700 text-sm md:text-base">Для всіх нових клієнтів при першому зверненні.</p>
+                <p class="text-gray-500 text-xs mt-3">Діє до 30.06.2026</p>
+            </div>
+            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
+                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Вакцинація + чіпування</h3>
+                <p class="text-gray-700 text-sm md:text-base">Комплексна послуга зі знижкою 15%.</p>
+                <p class="text-gray-500 text-xs mt-3">Запис за телефоном</p>
+            </div>
+            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
+                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Безкоштовна консультація хірурга</h3>
+                <p class="text-gray-700 text-sm md:text-base">При попередньому записі на операцію.</p>
+                <p class="text-gray-500 text-xs mt-3">Акція обмежена</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Лікарі (горизонтальна карусель без стрілок, тільки свайп) -->
 <section id="doctors" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
@@ -280,29 +304,29 @@
     }
 
     function renderPrices(service) {
-        if (service.priceTable) {
-            let html = '<div class="overflow-x-auto"><table class="min-w-full border-collapse border border-gray-200 text-sm">';
-            html += '<thead><tr class="bg-red-100">';
-            service.priceTable.header.forEach(cell => html += `<th class="border border-gray-300 px-3 py-2 text-left">${cell}</th>`);
-            html += '</tr></thead><tbody>';
-            service.priceTable.rows.forEach(row => {
-                html += '<tr>';
-                row.forEach(cell => html += `<td class="border border-gray-300 px-3 py-2">${cell}</td>`);
-                html += '</tr>';
-            });
-            html += '</tbody></table></div>';
-            if (service.priceTable.note) html += `<p class="text-xs text-gray-500 mt-2">${service.priceTable.note}</p>`;
-            return html;
-        } else if (service.priceList) {
-            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">';
-            service.priceList.forEach(item => {
-                html += `<div class="border border-gray-200 rounded-lg p-3 shadow-sm"><span class="font-medium">${item.name}</span><div class="text-red-600 font-bold mt-1">${item.price} грн</div></div>`;
-            });
-            html += '</div>';
-            return html;
-        } else return '<p class="text-gray-500">Уточнюйте ціни в клініці</p>';
-    }
-
+    if (service.priceTable) {
+        let html = '<div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">';
+        html += '<table class="min-w-[600px] w-full border-collapse border border-gray-200 text-sm">';
+        html += '<thead><tr class="bg-red-100">';
+        service.priceTable.header.forEach(cell => html += `<th class="border border-gray-300 px-3 py-2 text-left">${cell}</th>`);
+        html += ' </tr></thead><tbody>';
+        service.priceTable.rows.forEach(row => {
+            html += '<tr>';
+            row.forEach(cell => html += `<td class="border border-gray-300 px-3 py-2">${cell}</td>`);
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        if (service.priceTable.note) html += `<p class="text-xs text-gray-500 mt-2">${service.priceTable.note}</p>`;
+        return html;
+    } else if (service.priceList) {
+        let html = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">';
+        service.priceList.forEach(item => {
+            html += `<div class="border border-gray-200 rounded-lg p-3 shadow-sm"><span class="font-medium">${item.name}</span><div class="text-red-600 font-bold mt-1">${item.price} грн</div></div>`;
+        });
+        html += '</div>';
+        return html;
+    } else return '<p class="text-gray-500">Уточнюйте ціни в клініці</p>';
+}
     const loadingDiv = document.getElementById('service-loading');
     const displayDiv = document.getElementById('service-display');
     const btns = document.querySelectorAll('.service-btn');
@@ -321,7 +345,7 @@
                             <p class="text-gray-700 text-base leading-relaxed mt-4">${data.description}</p>
                         </div>
                         <div class="order-1 md:order-2">
-                            <img src="${data.img}" alt="${data.title}" class="w-full rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
+                           <img src="${data.img}" alt="${data.title}" style="max-width: 100%; height: auto;" class="w-full rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
                         </div>
                     </div>
                 `;
