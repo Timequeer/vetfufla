@@ -215,3 +215,8 @@ def make_doctor():
             "is_verified": user.is_verified
         }
     }), 200
+
+@auth_bp.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
