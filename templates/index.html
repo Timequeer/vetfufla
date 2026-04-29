@@ -66,58 +66,170 @@
     </div>
 </section>
 
-<script>
-  // Функція для відкриття модального вікна
-  function openPromoModal(modalId) {
-    const modal = document.getElementById(modalId);
-    const content = modal.querySelector('[id^="modal-content-"]');
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    // Невелика затримка для активації анімації
-    setTimeout(() => {
-      content.classList.remove('scale-95', 'opacity-0');
-      content.classList.add('scale-100', 'opacity-100');
-    }, 50);
-    
-    // Блокуємо скрол на основній сторінці
-    document.body.style.overflow = 'hidden';
-  }
+<!-- Акції та пропозиції (у стилі Helsi) -->
+<section class="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-white">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">
+      Акції та пропозиції
+    </h2>
+    <p class="text-center text-gray-500 mb-8 md:mb-10 text-sm md:text-base">
+      Оберіть пропозицію, щоб дізнатися більше
+    </p>
 
-  // Функція для закриття модального вікна
-  function closePromoModal(modalId) {
-    const modal = document.getElementById(modalId);
-    const content = modal.querySelector('[id^="modal-content-"]');
-    
-    content.classList.remove('scale-100', 'opacity-100');
-    content.classList.add('scale-95', 'opacity-0');
-    
-    setTimeout(() => {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      // Розблоковуємо скрол
-      document.body.style.overflow = '';
-    }, 200);
-  }
+    <!-- Сітка з картками -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
 
-  // Закриття по кліку на фон (за межами модального вікна)
-  document.addEventListener('click', function(event) {
-    if (event.target.classList.contains('promo-modal')) {
-      closePromoModal(event.target.id);
-    }
-  });
+      <!-- Картка 1: Перший візит -->
+      <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+           onclick="openPromoModal('modal-promo-1')">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-300">
+            <!-- Іконка "Знижка" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">-10%</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">Перший візит – знижка 10%</h3>
+        <p class="text-gray-500 text-sm mb-4">Для всіх нових клієнтів при першому зверненні до клініки.</p>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400">Діє до 31.07.2026</span>
+          <span class="text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
+        </div>
+      </div>
 
-  // Закриття по клавіші Escape
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      const visibleModal = document.querySelector('.promo-modal:not(.hidden)');
-      if (visibleModal) {
-        closePromoModal(visibleModal.id);
-      }
-    }
-  });
-</script>
+      <!-- Картка 2: Вакцинація -->
+      <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+           onclick="openPromoModal('modal-promo-2')">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform duration-300">
+            <!-- Іконка "Щит" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">-15%</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 group-hover:text-green-600 transition-colors">Комплексна вакцинація – 15%</h3>
+        <p class="text-gray-500 text-sm mb-4">При щепленні всіх тварин в родині. Подбайте про здоров'я своїх улюбленців.</p>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400">Запис обов'язковий</span>
+          <span class="text-green-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
+        </div>
+      </div>
+
+      <!-- Картка 3: Консультація хірурга -->
+      <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+           onclick="openPromoModal('modal-promo-3')">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform duration-300">
+            <!-- Іконка "Безкоштовно" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-green-500 bg-green-50 px-2 py-1 rounded-full">Безкоштовно</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 group-hover:text-orange-600 transition-colors">Безкоштовна консультація хірурга</h3>
+        <p class="text-gray-500 text-sm mb-4">При попередньому записі на операцію. Акція обмежена.</p>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400">Кількість місць обмежена</span>
+          <span class="text-orange-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Модальні вікна для акцій -->
+<!-- Модальне вікно 1 -->
+<div id="modal-promo-1" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-1">
+    <div class="relative p-6 md:p-8">
+      <button onclick="closePromoModal('modal-promo-1')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-3">Перший візит – знижка 10%</h2>
+      <p class="text-gray-600 mb-4">Ласкаво просимо до VetFuture! Ми даруємо знижку 10% на будь-яку послугу для вашого улюбленця при першому зверненні до нашої клініки.</p>
+      <div class="bg-blue-50 rounded-xl p-4 mb-4">
+        <p class="text-sm text-gray-600"><span class="font-semibold">Термін дії:</span> до 31 липня 2026 року</p>
+        <p class="text-sm text-gray-600"><span class="font-semibold">Умови:</span> для нових клієнтів, які не обслуговувалися раніше</p>
+      </div>
+      <p class="text-gray-500 text-sm mb-6">Запишіться на прийом вже сьогодні та отримайте знижку на першу консультацію, вакцинацію або будь-яку іншу послугу.</p>
+      <a href="#contact" onclick="closePromoModal('modal-promo-1')" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на прийом
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Модальне вікно 2 -->
+<div id="modal-promo-2" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-2">
+    <div class="relative p-6 md:p-8">
+      <button onclick="closePromoModal('modal-promo-2')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-3">Комплексна вакцинація – 15%</h2>
+      <p class="text-gray-600 mb-4">Подбайте про здоров'я всіх ваших улюбленців одночасно! При щепленні кількох тварин з однієї родини ви отримуєте знижку 15% на весь комплекс вакцинації.</p>
+      <div class="bg-green-50 rounded-xl p-4 mb-4">
+        <p class="text-sm text-gray-600"><span class="font-semibold">Умови:</span> щеплення 2-х і більше тварин з однієї родини</p>
+        <p class="text-sm text-gray-600"><span class="font-semibold">Вакцини:</span> використовуються сертифіковані препарати</p>
+      </div>
+      <p class="text-gray-500 text-sm mb-6">Захистіть своїх улюбленців від небезпечних інфекцій. Обов'язковий попередній запис.</p>
+      <a href="#contact" onclick="closePromoModal('modal-promo-2')" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на вакцинацію
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Модальне вікно 3 -->
+<div id="modal-promo-3" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-3">
+    <div class="relative p-6 md:p-8">
+      <button onclick="closePromoModal('modal-promo-3')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-3">Безкоштовна консультація хірурга</h2>
+      <p class="text-gray-600 mb-4">Плануєте операцію для свого улюбленця? Отримайте безкоштовну консультацію хірурга при попередньому записі на хірургічне втручання.</p>
+      <div class="bg-orange-50 rounded-xl p-4 mb-4">
+        <p class="text-sm text-gray-600"><span class="font-semibold">Умови:</span> консультація безкоштовна при записі на операцію</p>
+        <p class="text-sm text-gray-600"><span class="font-semibold">Тривалість:</span> 30 хвилин</p>
+      </div>
+      <p class="text-gray-500 text-sm mb-6">Кількість місць обмежена. Поспішайте записатися!</p>
+      <a href="#contact" onclick="closePromoModal('modal-promo-3')" class="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на консультацію
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- Лікарі (горизонтальна карусель без стрілок, тільки свайп) -->
 <section id="doctors" class="py-12 md:py-16 bg-white section-fade">
@@ -441,6 +553,58 @@
     }
 }
 </style>
+<script>
+  // Функція для відкриття модального вікна
+  function openPromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Невелика затримка для активації анімації
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+    
+    // Блокуємо скрол на основній сторінці
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Функція для закриття модального вікна
+  function closePromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      // Розблоковуємо скрол
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  // Закриття по кліку на фон (за межами модального вікна)
+  document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('promo-modal')) {
+      closePromoModal(event.target.id);
+    }
+  });
+
+  // Закриття по клавіші Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      const visibleModal = document.querySelector('.promo-modal:not(.hidden)');
+      if (visibleModal) {
+        closePromoModal(visibleModal.id);
+      }
+    }
+  });
+</script>
 
 
 {% endblock %}
