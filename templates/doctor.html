@@ -1,118 +1,252 @@
 {% extends "base.html" %}
-{% block title %}Панель лікаря — VetFuture{% endblock %}
+{% block title %}Кабінет лікаря | VetFuture{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-red-600">Панель лікаря</h1>
-        <a href="/settings" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full text-sm font-medium">⚙️ Налаштування</a>
+
+<style>
+  html { scroll-behavior: smooth; }
+  .doc-tab-content { display: none; }
+  .doc-tab-content.active { display: block; }
+</style>
+
+<div class="flex min-h-screen bg-gray-50 pb-20 md:pb-0">
+  <!-- Sidebar (тільки десктоп) -->
+  <aside class="hidden md:flex md:flex-col w-64 bg-white shadow-md">
+    <div class="p-6 border-b border-gray-100">
+      <h2 class="text-2xl font-bold text-red-600">VetFuture</h2>
+      <p class="text-sm text-gray-500 mt-1" id="doctorSidebarName">Кабінет лікаря</p>
     </div>
-    <div class="grid md:grid-cols-4 gap-6">
-        <div class="md:col-span-1">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border sticky top-24">
-                <div class="flex items-center gap-3 pb-4 border-b">
-                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-2xl"></div>
-                    <div><div class="font-bold" id="doctorPhone">Лікар</div><div class="text-xs text-gray-500">Панель</div></div>
-                </div>
-                <div class="mt-4 space-y-2">
-                    <button onclick="showDocTab('overview')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50"> Огляд</button>
-                    <button onclick="showDocTab('patients')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50"> Пацієнти</button>
-                    <button onclick="showDocTab('appointments')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50"> Записи сьогодні</button>
-                    <button onclick="showDocTab('schedule')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50"> Мій розклад</button>
-                    <button onclick="showDocTab('ai')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50"> AI-асистент</button>
-                </div>
-            </div>
-        </div>
-        <div class="md:col-span-3">
-            <div id="docTab-overview" class="doc-tab active"><div class="bg-white p-6 rounded-2xl shadow-sm"><h2 class="text-2xl font-bold text-red-600 mb-4">Добрий день, лікарю!</h2><p id="todayDate" class="text-gray-500"></p><div class="grid grid-cols-3 gap-4 my-6"><div class="text-center p-3 border rounded-xl"><div class="text-3xl font-bold text-red-600" id="statToday">0</div><div class="text-sm">Записів сьогодні</div></div><div class="text-center p-3 border rounded-xl"><div class="text-3xl font-bold text-red-600" id="statPatients">0</div><div class="text-sm">Пацієнтів</div></div><div class="text-center p-3 border rounded-xl"><div class="text-3xl font-bold text-red-600" id="statPending">0</div><div class="text-sm">Очікують</div></div></div><div><h3 class="font-semibold mb-2">Найближчі записи</h3><div id="overviewAppts"></div></div></div></div>
-            <div id="docTab-patients" class="doc-tab hidden"><div class="bg-white p-6 rounded-2xl shadow-sm"><h2 class="text-2xl font-bold text-red-600 mb-4">Мої пацієнти</h2><div id="patientsList">Завантаження...</div></div></div>
-            <div id="docTab-appointments" class="doc-tab hidden"><div class="bg-white p-6 rounded-2xl shadow-sm"><h2 class="text-2xl font-bold text-red-600 mb-4">Записи на сьогодні</h2><div id="appointmentsListDoc">Завантаження...</div></div></div>
-            <div id="docTab-schedule" class="doc-tab hidden"><div class="bg-white p-6 rounded-2xl shadow-sm"><h2 class="text-2xl font-bold text-red-600 mb-4">Мій розклад</h2><div class="space-y-2"><div class="flex justify-between border-b py-2"><span>Понеділок</span><span>10:00 – 18:00</span></div><div class="flex justify-between border-b py-2"><span>Вівторок</span><span>10:00 – 18:00</span></div><div class="flex justify-between border-b py-2"><span>Середа</span><span>10:00 – 18:00</span></div><div class="flex justify-between border-b py-2"><span>Четвер</span><span>10:00 – 18:00</span></div><div class="flex justify-between border-b py-2"><span>П'ятниця</span><span>10:00 – 18:00</span></div><div class="flex justify-between border-b py-2"><span>Субота</span><span>10:00 – 14:00</span></div><div class="flex justify-between py-2"><span>Неділя</span><span>Вихідний</span></div></div></div></div>
-            <div id="docTab-ai" class="doc-tab hidden"><div class="bg-white p-6 rounded-2xl shadow-sm"><h2 class="text-2xl font-bold text-red-600 mb-4">AI-асистент лікаря</h2><div class="border rounded-xl"><div class="h-96 overflow-y-auto p-4 space-y-3" id="docChatMessages"><div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">🧬</div><div class="bg-gray-100 p-2 rounded-xl max-w-[80%]">Привіт! Я клінічний AI-асистент. Запитайте про дозування, протоколи, діагностику.</div></div></div><div class="border-t p-3 flex gap-2"><textarea id="docChatInput" rows="1" class="flex-1 border rounded-xl p-2 resize-none" placeholder="Наприклад: Собака 12 кг, доза цефтріаксону?"></textarea><button onclick="sendDocAI()" class="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl">➤</button></div></div></div></div>
-        </div>
+    <nav class="flex-1 mt-6 px-4 space-y-2" id="desktop-nav">
+      <button onclick="showDocTab('overview')" class="nav-btn w-full text-left flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors" data-tab="overview">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Огляд
+      </button>
+      <button onclick="showDocTab('patients')" class="nav-btn w-full text-left flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors" data-tab="patients">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        Пацієнти
+      </button>
+      <button onclick="showDocTab('appointments')" class="nav-btn w-full text-left flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors" data-tab="appointments">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Записи сьогодні
+      </button>
+      <button onclick="showDocTab('schedule')" class="nav-btn w-full text-left flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors" data-tab="schedule">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Мій розклад
+      </button>
+      <button onclick="showDocTab('ai')" class="nav-btn w-full text-left flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors" data-tab="ai">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        AI-асистент
+      </button>
+    </nav>
+    <div class="p-4 border-t border-gray-100">
+      <a href="/logout" class="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Вийти
+      </a>
     </div>
+  </aside>
+
+  <!-- Основний контент -->
+  <main class="flex-1 p-4 md:p-8 pt-4 md:pt-8">
+    <!-- Огляд -->
+    <div id="docTab-overview" class="doc-tab-content active bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Добрий день, лікарю!</h2>
+      <p id="todayDate" class="text-gray-500 mb-6"></p>
+      <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="text-center p-4 bg-red-50 rounded-xl">
+          <div class="text-3xl font-bold text-red-600" id="statToday">0</div>
+          <div class="text-sm text-gray-600">Записів сьогодні</div>
+        </div>
+        <div class="text-center p-4 bg-gray-100 rounded-xl">
+          <div class="text-3xl font-bold text-gray-800" id="statPatients">0</div>
+          <div class="text-sm text-gray-600">Пацієнтів</div>
+        </div>
+        <div class="text-center p-4 bg-yellow-50 rounded-xl">
+          <div class="text-3xl font-bold text-yellow-600" id="statPending">0</div>
+          <div class="text-sm text-gray-600">Очікують</div>
+        </div>
+      </div>
+      <h3 class="font-semibold text-gray-800 mb-3">Найближчі записи</h3>
+      <div id="overviewAppts" class="space-y-2"></div>
+    </div>
+
+    <!-- Пацієнти -->
+    <div id="docTab-patients" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої пацієнти</h2>
+      <div id="patientsList">Завантаження...</div>
+    </div>
+
+    <!-- Записи на сьогодні -->
+    <div id="docTab-appointments" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Записи на сьогодні</h2>
+      <div id="appointmentsListDoc">Завантаження...</div>
+    </div>
+
+    <!-- Мій розклад -->
+    <div id="docTab-schedule" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Мій розклад</h2>
+      <div class="space-y-2">
+        <div class="flex justify-between border-b py-2"><span>Понеділок</span><span>10:00 – 18:00</span></div>
+        <div class="flex justify-between border-b py-2"><span>Вівторок</span><span>10:00 – 18:00</span></div>
+        <div class="flex justify-between border-b py-2"><span>Середа</span><span>10:00 – 18:00</span></div>
+        <div class="flex justify-between border-b py-2"><span>Четвер</span><span>10:00 – 18:00</span></div>
+        <div class="flex justify-between border-b py-2"><span>П'ятниця</span><span>10:00 – 18:00</span></div>
+        <div class="flex justify-between border-b py-2"><span>Субота</span><span>10:00 – 14:00</span></div>
+        <div class="flex justify-between py-2"><span>Неділя</span><span>Вихідний</span></div>
+      </div>
+    </div>
+
+    <!-- AI-асистент -->
+    <div id="docTab-ai" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">AI-асистент лікаря</h2>
+      <div class="border border-gray-200 rounded-xl">
+        <div class="h-96 overflow-y-auto p-4 space-y-3" id="docChatMessages">
+          <div class="flex gap-2">
+            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">🧬</div>
+            <div class="bg-gray-100 p-2 rounded-xl max-w-[80%] text-sm">Привіт! Я клінічний AI-асистент. Запитайте про дозування, протоколи, діагностику.</div>
+          </div>
+        </div>
+        <div class="border-t border-gray-200 p-3 flex gap-2">
+          <textarea id="docChatInput" rows="1" class="flex-1 border border-gray-300 rounded-xl p-2 resize-none focus:outline-none focus:border-red-400" placeholder="Наприклад: Собака 12 кг, доза цефтріаксону?"></textarea>
+          <button onclick="sendDocAI()" class="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl transition-colors">→</button>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
+<!-- Нижня мобільна навігація -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around items-center py-2 shadow-lg">
+  <button onclick="showDocTab('overview')" class="mobile-nav-btn flex flex-col items-center text-red-600" data-tab="overview">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <span class="text-xs mt-1">Огляд</span>
+  </button>
+  <button onclick="showDocTab('patients')" class="mobile-nav-btn flex flex-col items-center text-gray-500" data-tab="patients">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+    <span class="text-xs mt-1">Пацієнти</span>
+  </button>
+  <button onclick="showDocTab('appointments')" class="mobile-nav-btn flex flex-col items-center text-gray-500" data-tab="appointments">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <span class="text-xs mt-1">Записи</span>
+  </button>
+  <button onclick="showDocTab('schedule')" class="mobile-nav-btn flex flex-col items-center text-gray-500" data-tab="schedule">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="text-xs mt-1">Розклад</span>
+  </button>
+  <button onclick="showDocTab('ai')" class="mobile-nav-btn flex flex-col items-center text-gray-500" data-tab="ai">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+    <span class="text-xs mt-1">AI</span>
+  </button>
+</nav>
+
 <script>
-    function showDocTab(n) {
-        document.querySelectorAll('.doc-tab').forEach(t => t.classList.add('hidden'));
-        document.getElementById(`docTab-${n}`).classList.remove('hidden');
-        if (n === 'patients') loadDocPatients();
-        if (n === 'appointments') loadDocAppointments();
-    }
+  // --- Логіка табів ---
+  function showDocTab(n) {
+    document.querySelectorAll('.doc-tab-content').forEach(t => t.classList.remove('active'));
+    const target = document.getElementById(`docTab-${n}`);
+    if (target) target.classList.add('active');
 
-    function loadDocPatients() {
-        fetch('/api/pets')
-            .then(r => r.json())
-            .then(data => {
-                const el = document.getElementById('patientsList');
-                if (data.error || !data.length) el.innerHTML = '<div class="text-center p-4">Немає пацієнтів</div>';
-                else el.innerHTML = data.map(p => `
-                    <div class="border rounded-xl p-4 mb-3 flex justify-between">
-                        <div><span class="font-semibold">${p.name}</span><div class="text-sm text-gray-500">${p.species||''}</div></div>
-                        <button onclick="alert('Медкарта пацієнта ${p.guid}')" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">📋 Історія</button>
-                    </div>
-                `).join('');
-            });
-    }
+    // Підсвічування кнопок у сайдбарі
+    document.querySelectorAll('#desktop-nav .nav-btn').forEach(btn => {
+      btn.classList.remove('bg-red-50', 'text-red-600');
+      btn.classList.add('text-gray-700');
+      if (btn.dataset.tab === n) {
+        btn.classList.add('bg-red-50', 'text-red-600');
+        btn.classList.remove('text-gray-700');
+      }
+    });
 
-    function loadDocAppointments() {
-        fetch('/api/appointments')
-            .then(r => r.json())
-            .then(data => {
-                const el = document.getElementById('appointmentsListDoc');
-                if (!data.length) el.innerHTML = '<div class="text-center p-4">Немає записів на сьогодні</div>';
-                else el.innerHTML = data.map(a => `
-                    <div class="border rounded-xl p-4 mb-3">
-                        <div class="font-semibold">${new Date(a.date).toLocaleString()}</div>
-                        <div>${a.status==='confirmed'?'✅ Підтверджено':'⏳ Очікує'}</div>
-                    </div>
-                `).join('');
-            });
-    }
+    // Підсвічування кнопок у нижній панелі
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+      btn.classList.remove('text-red-600');
+      btn.classList.add('text-gray-500');
+      if (btn.dataset.tab === n) {
+        btn.classList.add('text-red-600');
+        btn.classList.remove('text-gray-500');
+      }
+    });
 
-    async function sendDocAI() {
-        const input = document.getElementById('docChatInput');
-        const q = input.value.trim();
-        if (!q) return;
-        const c = document.getElementById('docChatMessages');
-        c.innerHTML += `<div class="flex justify-end gap-2"><div class="bg-red-600 text-white p-2 rounded-xl max-w-[80%]">${q}</div></div>`;
-        input.value = '';
-        c.innerHTML += `<div class="flex gap-2" id="typing"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">🧬</div><div class="bg-gray-100 p-2 rounded-xl">...думаю</div></div>`;
-        c.scrollTop = c.scrollHeight;
-        try {
-            const res = await fetch('/api/ai-support', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question: q})
-            });
-            const data = await res.json();
-            document.getElementById('typing')?.remove();
-            c.innerHTML += `<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">🧬</div><div class="bg-gray-100 p-2 rounded-xl max-w-[80%]">${data.answer||'Помилка'}</div></div>`;
-            c.scrollTop = c.scrollHeight;
-        } catch(e) {
-            document.getElementById('typing')?.remove();
-            c.innerHTML += `<div class="flex gap-2"><div class="bg-gray-100 p-2 rounded-xl">Помилка зв'язку</div></div>`;
-        }
-    }
+    if (n === 'patients') loadDocPatients();
+    if (n === 'appointments') loadDocAppointments();
+  }
 
-    const now = new Date();
-    document.getElementById('todayDate').innerText = now.toLocaleDateString('uk-UA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-    fetch('/api/appointments')
-        .then(r => r.json())
-        .then(data => {
-            const today = new Date().toDateString();
-            const todayCount = data.filter(a => new Date(a.date).toDateString() === today).length;
-            const pendingCount = data.filter(a => a.status !== 'confirmed').length;
-            document.getElementById('statToday').innerText = todayCount;
-            document.getElementById('statPending').innerText = pendingCount;
-            const apptsDiv = document.getElementById('overviewAppts');
-            if (!todayCount) apptsDiv.innerHTML = '<div class="text-center p-4 text-gray-500">Немає записів на сьогодні</div>';
-            else apptsDiv.innerHTML = data.filter(a => new Date(a.date).toDateString() === today).slice(0,5).map(a => `<div class="border-b py-2">${new Date(a.date).toLocaleTimeString()} - ${a.pet_name||a.pet_guid}</div>`).join('');
-        });
+  function loadDocPatients() {
     fetch('/api/pets')
-        .then(r => r.json())
-        .then(data => { if (!data.error) document.getElementById('statPatients').innerText = data.length; });
-    loadDocPatients();
-    loadDocAppointments();
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('patientsList');
+        if (data.error || !data.length) el.innerHTML = '<div class="text-center p-4 text-gray-500">Немає пацієнтів</div>';
+        else el.innerHTML = data.map(p => `
+          <div class="border border-gray-200 rounded-xl p-4 mb-3 flex justify-between items-center">
+            <div>
+              <span class="font-semibold text-gray-800">${p.name}</span>
+              <div class="text-sm text-gray-500">${p.species||''}</div>
+            </div>
+            <button onclick="alert('Медкарта пацієнта ${p.guid}')" class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-sm hover:bg-red-100 transition-colors">📋 Історія</button>
+          </div>
+        `).join('');
+      });
+  }
+
+  function loadDocAppointments() {
+    fetch('/api/appointments')
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('appointmentsListDoc');
+        if (!data.length) el.innerHTML = '<div class="text-center p-4 text-gray-500">Немає записів на сьогодні</div>';
+        else el.innerHTML = data.map(a => `
+          <div class="border border-gray-200 rounded-xl p-4 mb-3">
+            <div class="font-semibold text-gray-800">${new Date(a.date).toLocaleString()}</div>
+            <div class="text-sm">${a.status==='confirmed'?'✅ Підтверджено':'⏳ Очікує'}</div>
+          </div>
+        `).join('');
+      });
+  }
+
+  async function sendDocAI() {
+    const input = document.getElementById('docChatInput');
+    const q = input.value.trim();
+    if (!q) return;
+    const c = document.getElementById('docChatMessages');
+    c.innerHTML += `<div class="flex justify-end gap-2"><div class="bg-red-600 text-white p-2 rounded-xl max-w-[80%] text-sm">${q}</div></div>`;
+    input.value = '';
+    c.innerHTML += `<div class="flex gap-2" id="typing"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">🧬</div><div class="bg-gray-100 p-2 rounded-xl text-sm">...думаю</div></div>`;
+    c.scrollTop = c.scrollHeight;
+    try {
+      const res = await fetch('/api/ai-support', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q})
+      });
+      const data = await res.json();
+      document.getElementById('typing')?.remove();
+      c.innerHTML += `<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">🧬</div><div class="bg-gray-100 p-2 rounded-xl max-w-[80%] text-sm">${data.answer||'Помилка'}</div></div>`;
+      c.scrollTop = c.scrollHeight;
+    } catch(e) {
+      document.getElementById('typing')?.remove();
+      c.innerHTML += `<div class="flex gap-2"><div class="bg-gray-100 p-2 rounded-xl text-sm">Помилка зв'язку</div></div>`;
+    }
+  }
+
+  // Ініціалізація
+  const now = new Date();
+  document.getElementById('todayDate').innerText = now.toLocaleDateString('uk-UA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  fetch('/api/appointments')
+    .then(r => r.json())
+    .then(data => {
+      const today = new Date().toDateString();
+      const todayCount = data.filter(a => new Date(a.date).toDateString() === today).length;
+      const pendingCount = data.filter(a => a.status !== 'confirmed').length;
+      document.getElementById('statToday').innerText = todayCount;
+      document.getElementById('statPending').innerText = pendingCount;
+      const apptsDiv = document.getElementById('overviewAppts');
+      if (!todayCount) apptsDiv.innerHTML = '<div class="text-center p-4 text-gray-500">Немає записів на сьогодні</div>';
+      else apptsDiv.innerHTML = data.filter(a => new Date(a.date).toDateString() === today).slice(0,5).map(a => `<div class="border-b py-2 flex justify-between"><span>${new Date(a.date).toLocaleTimeString()}</span><span class="text-gray-600">${a.pet_name||'Тварина'}</span></div>`).join('');
+    });
+  fetch('/api/pets')
+    .then(r => r.json())
+    .then(data => { if (!data.error) document.getElementById('statPatients').innerText = data.length; });
+  loadDocPatients();
+  loadDocAppointments();
 </script>
+
 {% endblock %}
