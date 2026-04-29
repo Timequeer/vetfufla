@@ -12,7 +12,7 @@ def dashboard():
         return redirect("/login")
     if user.is_doctor:
         return redirect("/doctor")
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", user=user)
 
 @client_bp.route('/settings')
 def settings():
