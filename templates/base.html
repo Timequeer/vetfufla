@@ -25,6 +25,10 @@
         html, body { overflow-x: hidden; overflow-y: auto !important; height: auto !important; position: static !important; }
         main { min-height: calc(100vh - 120px); }
         html { scroll-padding-top: 60px; scroll-behavior: smooth; }
+        /* Безпечний відступ для хедера на iPhone */
+        .header-safe {
+            padding-top: env(safe-area-inset-top);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -64,7 +68,7 @@
 
 <body class="bg-white text-gray-800">
 
-<header id="mainHeader" class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300">
+<header id="mainHeader" class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300 header-safe">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex items-center justify-between gap-2">
         <!-- Лого-символ -->
         <div class="flex items-center">
@@ -72,7 +76,7 @@
         </div>
         <!-- Текстовий логотип -->
         <div class="flex-1 flex justify-center">
-            <img src="/static/images/logo2.png" alt="VetFuture Text Logo" class="w-auto h-17 md:h-18 max-w-[140px] md:max-w-[260px]">
+            <img src="/static/images/logo2.png" alt="VetFuture Text Logo" class="w-auto h-17 md:h-17 max-w-[140px] md:max-w-[260px]">
         </div>
         <!-- Навігація десктоп -->
         <nav class="hidden md:flex space-x-8 text-gray-700 font-medium text-lg">
@@ -102,7 +106,7 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
     </div>
-    <!-- Мобільне меню (без змін) -->
+    <!-- Мобільне меню -->
     <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-200 py-3 px-4 shadow-lg absolute top-full left-0 right-0 z-40">
         <nav class="flex flex-col space-y-2 text-gray-700 font-medium">
             <a href="/" class="hover:text-red-600 transition py-1">Головна</a>
@@ -137,7 +141,6 @@
 <footer class="bg-gray-800 text-white py-6 mt-8">
     <div class="max-w-7xl mx-auto px-4 text-center text-sm">
         <p>&copy; 2026 VetFuture — Ветеринарна клініка майбутнього. Всі права захищено.</p>
-        <p class="mt-2 text-gray-400">✉️ info@vetfuture.com</p>
     </div>
 </footer>
 
