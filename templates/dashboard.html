@@ -46,8 +46,8 @@
   <!-- Основний контент -->
   <main class="flex-1 p-4 md:p-8 pt-4 md:pt-8">
     <!-- Профіль -->
-    <section id="profile" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Профіль</h2>
+    <section id="profile" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Профіль</h2>
 
       {% if user and user.full_name %}
       <!-- Повний профіль -->
@@ -63,6 +63,9 @@
         <div>
           <label class="text-sm text-gray-500">По батькові</label>
           <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.patronymic or '' }}</p>
+        </div>
+        <div>
+          <!-- порожнє місце, щоб номер займав два стовпці -->
         </div>
         <div class="md:col-span-2">
           <label class="text-sm text-gray-500">Номер телефону</label>
@@ -81,10 +84,10 @@
           <input id="address" type="text" value="{{ user.address or '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
         </div>
       </div>
-      <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <p class="text-xs text-gray-400">Дані синхронізовано через E-Note. Для зміни ПІБ зверніться до адміністратора.</p>
+      <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <p class="text-xs text-gray-400 max-w-sm">Дані синхронізовано через E-Note. Для зміни ПІБ зверніться до адміністратора.</p>
         <div class="flex gap-3">
-          <a href="/logout" class="py-2 px-4 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
+          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
           <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
         </div>
       </div>
@@ -103,7 +106,7 @@
           Як тільки адміністратор внесе ваші дані до E-Note, вони автоматично з'являться тут.
         </p>
         <p class="text-gray-400 text-xs mt-4">Якщо ви вже є клієнтом клініки, зверніться до адміністратора для синхронізації.</p>
-        <div class="grid md:grid-cols-2 gap-4 mt-6 text-left">
+        <div class="grid md:grid-cols-2 gap-4 mt-6 text-left max-w-xl mx-auto">
           <div>
             <label for="email2" class="text-sm text-gray-500">Email</label>
             <input id="email2" type="email" value="{{ user.email if user else '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
@@ -114,7 +117,7 @@
           </div>
         </div>
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a href="/logout" class="py-2 px-4 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
+          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
           <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
         </div>
       </div>
@@ -122,7 +125,7 @@
     </section>
 
     <!-- Мої тварини -->
-    <section id="animals" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <section id="animals" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Мої тварини</h2>
         <button class="text-red-600 hover:text-red-700 text-sm font-medium">+ Додати</button>
@@ -143,7 +146,7 @@
     </section>
 
     <!-- Запис на прийом -->
-    <section id="appointments" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <section id="appointments" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Запис на прийом</h2>
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 bg-gray-50 rounded-xl p-4">
@@ -175,7 +178,7 @@
     </section>
 
     <!-- Мої аналізи -->
-    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої аналізи</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -222,7 +225,7 @@
     </section>
 
     <!-- Історія візитів -->
-    <section id="history" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <section id="history" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Історія візитів</h2>
       <div class="space-y-3">
         <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
@@ -241,7 +244,7 @@
     </section>
 
     <!-- AI-помічник -->
-    <section id="ai" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <section id="ai" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">AI-помічник</h2>
       <p class="text-gray-500 text-sm mb-4">Запитайте про графік роботи, підготовку до процедур, загальні рекомендації. <strong>Пам'ятайте:</strong> я не даю дозувань та не ставимо діагнозів.</p>
       <div class="bg-gray-50 rounded-xl p-4 min-h-[100px] flex items-center justify-center text-gray-400">
