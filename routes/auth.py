@@ -7,6 +7,8 @@ import re
 import time
 from services.logger_service import log_action
 from services.telegram import get_bot
+from services.enote_service import enote
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -144,6 +146,12 @@ def verify_code():
         user = User(phone=phone, is_doctor=False, is_verified=False)
         db.session.add(user)
         db.session.commit()
+
+     if not user.enote_guid:
+        enote_clients = enote.get_clients(phone=phone)
+        if enote_clients:
+            user.enote_guid = enote_clients[0]['Ref_Key']
+            db.session.commit()
     
     if auth_code.chat_id:
         setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
