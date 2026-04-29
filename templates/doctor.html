@@ -4,12 +4,12 @@
 
 <style>
   html { scroll-behavior: smooth; }
-  .doc-tab-content { display: none; }
-  .doc-tab-content.active { display: block; }
+  .doc-tab { display: none; }
+  .doc-tab.active { display: block; }
 </style>
 
 <div class="flex min-h-screen bg-gray-50 pb-20 md:pb-0">
-  <!-- Sidebar (тільки десктоп) -->
+  <!-- Сайдбар (тільки десктоп) -->
   <aside class="hidden md:flex md:flex-col w-64 bg-white shadow-md">
     <div class="p-6 border-b border-gray-100">
       <h2 class="text-2xl font-bold text-red-600">VetFuture</h2>
@@ -48,7 +48,7 @@
   <!-- Основний контент -->
   <main class="flex-1 p-4 md:p-8 pt-4 md:pt-8">
     <!-- Огляд -->
-    <div id="docTab-overview" class="doc-tab-content active bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <div id="docTab-overview" class="doc-tab active bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-2">Добрий день, лікарю!</h2>
       <p id="todayDate" class="text-gray-500 mb-6"></p>
       <div class="grid grid-cols-3 gap-4 mb-8">
@@ -70,19 +70,19 @@
     </div>
 
     <!-- Пацієнти -->
-    <div id="docTab-patients" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <div id="docTab-patients" class="doc-tab bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої пацієнти</h2>
       <div id="patientsList">Завантаження...</div>
     </div>
 
     <!-- Записи на сьогодні -->
-    <div id="docTab-appointments" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <div id="docTab-appointments" class="doc-tab bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Записи на сьогодні</h2>
       <div id="appointmentsListDoc">Завантаження...</div>
     </div>
 
     <!-- Мій розклад -->
-    <div id="docTab-schedule" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <div id="docTab-schedule" class="doc-tab bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Мій розклад</h2>
       <div class="space-y-2">
         <div class="flex justify-between border-b py-2"><span>Понеділок</span><span>10:00 – 18:00</span></div>
@@ -96,7 +96,7 @@
     </div>
 
     <!-- AI-асистент -->
-    <div id="docTab-ai" class="doc-tab-content bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <div id="docTab-ai" class="doc-tab bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">AI-асистент лікаря</h2>
       <div class="border border-gray-200 rounded-xl">
         <div class="h-96 overflow-y-auto p-4 space-y-3" id="docChatMessages">
@@ -133,17 +133,18 @@
     <span class="text-xs mt-1">Розклад</span>
   </button>
   <button onclick="showDocTab('ai')" class="mobile-nav-btn flex flex-col items-center text-gray-500" data-tab="ai">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-    <span class="text-xs mt-1">AI</span>
+    <a href="/logout" class="flex flex-col items-center text-gray-500 hover:text-red-600">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      <span class="text-xs mt-1">Вийти</span>
+    </a>
   </button>
 </nav>
 
 <script>
   // --- Логіка табів ---
   function showDocTab(n) {
-    document.querySelectorAll('.doc-tab-content').forEach(t => t.classList.remove('active'));
-    const target = document.getElementById(`docTab-${n}`);
-    if (target) target.classList.add('active');
+    document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`docTab-${n}`).classList.add('active');
 
     // Підсвічування кнопок у сайдбарі
     document.querySelectorAll('#desktop-nav .nav-btn').forEach(btn => {
