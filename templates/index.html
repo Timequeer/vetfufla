@@ -66,29 +66,58 @@
     </div>
 </section>
 
-<!-- Акції -->
-<section class="py-12 md:py-16 bg-white section-fade">
-    <div class="max-w-6xl mx-auto px-4">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Акції та пропозиції</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
-                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Знижка 10% на перший візит</h3>
-                <p class="text-gray-700 text-sm md:text-base">Для всіх нових клієнтів при першому зверненні.</p>
-                <p class="text-gray-500 text-xs mt-3">Діє до 30.06.2026</p>
-            </div>
-            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
-                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Вакцинація + чіпування</h3>
-                <p class="text-gray-700 text-sm md:text-base">Комплексна послуга зі знижкою 15%.</p>
-                <p class="text-gray-500 text-xs mt-3">Запис за телефоном</p>
-            </div>
-            <div class="border border-red-200 rounded-xl p-5 md:p-6 bg-red-50">
-                <h3 class="text-lg md:text-xl font-semibold text-red-700 mb-2">Безкоштовна консультація хірурга</h3>
-                <p class="text-gray-700 text-sm md:text-base">При попередньому записі на операцію.</p>
-                <p class="text-gray-500 text-xs mt-3">Акція обмежена</p>
-            </div>
-        </div>
-    </div>
-</section>
+<script>
+  // Функція для відкриття модального вікна
+  function openPromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Невелика затримка для активації анімації
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+    
+    // Блокуємо скрол на основній сторінці
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Функція для закриття модального вікна
+  function closePromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      // Розблоковуємо скрол
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  // Закриття по кліку на фон (за межами модального вікна)
+  document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('promo-modal')) {
+      closePromoModal(event.target.id);
+    }
+  });
+
+  // Закриття по клавіші Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      const visibleModal = document.querySelector('.promo-modal:not(.hidden)');
+      if (visibleModal) {
+        closePromoModal(visibleModal.id);
+      }
+    }
+  });
+</script>
 
 <!-- Лікарі (горизонтальна карусель без стрілок, тільки свайп) -->
 <section id="doctors" class="py-12 md:py-16 bg-white section-fade">
