@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>{% block title %}VetFuture — Ветеринарна клініка майбутнього{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#dc2626">
@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/static/images/logo-192.png">
     <style>
-        body { font-family: 'DM Sans', sans-serif; padding-top: 60px; }
-        @media (max-width: 768px) { body { padding-top: 50px; } }
+        body { font-family: 'DM Sans', sans-serif; padding-top: env(safe-area-inset-top, 60px); }
+        @media (max-width: 768px) { body { padding-top: env(safe-area-inset-top, 50px); } }
         .section-fade { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
         .section-fade.visible { opacity: 1; transform: translateY(0); }
         .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
@@ -34,7 +34,6 @@
     function initPopups() {
         const popups = document.querySelectorAll('.popup-card');
         popups.forEach(card => {
-            // Видаляємо старі обробники, щоб не дублювати
             card.removeEventListener('mouseenter', card._mouseEnter);
             card.removeEventListener('mouseleave', card._mouseLeave);
             let timer;
@@ -50,7 +49,6 @@
             card.addEventListener('mouseleave', mouseLeave);
             card._mouseEnter = mouseEnter;
             card._mouseLeave = mouseLeave;
-            // Для мобільних – клік
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.popup-card').forEach(p => { if (p !== card) p.classList.remove('show-popup'); });
@@ -68,11 +66,13 @@
 
 <header id="mainHeader" class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-1 flex items-center justify-between gap-2">
+        <!-- Збільшене лого (символ) -->
         <div class="flex items-center">
-            <img src="/static/images/logo1.png" alt="VetFuture Symbol" class="h-8 md:h-10 w-auto">
+            <img src="/static/images/logo1.png" alt="VetFuture Symbol" class="h-10 md:h-14 w-auto">
         </div>
+        <!-- Збільшений текстовий логотип -->
         <div class="flex-1 flex justify-center">
-            <img src="/static/images/logo2.png" alt="VetFuture Text Logo" class="w-1/2 md:w-2/3 h-auto max-w-[120px] md:max-w-[200px]">
+            <img src="/static/images/logo2.png" alt="VetFuture Text Logo" class="w-3/4 md:w-2/3 h-auto max-w-[160px] md:max-w-[260px]">
         </div>
         <nav class="hidden md:flex space-x-4 text-gray-700 font-medium text-sm">
             <a href="/" class="hover:text-red-600 transition">Головна</a>
@@ -81,16 +81,17 @@
             <a href="/#doctors" class="hover:text-red-600 transition">Фахівці</a>
             <a href="/#contacts" class="hover:text-red-600 transition">Контакти</a>
         </nav>
-        <div class="hidden md:flex items-center gap-2">
+        <!-- Збільшені кнопки (кабінет/вхід/вийти) -->
+        <div class="hidden md:flex items-center gap-3">
             {% if session.get('user_id') %}
-                <a href="/dashboard" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full font-medium text-sm flex items-center gap-1">
+                <a href="/dashboard" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full font-medium text-base flex items-center gap-2">
                     <i class="fas fa-user-circle"></i> Кабінет
                 </a>
-                <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-full font-medium text-sm">
+                <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-full font-medium text-base">
                     Вийти
                 </button>
             {% else %}
-                <a href="/login" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-full font-medium text-sm flex items-center gap-1">
+                <a href="/login" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-medium text-base flex items-center gap-2">
                     <i class="fas fa-sign-in-alt"></i> Вхід
                 </a>
             {% endif %}
@@ -118,7 +119,6 @@
 </header>
 
 <script>
-    // Бургер меню
     const menuBtn = document.getElementById('menuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
     if (menuBtn && mobileMenu) {
