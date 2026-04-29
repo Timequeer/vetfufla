@@ -16,6 +16,7 @@
     </div>
 </section>
 
+
 <!-- Про клініку (без змін) -->
 <section id="about" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
@@ -389,4 +390,32 @@
     if (!localStorage.getItem('pwaBannerClosed')) { document.getElementById('pwaBanner').style.display = 'block'; }
 </script>
 <style>.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }</style>
+<style>
+/* === Примусовий горизонтальний скрол для таблиць (хірургія, стаціонар) === */
+#service-content .overflow-x-auto {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100%;
+}
+
+#service-content table {
+    min-width: 700px !important;
+    width: auto !important;
+}
+
+/* Опціонально: стилізувати смугу прокрутки (можна не додавати) */
+#service-content .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+#service-content .overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+#service-content .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #dc2626;
+    border-radius: 10px;
+} 
+</style>
+
+
 {% endblock %}
