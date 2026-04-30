@@ -94,6 +94,47 @@ def test_auth():
     r = enote.session.get(url, params={"$top": 1, "$format": "json"})
     return jsonify({"status": r.status_code, "body": r.text[:200]})
 
+@client_bp.route('/test-appointments')
+def test_appointments():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "No session"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify({"error": "No enote_guid"}), 400
+
+    pets = enote.get_pets_by_owner(user.enote_guid)
+    result = {}
+    for pet in pets[:2]:   # тільки перші дві тварини
+        pet_key = pet['Ref_Key']
+        url = enote._build_url("Task_ПредварительнаяЗапись")
+        params = {
+            "$filter": f"Карточка_Key eq guid'{pet_key}'",
+            "$top": 3,
+            "$format": "json"
+        }
+        r = enote.session.get(url, params=params, timeout=25)
+        result[pet.get('Description', '')] = {
+            "status": r.status_code,
+            "body": r.json() if r.ok else r.text[:200]
+        }
+
+    # так само для візитів (першої тварини)
+    first_pet = pets[0] if pets else None
+    if first_pet:
+        url_visits = enote._build_url("Document_Посещение")
+        r_visits = enote.session.get(url_visits, params={
+            "$filter": f"Карточка_Key eq guid'{first_pet['Ref_Key']}'",
+            "$top": 3,
+            "$format": "json"
+        }, timeout=25)
+        result["visits_for_" + str(first_pet.get('Description', ''))] = {
+            "status": r_visits.status_code,
+            "body": r_visits.json() if r_visits.ok else r_visits.text[:200]
+        }
+
+    return jsonify(result)
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
