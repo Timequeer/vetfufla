@@ -223,8 +223,8 @@ def make_doctor():
         }
     }), 200
 
-@auth_bp.route('/api/fix-enote-guid')
-def fix_enote_guid():
+@auth_bp.route('/api/fix-enote')
+def fix_enote():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Не авторизовано"}), 401
@@ -233,7 +233,7 @@ def fix_enote_guid():
         return jsonify({"error": "Користувача не знайдено"}), 404
     user.enote_guid = '953c3d36-4cbff-11ee-2294-2ae983d8a0f0'
     db.session.commit()
-    return jsonify({"message": "GUID оновлено", "enote_guid": user.enote_guid})
+    return jsonify({"message": "GUID Кошик прив’язано", "enote_guid": user.enote_guid})
 
 @auth_bp.route('/logout')
 def logout():
