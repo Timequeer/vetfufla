@@ -70,21 +70,21 @@ class EnoteClient:
     def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
         def fetch():
-            data = self._get(url, {
-                "$filter": f"Карточка_Key eq guid'{pet_guid}'",
-                "$top": 20
-            })
-            if data:
-                return data
-            result, skip = [], 0
+            result = []
+            skip = 0
             while True:
-                batch = self._get(url, {"$top": 100, "$skip": skip})
+                batch = self._get(url, {"$top": 50, "$skip": skip})
                 if not batch:
                     break
-                result += [a for a in batch if a.get('Карточка_Key') == pet_guid]
-                skip += 100
+                for a in batch:
+                    if a.get('Карточка_Key') == pet_guid:
+                        result.append(a)
+                skip += 50
+                # Якщо знайшли хоч щось, припиняємо після 200 записів
+                if result and skip >= 200:
+                    break
             return result
-        return self._cached(f"analyses:{pet_guid}", fetch)
+        return self._cached(f"analyses_pet:{pet_guid}", fetch)
 
     def get_analyses_by_owner(self, owner_guid):
         # Спроба отримати контактну особу власника
