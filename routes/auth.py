@@ -97,7 +97,6 @@ def send_code():
                 return jsonify({"error": "Помилка бота"}), 500
     # Якщо користувача немає і активного коду теж немає
     return jsonify({"error": "Спочатку отримайте код у Telegram-бота @VetFurure_bot (команда /start, потім введіть номер)"}), 400
-
 @auth_bp.route('/api/auth/verify-code', methods=['POST'])
 def verify_code():
     data = request.get_json()
@@ -138,7 +137,7 @@ def verify_code():
         return jsonify({"error": "Невірний або застарілий код"}), 401
     
     # Успішна верифікація
-       auth_code.used = True
+    auth_code.used = True
     db.session.commit()
     
     user = User.query.filter_by(phone=phone).first()
