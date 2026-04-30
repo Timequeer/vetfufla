@@ -51,8 +51,30 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    # Використовуємо кешований метод
-    return jsonify(get_cached_analyses(user.enote_guid))
+
+    from services.enote_service import enote
+    pets = enote.get_pets_by_owner(user.enote_guid)
+    all_analyses = []
+
+    for pet in pets:
+        url = enote._build_url("Document_Анализы")
+        params = {
+            "$format": "json",
+            "$filter": f"Карточка_Key eq guid'{pet['Ref_Key']}'",
+            "$top": 20
+        }
+        try:
+            r = enote.session.get(url, params=params, timeout=30)
+            if r.ok:
+                analyses = r.json().get('value', [])
+                for a in analyses:
+                    a['_pet_name'] = pet.get('Description', '')
+                    all_analyses.extend(analyses)
+        except Exception as e:
+            print(f"Помилка отримання аналізів для {pet.get('Description')}: {e}")
+
+    all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+    return jsonify(all_analyses)
 
 @client_bp.route('/api/my-visits')
 def my_visits():
