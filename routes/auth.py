@@ -147,11 +147,12 @@ def verify_code():
         db.session.commit()
 
     if not user.enote_guid:
-        enote_clients = enote.get_clients(phone=phone)
-        if enote_clients:
-            user.enote_guid = enote_clients[0]['Ref_Key']
+        # Синхронізація з ENOTE через пошук за номером телефону
+        client_guid = enote.get_client_by_phone(phone)
+        if client_guid:
+            user.enote_guid = client_guid
             db.session.commit()
-    
+            
     if auth_code.chat_id:
         setting = NotificationSetting.query.filter_by(user_id=user.id, channel="telegram").first()
         if not setting:
