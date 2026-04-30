@@ -106,12 +106,27 @@ class EnoteClient:
     def get_analyses_by_owner_via_pets(self, owner_guid):
         def fetch():
             pets = self.get_pets_by_owner(owner_guid)
+            if not pets:
+                return []
+            pet_guids = {p['Ref_Key'] for p in pets}
+            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+            url = self._build_url("Document_Анализы")
             all_analyses = []
-            for pet in pets:
-                analyses = self.get_analyses_by_pet(pet['Ref_Key'])
-                for a in analyses:
-                    a['_pet_name'] = pet.get('Description', '')
-                    all_analyses.append(a)
+            skip = 0
+            # Проходимо по всіх аналізах один раз, шукаємо збіги з нашими тваринами
+            while True:
+                batch = self._get(url, {"$top": 50, "$skip": skip})
+                if not batch:
+                    break
+                for a in batch:
+                    pet_key = a.get('Карточка_Key')
+                    if pet_key in pet_guids:
+                        a['_pet_name'] = pet_names.get(pet_key, '')
+                        all_analyses.append(a)
+                skip += 50
+                # Якщо вже знайшли достатньо, припиняємо
+                if all_analyses and skip > 200:
+                    break
             all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
             return all_analyses
         return self._cached(f"analyses_owner_pets:{owner_guid}", fetch)
