@@ -44,6 +44,15 @@ def my_visits():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
+    pets = enote.get_pets_by_owner(user.enote_guid)
+    all_visits = []
+    for pet in pets:
+        visits = enote.get_visits_by_pet(pet['Ref_Key'])
+        for v in visits:
+            v['_pet_name'] = pet.get('Description', '')
+            all_visits.append(v)
+    all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
+    return jsonify(all_visits)
     
     pets = enote.get_pets_by_owner(user.enote_guid)  # вже закешовано
     all_visits = []
