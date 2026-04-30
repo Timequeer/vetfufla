@@ -13,6 +13,18 @@ class EnoteClient:
     def _build_url(self, endpoint):
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
+    def _format_guid(self, guid: str) -> str:
+        """Перетворює GUID без дефісів (32 символи) у стандартний UUID (36 символів)"""
+        if not guid:
+            return guid
+        # Якщо GUID вже містить дефіси, повертаємо як є
+        if '-' in guid:
+            return guid
+        # Якщо довжина 32 символи, додаємо дефіси
+        if len(guid) == 32:
+            return f"{guid[:8]}-{guid[8:12]}-{guid[12:16]}-{guid[16:20]}-{guid[20:]}"
+        return guid
+
     def get_clients(self, phone=None):
         url = self._build_url("Catalog_Клиенты")
         params = {"$format": "json"}
@@ -21,7 +33,7 @@ class EnoteClient:
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
-        return None
+        return []
 
     def get_pets(self, client_guid=None):
         url = self._build_url("Catalog_Питомцы")
@@ -31,7 +43,7 @@ class EnoteClient:
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
-        return None
+        return []
 
     def get_analyses(self, pet_guid=None):
         url = self._build_url("Document_Анализы")
@@ -41,7 +53,7 @@ class EnoteClient:
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
-        return None
+        return []
 
     def get_appointments(self, doctor_guid=None, date_from=None, date_to=None):
         url = self._build_url("Document_Приемы")
@@ -56,18 +68,6 @@ class EnoteClient:
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
-        return None
-
-   def _format_guid(self, guid: str) -> str:
-        """Перетворює GUID без дефісів (32 символи) у стандартний UUID (36 символів)"""
-        if not guid:
-            return guid
-        # Якщо GUID вже містить дефіси, повертаємо як є
-        if '-' in guid:
-            return guid
-        # Якщо довжина 32 символи, додаємо дефіси
-        if len(guid) == 32:
-            return f"{guid[:8]}-{guid[8:12]}-{guid[12:16]}-{guid[16:20]}-{guid[20:]}"
-        return guid
+        return []
 
 enote = EnoteClient()
