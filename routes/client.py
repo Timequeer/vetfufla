@@ -34,16 +34,16 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
+    
+    # Один запит замість N по кожній тварині
     pets = enote.get_pets_by_owner(user.enote_guid)
-    all_analyses = []
-    pet_names = {}
-    for pet in pets:
-        pet_names[pet['Ref_Key']] = pet.get('Description', '')
-        analyses = enote.get_analyses_by_pet(pet['Ref_Key'])
-        for a in analyses:
-            a['_pet_name'] = pet.get('Description', '')
-            all_analyses.append(a)
-    return jsonify(all_analyses)
+    pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+    
+    analyses = enote.get_analyses_by_owner(user.enote_guid)
+    for a in analyses:
+        a['_pet_name'] = pet_names.get(a.get('Карточка_Key', ''), '')
+    
+    return jsonify(analyses)
 
 @client_bp.route('/api/my-visits')
 def my_visits():
