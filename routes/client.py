@@ -1,8 +1,26 @@
 from flask import Blueprint, render_template, session, redirect, jsonify
 from models import User
 from services.enote_service import enote
+import time
 
 client_bp = Blueprint('client', __name__)
+
+# Простий кеш у пам'яті для аналізів
+_analyses_cache = {
+    "data": None,
+    "timestamp": 0,
+    "ttl": 30 * 60  # 30 хвилин
+}
+
+def get_cached_analyses(owner_guid):
+    now = time.time()
+    if _analyses_cache["data"] is not None and (now - _analyses_cache["timestamp"]) < _analyses_cache["ttl"]:
+        return _analyses_cache["data"]
+    # Інакше отримуємо свіжі дані
+    data = enote.get_analyses_by_owner_via_pets(owner_guid)
+    _analyses_cache["data"] = data
+    _analyses_cache["timestamp"] = now
+    return data
 
 @client_bp.route('/dashboard')
 def dashboard():
@@ -23,8 +41,7 @@ def my_pets():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    pets = enote.get_pets_by_owner(user.enote_guid)
-    return jsonify(pets)
+    return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
 @client_bp.route('/api/my-analyses')
 def my_analyses():
@@ -34,8 +51,8 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    # Використовуємо надійний метод через тварин (кешується)
-    return jsonify(enote.get_analyses_by_owner_via_pets(user.enote_guid))
+    # Використовуємо кешований метод
+    return jsonify(get_cached_analyses(user.enote_guid))
 
 @client_bp.route('/api/my-visits')
 def my_visits():
@@ -52,18 +69,6 @@ def my_visits():
         for v in visits:
             v['_pet_name'] = pet.get('Description', '')
             all_visits.append(v)
-    all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
-    return jsonify(all_visits)
-    
-    pets = enote.get_pets_by_owner(user.enote_guid)  # вже закешовано
-    all_visits = []
-    for pet in pets:
-        visits = enote.get_visits_by_pet(pet['Ref_Key'])
-        for v in visits:
-            v['_pet_name'] = pet.get('Description', '')
-            all_visits.append(v)
-    
-    # Сортуємо по даті, найновіші першими
     all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
     return jsonify(all_visits)
 
@@ -83,22 +88,6 @@ def my_profile():
             "email": user.email
         })
     return jsonify({"phone": user.phone, "email": user.email})
-
-@client_bp.route('/api/my-appointments')
-def my_appointments():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    appointments = enote.get_appointments_by_owner(user.enote_guid)
-    return jsonify(appointments)
-
-@client_bp.route('/api/clear-cache')
-def clear_cache():
-    enote.clear_cache()
-    return jsonify({"message": "Кеш очищено"})
 
 @client_bp.route('/settings')
 def settings():
