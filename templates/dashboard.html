@@ -97,30 +97,23 @@
     </section>
 
     <!-- Запис на прийом -->
-    <section id="appointments" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Запис на прийом</h2>
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1 bg-gray-50 rounded-xl p-4">
-          <h3 class="font-semibold text-gray-700 mb-3">Мої записи</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between items-center border-b pb-2">
-              <div><p class="font-medium">Консультація терапевта</p><p class="text-sm text-gray-500">15 липня 2025, 10:00</p></div>
-              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Підтверджено</span>
-            </div>
-            <div class="flex justify-between items-center border-b pb-2">
-              <div><p class="font-medium">Вакцинація (Льолік)</p><p class="text-sm text-gray-500">22 липня 2025, 14:30</p></div>
-              <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Очікує</span>
-            </div>
-          </div>
-        </div>
-        <div class="md:w-80">
-          <h3 class="font-semibold text-gray-700 mb-3">Новий запис</h3>
-          <button onclick="openCalendarModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
-            Обрати дату та лікаря
-          </button>
-        </div>
+<section id="appointments" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">Запис на прийом</h2>
+  <div class="flex flex-col md:flex-row gap-4">
+    <div class="flex-1 bg-gray-50 rounded-xl p-4">
+      <h3 class="font-semibold text-gray-700 mb-3">Мої записи</h3>
+      <div id="appointmentsList" class="space-y-3">
+        <div class="text-gray-400 text-sm">Завантаження...</div>
       </div>
-    </section>
+    </div>
+    <div class="md:w-80">
+      <h3 class="font-semibold text-gray-700 mb-3">Новий запис</h3>
+      <button onclick="openCalendarModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Обрати дату та лікаря
+      </button>
+    </div>
+  </div>
+</section>
 
     <!-- Мої аналізи -->
    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
@@ -393,6 +386,28 @@ fetch('/api/my-profile')
         <div class="mt-4 flex justify-center">
           <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
         </div>`;
+    }
+  });
+
+  fetch('/api/my-appointments')
+  .then(r => r.json())
+  .then(appointments => {
+    const list = document.getElementById('appointmentsList');
+    const future = appointments.filter(a => !a.Executed && a.ЗаписьНаДату);
+    if (!future || future.length === 0) {
+      list.innerHTML = '<p class="text-gray-400 text-sm">Немає запланованих записів</p>';
+    } else {
+      list.innerHTML = future.map(a => {
+        const date = new Date(a.ЗаписьНаДату);
+        const dateStr = date.toLocaleDateString('uk-UA') + ', ' + date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+        const badge = a.Подтверждено
+          ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Підтверджено</span>'
+          : '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Очікує</span>';
+        return `<div class="flex justify-between items-center border-b pb-2">
+          <div><p class="font-medium">${a.Кличка || 'Тварина'}</p><p class="text-sm text-gray-500">${dateStr}</p></div>
+          ${badge}
+        </div>`;
+      }).join('');
     }
   });
   
