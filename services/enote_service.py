@@ -17,10 +17,8 @@ class EnoteClient:
         """Перетворює GUID без дефісів (32 символи) у стандартний UUID (36 символів)"""
         if not guid:
             return guid
-        # Якщо GUID вже містить дефіси, повертаємо як є
         if '-' in guid:
             return guid
-        # Якщо довжина 32 символи, додаємо дефіси
         if len(guid) == 32:
             return f"{guid[:8]}-{guid[8:12]}-{guid[12:16]}-{guid[16:20]}-{guid[20:]}"
         return guid
@@ -36,20 +34,22 @@ class EnoteClient:
         return []
 
     def get_pets(self, client_guid=None):
-        url = self._build_url("Catalog_Питомцы")
+        """Отримати тварин за GUID клієнта (Хозяин_Key)"""
+        url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
         if client_guid:
-            params["$filter"] = f"Владелец_Key eq guid'{self._format_guid(client_guid)}'"
+            params["$filter"] = f"Хозяин_Key eq guid'{self._format_guid(client_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
         return []
 
     def get_analyses(self, pet_guid=None):
+        """Отримати аналізи за GUID тварини (Карточка_Key)"""
         url = self._build_url("Document_Анализы")
         params = {"$format": "json"}
         if pet_guid:
-            params["$filter"] = f"Питомец_Key eq guid'{self._format_guid(pet_guid)}'"
+            params["$filter"] = f"Карточка_Key eq guid'{self._format_guid(pet_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
