@@ -13,27 +13,16 @@ _analyses_cache = {
     "ttl": 30 * 60  # 30 хвилин
 }
 
-def get_cached_analyses(owner_guid):
-    logging.info(f"[ANALYSES] Запит для owner_guid={owner_guid}")
-    now = time.time()
-    if _analyses_cache["data"] is not None and (now - _analyses_cache["timestamp"]) < _analyses_cache["ttl"]:
-        logging.info("[ANALYSES] Повертаємо з кешу")
-        return _analyses_cache["data"]
-
-    data = enote.get_analyses_by_owner_via_pets(owner_guid)
-    logging.info(f"[ANALYSES] Отримано {len(data) if data else 0} записів")
-    if not data:
-        pets = enote.get_pets_by_owner(owner_guid)
-        if pets:
-            pet = pets[0]
-            logging.info(f"[ANALYSES] Тварина: {pet.get('Description')}, guid={pet['Ref_Key']}")
-            url = enote._build_url("Document_Анализы")
-            params = {"$format": "json", "$top": 3}
-            r = enote.session.get(url, params=params, timeout=90)
-            logging.info(f"[ANALYSES] ENOTE status: {r.status_code}, text: {r.text[:200]}")
-    _analyses_cache["data"] = data if data else []
-    _analyses_cache["timestamp"] = now
-    return _analyses_cache["data"]
+@client_bp.route('/api/my-analyses')
+def my_analyses():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    analyses = enote.get_analyses_by_owner_via_pets(user.enote_guid)
+    return jsonify(analyses if analyses else [])
 
 @client_bp.route('/dashboard')
 def dashboard():
