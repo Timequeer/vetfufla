@@ -160,7 +160,7 @@ from models import UserPhone
 
 
 # ---------- Додаткові номери телефонів ----------
-@api_bp.route('/my-phones', methods=['GET'])
+@api_bp.route('/api/my-phones', methods=['GET'])
 def get_my_phones():
     user_id = session.get("user_id")
     if not user_id:
@@ -172,7 +172,7 @@ def get_my_phones():
         "comment": p.comment
     } for p in phones])
 
-@api_bp.route('/my-phones', methods=['POST'])
+@api_bp.route('/api/my-phones', methods=['POST'])
 def add_phone():
     user_id = session.get("user_id")
     if not user_id:
@@ -198,7 +198,7 @@ def add_phone():
     db.session.commit()
     return jsonify({"id": new_phone.id, "phone": new_phone.phone, "comment": new_phone.comment}), 201
 
-@api_bp.route('/my-phones/<int:phone_id>', methods=['PUT'])
+@api_bp.route('/api/my-phones/<int:phone_id>', methods=['PUT'])
 def update_phone(phone_id):
     user_id = session.get("user_id")
     if not user_id:
@@ -214,7 +214,7 @@ def update_phone(phone_id):
     db.session.commit()
     return jsonify({"id": phone_entry.id, "phone": phone_entry.phone, "comment": phone_entry.comment})
 
-@api_bp.route('/my-phones/<int:phone_id>', methods=['DELETE'])
+@api_bp.route('/api/my-phones/<int:phone_id>', methods=['DELETE'])
 def delete_phone(phone_id):
     user_id = session.get("user_id")
     if not user_id:
