@@ -146,11 +146,11 @@ def verify_code():
         db.session.add(user)
         db.session.commit()
 
+      # Автоматическая привязка ENOTE GUID (если ещё не привязан)
     if not user.enote_guid:
-        # Синхронізація з ENOTE через пошук за номером телефону
-        client_guid = enote.get_client_by_phone(phone)
-        if client_guid:
-            user.enote_guid = client_guid
+        client = enote.find_client_by_phone(phone)
+        if client:
+            user.enote_guid = client['Ref_Key']
             db.session.commit()
             
     if auth_code.chat_id:
