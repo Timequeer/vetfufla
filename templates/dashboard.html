@@ -119,62 +119,36 @@
     </section>
 
     <!-- Мої аналізи -->
-    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої аналізи</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b text-gray-500 text-sm">
-              <th class="py-2 pr-4"><input type="checkbox" id="select-all" class="accent-red-600"></th>
-              <th class="py-2 pr-4">Назва</th>
-              <th class="py-2 pr-4">Тварина</th>
-              <th class="py-2 pr-4">Дата</th>
-              <th class="py-2">Формат</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="border-b">
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">Загальний аналіз крові</td>
-              <td class="py-3 pr-4">Льолік</td>
-              <td class="py-3 pr-4 text-gray-500">10.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
-            <tr class="border-b">
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">Біохімія крові</td>
-              <td class="py-3 pr-4">Нефтида</td>
-              <td class="py-3 pr-4 text-gray-500">08.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
-            <tr>
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">УЗД черевної порожнини</td>
-              <td class="py-3 pr-4">Льолік</td>
-              <td class="py-3 pr-4 text-gray-500">01.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <button onclick="openSendModal()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition-colors">Відправити обрані</button>
-        <span class="text-sm text-gray-500">обрано: <span id="selected-count">0</span></span>
-      </div>
-    </section>
-
+   <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої аналізи</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="border-b text-gray-500 text-sm">
+          <th class="py-2 pr-4"><input type="checkbox" id="select-all" class="accent-red-600"></th>
+          <th class="py-2 pr-4">Назва</th>
+          <th class="py-2 pr-4">Тварина</th>
+          <th class="py-2 pr-4">Дата</th>
+          <th class="py-2">Формат</th>
+        </tr>
+      </thead>
+      <tbody id="analysesBody">
+        <tr><td colspan="5" class="text-center text-gray-500 py-8">Завантаження...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+    <button onclick="openSendModal()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition-colors">Відправити обрані</button>
+    <span class="text-sm text-gray-500">обрано: <span id="selected-count">0</span></span>
+  </div>
+</section>
     <!-- Історія візитів -->
     <section id="history" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Історія візитів</h2>
-      <div class="space-y-3">
-        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-          <div><p class="font-semibold">Огляд хірурга</p><p class="text-sm text-gray-500">05.06.2025 – Лікар Петренко</p></div>
-        </div>
-        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-          <div><p class="font-semibold">Вакцинація (Нефтида)</p><p class="text-sm text-gray-500">12.05.2025 – Лікар Іваненко</p></div>
-        </div>
-      </div>
-    </section>
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">Історія візитів</h2>
+  <div id="historyContainer" class="space-y-3">
+    <div class="text-center text-gray-500 py-8">Завантаження...</div>
+  </div>
+</section>
 
     <!-- AI-помічник -->
     <section id="ai" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
@@ -342,6 +316,57 @@
   }
   window.addEventListener('scroll', highlightNav);
   window.addEventListener('load', highlightNav);
+
+  // --- Загрузка анализов ---
+fetch('/api/my-analyses')
+  .then(r => r.json())
+  .then(analyses => {
+    const tbody = document.getElementById('analysesBody');
+    if (!analyses || analyses.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+    } else {
+      tbody.innerHTML = analyses.map(a => `
+        <tr class="border-b">
+          <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
+          <td class="py-3 pr-4 text-gray-800">${a.Description || a.Назва || 'Аналіз'}</td>
+          <td class="py-3 pr-4">${a._pet_name || '—'}</td>
+          <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
+          <td class="py-3">PDF</td>
+        </tr>
+      `).join('');
+    }
+    updateCount(); // эта функция уже есть в твоём dashboard
+  });
+
+// --- Загрузка истории визитов ---
+fetch('/api/my-visits')
+  .then(r => r.json())
+  .then(visits => {
+    const container = document.getElementById('historyContainer');
+    if (!visits || visits.length === 0) {
+      container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
+    } else {
+      container.innerHTML = visits.map(v => `
+        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
+          <div>
+            <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
+            <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+  });
+
+// --- Загрузка ФИО ---
+fetch('/api/my-profile')
+  .then(r => r.json())
+  .then(profile => {
+    if (profile.full_name) {
+      const sidebarName = document.querySelector('#desktop-nav + p') || document.querySelector('.text-sm.text-gray-500.mt-1');
+      if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
+    }
+  });
+  
 </script>
 
 {% endblock %}
