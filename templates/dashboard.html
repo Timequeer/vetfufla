@@ -45,7 +45,11 @@
   <main class="flex-1 p-4 md:p-8 pt-4 md:pt-8">
     <!-- Профіль -->
     <section id="profile" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Профіль</h2>
+  <h2 class="text-2xl font-bold text-gray-800 mb-6">Профіль</h2>
+  <div id="profileContainer">
+    <div class="text-center text-gray-400 py-8">Завантаження...</div>
+  </div>
+</section>
 
       {% if user and user.full_name %}
       <div class="grid md:grid-cols-2 gap-4">
@@ -361,9 +365,34 @@ fetch('/api/my-visits')
 fetch('/api/my-profile')
   .then(r => r.json())
   .then(profile => {
+    const container = document.getElementById('profileContainer');
     if (profile.full_name) {
-      const sidebarName = document.querySelector('#desktop-nav + p') || document.querySelector('.text-sm.text-gray-500.mt-1');
+      const parts = profile.full_name.trim().split(' ');
+      const surname = parts[0] || '';
+      const name = parts[1] || '';
+      const patronymic = parts[2] || '';
+      container.innerHTML = `
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
+          <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
+          <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
+          <div class="md:col-span-2"><label class="text-sm text-gray-500">Номер телефону</label>
+            <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profile.phone || ''}</p></div>
+          <div><label class="text-sm text-gray-500">Email</label>
+            <input id="email" type="email" value="${profile.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
+        </div>
+        <div class="mt-6 flex gap-3 justify-end">
+          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
+          <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
+        </div>`;
+      // Оновлюємо сайдбар
+      const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
       if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
+    } else {
+      container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>{{ user.phone if user else '' }}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
+        <div class="mt-4 flex justify-center">
+          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
+        </div>`;
     }
   });
   
