@@ -34,17 +34,6 @@ def my_pets():
         return jsonify([])
     return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
-@client_bp.route('/api/my-analyses')
-def my_analyses():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    # Новий метод, який шукає через контактну особу
-    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
-
 @client_bp.route('/api/my-visits')
 def my_visits():
     user_id = session.get("user_id")
@@ -97,6 +86,47 @@ def clear_cache():
     global _analyses_cache
     _analyses_cache = {"data": None, "timestamp": 0, "ttl": 30 * 60}
     return jsonify({"message": "Кеш очищено"})
+
+@client_bp.route('/api/test-analyses')
+def test_analyses():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+
+    # Fallback логіка (тимчасова, для тесту)
+    contact = enote.get_contact_by_owner(user.enote_guid)
+    if not contact:
+        return jsonify({"error": "Контакт не знайдено"}), 404
+
+    contact_guid = contact['Ref_Key']
+    url = enote._build_url("Document_Анализы")
+    all_analyses = []
+    skip = 0
+    limit = 2000
+
+    while len(all_analyses) < limit:
+        batch = enote._get(url, {"$top": 100, "$skip": skip})
+        if not batch:
+            break
+        for a in batch:
+            if a.get('КонтактноеЛицо_Key') == contact_guid:
+                all_analyses.append(a)
+        skip += 100
+
+    # Додаємо клички тварин
+    pets = enote.get_pets_by_owner(user.enote_guid)
+    pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+    for a in all_analyses:
+        a['_pet_name'] = pet_names.get(a.get('Карточка_Key'), '')
+
+    all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+    return jsonify({
+        "total_loaded": len(all_analyses),
+        "analyses": all_analyses[:50]
+    })
 
 @client_bp.route('/settings')
 def settings():
