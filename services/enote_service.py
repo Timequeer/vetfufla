@@ -1,5 +1,6 @@
 import requests
 import os
+import time
 
 class EnoteClient:
     def __init__(self):
@@ -9,57 +10,52 @@ class EnoteClient:
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
         self.session = requests.Session()
         self.session.auth = (self.user, self.password)
+        # Кэш: ключ -> (время сохранения, данные)
+        self._cache = {}
+        self._cache_ttl = 600  # 10 минут
 
     def _build_url(self, endpoint):
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
-    def _format_guid(self, guid: str) -> str:
-        if not guid:
-            return guid
-        if '-' in guid:
-            return guid
-        if len(guid) == 32:
-            return f"{guid[:8]}-{guid[8:12]}-{guid[12:16]}-{guid[16:20]}-{guid[20:]}"
-        return guid
+    def _cached_get(self, cache_key, url, params=None):
+        """Вернуть данные из кэша или загрузить и закэшировать"""
+        now = time.time()
+        cached = self._cache.get(cache_key)
+        if cached and (now - cached[0]) < self._cache_ttl:
+            return cached[1]
+
+        if params is None:
+            params = {}
+        params.setdefault("$format", "json")
+        r = self.session.get(url, params=params)
+        if r.ok:
+            data = r.json().get('value', [])
+            self._cache[cache_key] = (now, data)
+            return data
+        # если ошибка — вернуть пустой список, но кэш не обновлять
+        return []
+
+    def clear_cache(self):
+        self._cache.clear()
 
     # ---------- Животные ----------
     def get_all_pets(self):
-        """Получить вообще все карточки животных (без фильтра)"""
         url = self._build_url("Catalog_Карточки")
-        params = {"$format": "json"}
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
-        return []
+        return self._cached_get("pets", url)
 
     # ---------- Анализы ----------
     def get_all_analyses(self):
-        """Получить все анализы (без фильтра)"""
         url = self._build_url("Document_Анализы")
-        params = {"$format": "json", "$top": 500
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
-        return []
+        return self._cached_get("analyses", url)
 
-    # ---------- Визиты (посещения) ----------
+    # ---------- Визиты ----------
     def get_all_visits(self):
-        """Получить все посещения (без фильтра)"""
         url = self._build_url("Document_Посещение")
-        params = {"$format": "json", "$top": 500}
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
-        return []
+        return self._cached_get("visits", url)
 
     # ---------- Контактные лица ----------
     def get_all_contacts(self):
-        """Получить все контактные лица"""
         url = self._build_url("Catalog_КонтактныеЛица")
-        params = {"$format": "json", "$top": 500}
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
-        return []
+        return self._cached_get("contacts", url)
 
 enote = EnoteClient()
