@@ -34,7 +34,12 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
+    # Спроба 1 – через контакт (швидко)
+    analyses = enote.get_analyses_by_owner(user.enote_guid)
+    if analyses:
+        return jsonify(analyses)
+    # Fallback – через тварин (з кешуванням після першого разу)
+    return jsonify(enote.get_analyses_by_owner_via_pets(user.enote_guid))
 
 @client_bp.route('/api/my-visits')
 def my_visits():
