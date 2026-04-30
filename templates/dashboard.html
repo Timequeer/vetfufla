@@ -320,40 +320,74 @@ fetch('/api/my-visits')
     }
   });
 
-// --- Загрузка ФИО ---
-fetch('/api/my-profile')
-  .then(r => r.json())
-  .then(profile => {
-    const container = document.getElementById('profileContainer');
-    if (profile.full_name) {
-      const parts = profile.full_name.trim().split(' ');
-      const surname = parts[0] || '';
-      const name = parts[1] || '';
-      const patronymic = parts[2] || '';
-      container.innerHTML = `
-        <div class="grid md:grid-cols-2 gap-4">
-          <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
-          <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
-          <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
-          <div class="md:col-span-2"><label class="text-sm text-gray-500">Номер телефону</label>
-            <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profile.phone || ''}</p></div>
-          <div><label class="text-sm text-gray-500">Email</label>
-            <input id="email" type="email" value="${profile.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
+// --- Загрузка профілю та списку телефонів ---
+Promise.all([
+  fetch('/api/my-profile').then(r => r.json()),
+  fetch('/api/my-phones').then(r => r.json()).catch(() => []) // якщо API немає, повертаємо пустий масив
+]).then(([profile, phones]) => {
+  const container = document.getElementById('profileContainer');
+  if (profile.full_name) {
+    const parts = profile.full_name.trim().split(' ');
+    const surname = parts[0] || '';
+    const name = parts[1] || '';
+    const patronymic = parts[2] || '';
+    
+    // Генеруємо HTML для списку номерів
+    let phonesHtml = '';
+    if (phones && phones.length > 0) {
+      phonesHtml = `
+        <div class="mt-4">
+          <label class="text-sm text-gray-500 block mb-2">Контактні номери</label>
+          <div class="space-y-2">
+            ${phones.map(p => `
+              <div class="flex items-center gap-2 bg-gray-100 p-2 rounded-lg">
+                <span class="font-semibold text-gray-800">${p.phone}</span>
+                ${p.comment ? `<span class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">${p.comment}</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
         </div>
-        <div class="mt-6 flex gap-3 justify-end">
-          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
-          <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
-        </div>`;
-      // Оновлюємо сайдбар
-      const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
-      if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
+      `;
     } else {
-      container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>{{ user.phone if user else '' }}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
-        <div class="mt-4 flex justify-center">
-          <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
-        </div>`;
+      phonesHtml = `
+        <div class="mt-4">
+          <label class="text-sm text-gray-500 block mb-2">Контактні номери</label>
+          <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
+            <p>Немає додаткових номерів. Зверніться до адміністратора, щоб додати їх.</p>
+          </div>
+        </div>
+      `;
     }
-  });
+
+    container.innerHTML = `
+      <div class="grid md:grid-cols-2 gap-4">
+        <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
+        <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
+        <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
+        <div class="md:col-span-2">
+          <label class="text-sm text-gray-500">Основний номер телефону</label>
+          <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profile.phone || ''}</p>
+        </div>
+        ${phonesHtml}
+        <div><label class="text-sm text-gray-500">Email</label>
+          <input id="email" type="email" value="${profile.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
+        </div>
+      </div>
+      <div class="mt-6 flex gap-3 justify-end">
+        <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
+        <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
+      </div>`;
+    
+    // Оновлюємо сайдбар
+    const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
+    if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
+  } else {
+    container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>${profile.phone || ''}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
+      <div class="mt-4 flex justify-center">
+        <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
+      </div>`;
+  }
+});
 
   fetch('/api/my-appointments')
   .then(r => r.json())
