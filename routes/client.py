@@ -6,11 +6,10 @@ import logging
 
 client_bp = Blueprint('client', __name__)
 
-# Простий кеш у пам'яті для аналізів (на майбутнє)
 _analyses_cache = {
     "data": None,
     "timestamp": 0,
-    "ttl": 30 * 60  # 30 хвилин
+    "ttl": 30 * 60
 }
 
 @client_bp.route('/dashboard')
@@ -42,30 +41,8 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
+    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
 
-    contact = enote.get_contact_by_owner(user.enote_guid)
-    if not contact:
-        return jsonify({"error": "Контакт не знайдено"}), 404
-
-    contact_guid = contact['Ref_Key']
-    url = enote._build_url("Document_Анализы")
-    
-    # Завантажуємо перші 100 аналізів без фільтрації
-    sample_batch = enote._get(url, {"$top": 100})
-    
-    # Шукаємо збіги за нашим контактом
-    matched = [a for a in sample_batch if a.get('КонтактноеЛицо_Key') == contact_guid]
-    
-    # Беремо перші 3 аналізи для прикладу
-    sample_analyses = sample_batch[:3] if sample_batch else []
-    
-    return jsonify({
-        "contact_guid": contact_guid,
-        "total_loaded": len(sample_batch),
-        "matched_count": len(matched),
-        "sample_keys": [a.get('КонтактноеЛицо_Key') for a in sample_analyses],
-        "sample_desc": [a.get('Description','') for a in sample_analyses]
-    })
 @client_bp.route('/api/my-visits')
 def my_visits():
     user_id = session.get("user_id")
