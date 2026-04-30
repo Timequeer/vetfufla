@@ -15,6 +15,10 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"] = Config.DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {   
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+}
 app.secret_key = Config.SECRET_KEY
 
 db.init_app(app)
