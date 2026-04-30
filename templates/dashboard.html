@@ -389,7 +389,6 @@
 
   loadProfileAndPhones();
 
-  // ========== ЗАПИС НА ПРИЙОМ (ПРАВИЛЬНЕ ВІДОБРАЖЕННЯ) ==========
   fetch('/api/my-appointments')
     .then(r => r.json())
     .then(appointments => {
@@ -405,9 +404,7 @@
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
-      const past = [];
-      const today = [];
-      const future = [];
+      const past = [], today = [], future = [];
 
       appointments.forEach(a => {
         const date = new Date(a.ЗаписьНаДату);
@@ -417,16 +414,15 @@
       });
 
       let html = '';
-
-      if (today.length > 0) {
+      if (today.length) {
         html += '<h4 class="font-medium text-red-600 mb-2">Сьогодні</h4>';
         html += renderAppointments(today);
       }
-      if (future.length > 0) {
+      if (future.length) {
         html += '<h4 class="font-medium text-green-600 mb-2 mt-4">Заплановані</h4>';
         html += renderAppointments(future);
       }
-      if (past.length > 0) {
+      if (past.length) {
         html += '<h4 class="font-medium text-gray-400 mb-2 mt-4">Минулі</h4>';
         html += renderAppointments(past, true);
       }
