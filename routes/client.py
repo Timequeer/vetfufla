@@ -55,16 +55,32 @@ def my_visits():
     all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
     return jsonify(all_visits)
 
-@client_bp.route('/api/my-appointments')
-def my_appointments():
+@client_bp.route('/test-appointments')
+def test_appointments():
+    from flask import session
     user_id = session.get("user_id")
     if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
+        return jsonify({"error": "No session"}), 401
     user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    appointments = enote.get_appointments_by_owner(user.enote_guid)
-    return jsonify(appointments if appointments else [])
+    guid = user.enote_guid
+    enote.clear_cache()  # скидаємо кеш перед тестом
+
+    url = enote._build_url("Task_ПредварительнаяЗапись")
+    params = {
+        "$filter": f"Хозяин_Key eq guid'{guid}'",
+        "$orderby": "ЗаписьНаДату desc",
+        "$top": 20,
+        "$format": "json"
+    }
+    try:
+        r = enote.session.get(url, params=params, timeout=25)
+        return jsonify({
+            "status": r.status_code,
+            "url": r.url,          # перевірте, чи правильно закодований URL
+            "body": r.json()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @client_bp.route('/api/my-profile')
 def my_profile():
