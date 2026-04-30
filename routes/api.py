@@ -4,21 +4,12 @@ from services.ai_service import ask_gpt
 from config import Config
 from datetime import datetime
 from models import AuthCode
-from services.enote_service import ENoteClient
-from config import Config
-
-# Ініціалізація клієнта ENOTE
-enote_client = ENoteClient(
-    base_url=Config.ENOTE_BASE_URL,
-    login=Config.ENOTE_LOGIN,
-    password=Config.ENOTE_PASSWORD
-)
-
+from services.enote_service import enote  # <-- новый импорт (без ENoteClient!)
 
 api_bp = Blueprint('api', __name__)
 
 
-# Список тварин
+# Список тварин (тепер через enote, з новими методами)
 @api_bp.route('/api/pets', methods=['GET'])
 def get_pets():
     user_id = session.get("user_id")
@@ -28,12 +19,14 @@ def get_pets():
     if not user.enote_guid:
         return jsonify({"error": "Клієнт не прив'язаний до Енота"}), 400
     if user.is_doctor:
-        pets = enote_client.get_pets_by_doctor_guid(user.enote_guid)
+        # Для лікаря поки що повертаємо порожній список (метод get_pets_by_doctor_guid не реалізовано)
+        return jsonify([])
     else:
-        pets = enote_client.get_pets_by_owner_guid(user.enote_guid)
+        pets = enote.get_pets_by_owner(user.enote_guid)
     return jsonify(pets)
 
-# Записи на прийом
+
+# Записи на прийом (тимчасово – через візити)
 @api_bp.route('/api/appointments', methods=['GET'])
 def get_appointments():
     user_id = session.get("user_id")
@@ -41,33 +34,35 @@ def get_appointments():
         return jsonify({"error": "Не авторизовано"}), 401
     user = User.query.get(user_id)
     if user.is_doctor:
-        appointments = enote_client.get_appointments(doctor_guid=user.enote_guid)
+        # Для лікаря поки що повертаємо порожній список
+        return jsonify([])
     else:
-        pets = enote_client.get_pets_by_owner_guid(user.enote_guid)
-        appointments = []
-        for pet in pets:
-            appointments.extend(enote_client.get_appointments(pet_guid=pet["guid"]))
-    return jsonify(appointments)
+        # Використовуємо візити замість записів
+        visits = enote.get_visits_by_owner(user.enote_guid)
+        return jsonify(visits)
 
-# Результати аналізів
+
+# Результати аналізів (тимчасово – через get_analyses_by_pet)
 @api_bp.route('/api/lab-results/<pet_guid>', methods=['GET'])
 def get_lab_results(pet_guid):
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Не авторизовано"}), 401
-    results = enote_client.get_lab_results(pet_guid)
-    return jsonify(results)
+    analyses = enote.get_analyses_by_pet(pet_guid)
+    return jsonify(analyses)
 
-# Прививки
+
+# Прививки (поки що не реалізовано в новому сервісі – повертаємо порожній список)
 @api_bp.route('/api/vaccinations/<pet_guid>', methods=['GET'])
 def get_vaccinations(pet_guid):
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Не авторизовано"}), 401
-    vax = enote_client.get_vaccinations(pet_guid)
-    return jsonify(vax)
+    # TODO: додати метод get_vaccinations_by_pet у EnoteClient
+    return jsonify([])
 
-# AI-підтримка
+
+# AI-підтримка (без змін)
 @api_bp.route('/api/ai-support', methods=['POST'])
 def ai_support():
     user_id = session.get("user_id")
@@ -84,7 +79,8 @@ def ai_support():
     answer = ask_gpt(question, user_role=user_role)
     return jsonify({"answer": answer})
 
-# Налаштування сповіщень
+
+# Налаштування сповіщень (без змін)
 @api_bp.route('/api/notifications/settings', methods=['GET', 'POST'])
 def notification_settings():
     user_id = session.get("user_id")
@@ -108,6 +104,7 @@ def notification_settings():
         db.session.add(setting)
         db.session.commit()
         return jsonify({"message": "Збережено"}), 201
+
 
 # ---------- Telegram прив'язка ----------
 @api_bp.route('/api/telegram/status', methods=['GET'])
@@ -133,7 +130,6 @@ def bind_telegram():
     if not code:
         return jsonify({"error": "Введіть код"}), 400
     
-    # Шукаємо код у таблиці AuthCode (де phone – це chat_id)
     auth_code = AuthCode.query.filter_by(code=code, used=False).first()
     if not auth_code or auth_code.expires_at < datetime.utcnow():
         return jsonify({"error": "Невірний або прострочений код"}), 401
@@ -159,7 +155,9 @@ def bind_telegram():
     
     return jsonify({"message": "Telegram успішно прив'язано!"}), 200
 
+
 from models import UserPhone
+
 
 # ---------- Додаткові номери телефонів ----------
 @api_bp.route('/my-phones', methods=['GET'])
@@ -184,7 +182,6 @@ def add_phone():
     comment = data.get("comment", "")
     if not phone:
         return jsonify({"error": "Номер телефону обов'язковий"}), 400
-    # Нормалізація номера (можна використати вже існуючу функцію з auth.py, але я продублюю)
     import re
     def normalize_phone(p):
         digits = re.sub(r'\D', '', p)
