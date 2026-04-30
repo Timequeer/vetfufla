@@ -21,9 +21,36 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    analyses = enote.get_analyses_by_owner_via_pets(user.enote_guid)
-    return jsonify(analyses if analyses else [])
 
+    from services.enote_service import enote
+    pets = enote.get_pets_by_owner(user.enote_guid)
+    if not pets:
+        return jsonify({"debug": "немає тварин"})
+
+    # Примусово викликаємо метод, який заповнює _all_analyses
+    analyses = enote.get_analyses_by_owner_via_pets(user.enote_guid)
+
+    # Отримуємо доступ до внутрішнього списку
+    all_analyses = getattr(enote, '_all_analyses', None)
+    total_loaded = len(all_analyses) if all_analyses else 0
+
+    first_pet = pets[0]
+    sample_analyses = []
+    if all_analyses:
+        # Беремо перші 3 аналізи для прикладу
+        sample_analyses = all_analyses[:3]
+
+    return jsonify({
+        "owner_guid": user.enote_guid,
+        "total_pets": len(pets),
+        "first_pet_ref": first_pet.get('Ref_Key'),
+        "first_pet_name": first_pet.get('Description'),
+        "total_analyses_loaded": total_loaded,
+        "sample_analyses_keys": [a.get('Карточка_Key') for a in sample_analyses],
+        "sample_analyses_desc": [a.get('Description','') for a in sample_analyses],
+        "found_analyses_count": len(analyses) if analyses else 0
+    })
+    
 @client_bp.route('/dashboard')
 def dashboard():
     if "user_id" not in session:
