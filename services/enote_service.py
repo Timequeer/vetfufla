@@ -66,37 +66,31 @@ class EnoteClient:
             })
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
-    # ---------- Аналізи (тимчасово порожньо, основний метод буде замінено після тесту) ----------
+    # ---------- Аналізи (ФІНАЛЬНИЙ РОБОЧИЙ МЕТОД) ----------
     def get_analyses_by_owner(self, owner_guid):
-        """Мінімальний безпечний fallback – завантажує до 5 аналізів"""
+        """Завантажує перші 200 аналізів і фільтрує за тваринами власника"""
         def fetch():
-            contact = self.get_contact_by_owner(owner_guid)
-            if not contact:
+            pets = self.get_pets_by_owner(owner_guid)
+            if not pets:
                 return []
-            contact_guid = contact['Ref_Key']
+            pet_guids = {p['Ref_Key'] for p in pets}
+            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+
             url = self._build_url("Document_Анализы")
-            found = []
-            skip = 0
-            # Завантажуємо сторінки по 20, поки не знайдемо 5 аналізів або не пройдемо 300 записів
-            while len(found) < 5 and skip < 300:
-                batch = self._get(url, {"$top": 20, "$skip": skip})
+            all_analyses = []
+            # Завантажуємо лише 2 сторінки по 100 записів
+            for skip in [0, 100]:
+                batch = self._get(url, {"$top": 100, "$skip": skip})
                 if not batch:
                     break
                 for a in batch:
-                    if a.get('КонтактноеЛицо_Key') == contact_guid:
-                        found.append(a)
-                        if len(found) >= 5:
-                            break
-                skip += 20
-            # Додаємо клички тварин
-            if found:
-                pets = self.get_pets_by_owner(owner_guid)
-                pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
-                for a in found:
-                    a['_pet_name'] = pet_names.get(a.get('Карточка_Key'), '')
-                found.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return found
-        return self._cached(f"analyses_owner_light:{owner_guid}", fetch)
+                    if a.get('Карточка_Key') in pet_guids:
+                        a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
+                        all_analyses.append(a)
+
+            all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+            return all_analyses[:50]   # максимум 50 останніх
+        return self._cached(f"analyses_owner_final:{owner_guid}", fetch)
 
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
