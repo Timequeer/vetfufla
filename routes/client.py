@@ -65,7 +65,7 @@ def my_appointments():
         return jsonify([])
     appointments = enote.get_appointments_by_owner(user.enote_guid)
     return jsonify(appointments if appointments else [])
-    
+
 @client_bp.route('/api/my-profile')
 def my_profile():
     user_id = session.get("user_id")
