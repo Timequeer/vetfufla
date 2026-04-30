@@ -19,6 +19,16 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.phone}>"
 
+class UserPhone(db.Model):
+    __tablename__ = "user_phones"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    comment = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("additional_phones", lazy=True))
+
 class UserPet(db.Model):
     __tablename__ = "user_pets"
     id = db.Column(db.Integer, primary_key=True)
