@@ -130,19 +130,9 @@
         <h2 class="text-2xl font-bold text-gray-800">Мої тварини</h2>
         <button class="text-red-600 hover:text-red-700 text-sm font-medium">+ Додати</button>
       </div>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">🐶</div>
-            <div>
-              <h3 class="font-semibold text-gray-800">Барон</h3>
-              <p class="text-xs text-gray-500">Німецька вівчарка, 4 роки</p>
-            </div>
-          </div>
-          <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
-        </div>
+      <div id="animalsContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="col-span-full text-center text-gray-500 py-8">Завантаження...</div>
       </div>
-      <p class="text-xs text-gray-400 mt-4">Дані про тварин будуть синхронізовані з E-Note</p>
     </section>
 
     <!-- Запис на прийом -->
@@ -178,7 +168,7 @@
     </section>
 
     <!-- Мої аналізи -->
-    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+       <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої аналізи</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -191,28 +181,8 @@
               <th class="py-2">Формат</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="border-b">
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">Загальний аналіз крові</td>
-              <td class="py-3 pr-4">Барон</td>
-              <td class="py-3 pr-4 text-gray-500">10.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
-            <tr class="border-b">
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">Біохімія крові</td>
-              <td class="py-3 pr-4">Мурка</td>
-              <td class="py-3 pr-4 text-gray-500">08.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
-            <tr>
-              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
-              <td class="py-3 pr-4 text-gray-800">УЗД черевної порожнини</td>
-              <td class="py-3 pr-4">Барон</td>
-              <td class="py-3 pr-4 text-gray-500">01.07.2025</td>
-              <td class="py-3">PDF</td>
-            </tr>
+          <tbody id="analysesBody">
+            <tr><td colspan="5" class="text-center text-gray-500 py-8">Завантаження...</td></tr>
           </tbody>
         </table>
       </div>
@@ -311,26 +281,38 @@
 
 <script>
   // Лічильник обраних аналізів
-  const checkboxes = document.querySelectorAll('.analysis-checkbox');
+    // Лічильник обраних аналізів (з делегуванням)
+  // Лічильник обраних аналізів (з делегуванням)
+  const tbodyAnalyses = document.getElementById('analysesBody');
   const selectAll = document.getElementById('select-all');
   const countSpan = document.getElementById('selected-count');
 
   function updateCount() {
+    const checkboxes = document.querySelectorAll('.analysis-checkbox');
     const checked = document.querySelectorAll('.analysis-checkbox:checked').length;
     if (countSpan) countSpan.textContent = checked;
     if (selectAll) {
-      selectAll.checked = checkboxes.length === checked && checkboxes.length > 0;
+      selectAll.checked = checkboxes.length > 0 && checkboxes.length === checked;
     }
   }
 
-  checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
-  if (selectAll) {
-    selectAll.addEventListener('change', function() {
-      checkboxes.forEach(cb => cb.checked = this.checked);
-      updateCount();
+  // Делегування подій на таблиці
+  if (tbodyAnalyses) {
+    tbodyAnalyses.addEventListener('change', function(e) {
+      if (e.target.classList.contains('analysis-checkbox')) {
+        updateCount();
+      }
     });
   }
 
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      document.querySelectorAll('.analysis-checkbox').forEach(cb => {
+        cb.checked = this.checked;
+      });
+      updateCount();
+    });
+  }
   function openSendModal() {
     const modal = document.getElementById('send-modal');
     if (modal) {
@@ -405,6 +387,52 @@
 
   window.addEventListener('scroll', highlightNav);
   window.addEventListener('load', highlightNav);
+    // --- Завантаження тварин ---
+  fetch('/api/my-pets')
+    .then(r => r.json())
+    .then(pets => {
+      const container = document.getElementById('animalsContainer');
+      if (!pets || pets.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Немає тварин</div>';
+      } else {
+        container.innerHTML = pets.map(p => `
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+                ${p.Вид === 'Собака' ? '🐶' : p.Вид === 'Кішка' ? '🐱' : '🐾'}
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-800">${p.Кличка || 'Без імені'}</h3>
+                <p class="text-xs text-gray-500">${p.Порода || ''}, ${p.Возраст || ''} р.</p>
+              </div>
+            </div>
+            <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
+          </div>
+        `).join('');
+      }
+    });
+
+  // --- Завантаження аналізів ---
+  fetch('/api/my-analyses')
+    .then(r => r.json())
+    .then(analyses => {
+      const tbody = document.getElementById('analysesBody');
+      if (!analyses || analyses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+      } else {
+        tbody.innerHTML = analyses.map(a => `
+          <tr class="border-b">
+            <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
+            <td class="py-3 pr-4 text-gray-800">${a.Назва || 'Аналіз'}</td>
+            <td class="py-3 pr-4">${a.Питомец || '—'}</td>
+            <td class="py-3 pr-4 text-gray-500">${a.Дата || ''}</td>
+            <td class="py-3">PDF</td>
+          </tr>
+        `).join('');
+      }
+      // Переприв'язуємо лічильник
+      updateCount();
+    });
 </script>
 
 {% endblock %}
