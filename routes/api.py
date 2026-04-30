@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify, session
 from models import db, User, NotificationSetting
-from services.enote_service import ENoteClient
 from services.ai_service import ask_gpt
 from config import Config
 from datetime import datetime
 from models import AuthCode
+from services.enote_service import enote
 
 api_bp = Blueprint('api', __name__)
 
