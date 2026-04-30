@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+from urllib.parse import quote
 
 class EnoteClient:
     def __init__(self):
@@ -13,8 +14,9 @@ class EnoteClient:
         self._cache = {}
         self._cache_ttl = 600
 
-    def _build_url(self, endpoint):
-        return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
+def _build_url(self, endpoint):
+    encoded = quote(endpoint, safe='')
+    return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{encoded}"
 
     def _get(self, url, params):
         params.setdefault("$format", "json")
