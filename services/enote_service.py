@@ -33,10 +33,7 @@ class EnoteClient:
         return []
 
     def get_client_by_phone(self, phone):
-        """Знаходить GUID клієнта за номером телефону через регістр контактної інформації"""
-        # Нормалізуємо телефон (тільки цифри, без +)
         digits = ''.join(filter(str.isdigit, phone))
-        # Пробуємо різні формати
         for fmt_phone in [digits, f'+{digits}', f'38{digits}' if not digits.startswith('38') else digits]:
             url = self._build_url("InformationRegister_КонтактнаяИнформация")
             params = {
@@ -47,14 +44,12 @@ class EnoteClient:
             if r.ok:
                 data = r.json().get('value', [])
                 if data:
-                    obj_ref = data[0].get('Объект')  # це може бути рядок з GUID клієнта
+                    obj_ref = data[0].get('Объект')
                     if obj_ref:
-                        # витягаємо GUID з рядка (формат "guid'xxxx-...'")
                         import re
                         match = re.search(r"guid'([a-f0-9\-]+)'", obj_ref)
                         if match:
                             return match.group(1)
-            # якщо не спрацювало, спробуємо інший фільтр
             params["$filter"] = f"Поле1 eq '{fmt_phone}' and Тип eq 'Телефон'"
             r = self.session.get(url, params=params)
             if r.ok:
@@ -68,11 +63,10 @@ class EnoteClient:
                             return match.group(1)
         return None
 
-       def get_pets(self, client_guid=None):
+    def get_pets(self, client_guid=None):
         url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
         if client_guid:
-            # Правильный формат: просто GUID в кавычках без 'guid'
             params["$filter"] = f"Хозяин_Key eq '{self._format_guid(client_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
@@ -83,7 +77,7 @@ class EnoteClient:
         url = self._build_url("Document_Анализы")
         params = {"$format": "json"}
         if pet_guid:
-            params["$filter"] = f"Карточка_Key eq guid'{self._format_guid(pet_guid)}'"
+            params["$filter"] = f"Карточка_Key eq '{self._format_guid(pet_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
@@ -94,7 +88,7 @@ class EnoteClient:
         params = {"$format": "json"}
         filters = []
         if doctor_guid:
-            filters.append(f"Врач_Key eq guid'{self._format_guid(doctor_guid)}'")
+            filters.append(f"Врач_Key eq '{self._format_guid(doctor_guid)}'")
         if date_from and date_to:
             filters.append(f"ДатаДата gt {date_from} and ДатаДата lt {date_to}")
         if filters:
