@@ -84,14 +84,14 @@ class EnoteClient:
         return self._cached(f"analyses:{pet_guid}", fetch)
 
     def get_analyses_by_owner(self, owner_guid):
-    url = self._build_url("Document_Анализы")
-    def fetch():
-        return self._get(url, {
-            "$filter": f"КонтактноеЛицо_Key eq guid'{owner_guid}'",
-            "$orderby": "Date desc",
-            "$top": 20
-        })
-    return self._cached(f"analyses_owner:{owner_guid}", fetch)
+        url = self._build_url("Document_Анализы")
+        def fetch():
+            return self._get(url, {
+                "$filter": f"КонтактноеЛицо_Key eq guid'{owner_guid}'",
+                "$orderby": "Date desc",
+                "$top": 20
+            })
+        return self._cached(f"analyses_owner:{owner_guid}", fetch)
 
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
@@ -116,7 +116,6 @@ class EnoteClient:
             skip += 100
 
     def get_client_by_phone(self, phone):
-        """Шукає клієнта в ENOTE по номеру телефону, повертає Ref_Key або None"""
         digits = ''.join(filter(str.isdigit, phone))
         if digits.startswith('380'):
             digits = digits[2:]
