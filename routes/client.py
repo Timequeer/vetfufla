@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, jsonify
 from models import User
+from services.enote_service import enote
 
 client_bp = Blueprint('client', __name__)
 
@@ -13,7 +14,8 @@ def dashboard():
     if user.is_doctor:
         return redirect("/doctor")
     return render_template("dashboard.html", user=user)
-    
+
+# ---------- Животные (уже работает) ----------
 @client_bp.route('/api/my-pets')
 def my_pets():
     user_id = session.get("user_id")
@@ -22,33 +24,11 @@ def my_pets():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    from services.enote_service import enote
-    # Получаем всех животных (без фильтра)
-    all_pets = enote.get_pets()
-    if not all_pets:
-        return jsonify([])
-    # Фильтруем по GUID клиента на стороне Python
-    my_pets = [pet for pet in all_pets if pet.get('Хозяин_Key') == user.enote_guid]
+    all_pets = enote.get_all_pets()
+    my_pets = [p for p in all_pets if p.get('Хозяин_Key') == user.enote_guid]
     return jsonify(my_pets)
 
-@client_bp.route('/api/debug-enote')
-def debug_enote():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify({"error": "Немає enote_guid"}), 400
-    from services.enote_service import enote
-    url = enote._build_url("Catalog_Карточки")
-    params = {"$format": "json", "$filter": f"Хозяин_Key eq guid'{user.enote_guid}'"}
-    r = enote.session.get(url, params=params)
-    return jsonify({
-        "status_code": r.status_code,
-        "ok": r.ok,
-        "text": r.text[:500]  # перші 500 символів відповіді
-    })
-
+# ---------- Анализы ----------
 @client_bp.route('/api/my-analyses')
 def my_analyses():
     user_id = session.get("user_id")
@@ -57,19 +37,62 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    from services.enote_service import enote
-    pets = enote.get_pets(client_guid=user.enote_guid)
-    if not pets:
+    all_pets = enote.get_all_pets()
+    my_pet_guids = [p['Ref_Key'] for p in all_pets if p.get('Хозяин_Key') == user.enote_guid]
+    if not my_pet_guids:
         return jsonify([])
-    all_analyses = []
-    for pet in pets:
-        analyses = enote.get_analyses(pet_guid=pet['Ref_Key'])
-        if analyses:
-            all_analyses.extend(analyses)
-    return jsonify(all_analyses)
+    all_analyses = enote.get_all_analyses()
+    my_analyses = [a for a in all_analyses if a.get('Карточка_Key') in my_pet_guids]
+    # добавим имя питомца для красивого отображения
+    pet_names = {p['Ref_Key']: p.get('Description', '') for p in all_pets}
+    for a in my_analyses:
+        a['_pet_name'] = pet_names.get(a.get('Карточка_Key'), '')
+    return jsonify(my_analyses)
+
+# ---------- История визитов ----------
+@client_bp.route('/api/my-visits')
+def my_visits():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    all_pets = enote.get_all_pets()
+    my_pet_guids = [p['Ref_Key'] for p in all_pets if p.get('Хозяин_Key') == user.enote_guid]
+    if not my_pet_guids:
+        return jsonify([])
+    all_visits = enote.get_all_visits()
+    my_visits = [v for v in all_visits if v.get('Карточка_Key') in my_pet_guids]
+    pet_names = {p['Ref_Key']: p.get('Description', '') for p in all_pets}
+    for v in my_visits:
+        v['_pet_name'] = pet_names.get(v.get('Карточка_Key'), '')
+    return jsonify(my_visits)
+
+# ---------- Профиль (ФИО) ----------
+@client_bp.route('/api/my-profile')
+def my_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify({})
+    contacts = enote.get_all_contacts()
+    owner_contacts = [c for c in contacts if c.get('ОбъектВладелец') == user.enote_guid]
+    if owner_contacts:
+        c = owner_contacts[0]
+        return jsonify({
+            "full_name": f"{c.get('Фамилия', '')} {c.get('Имя', '')}".strip(),
+            "phone": user.phone,
+            "email": user.email
+        })
+    return jsonify({"phone": user.phone, "email": user.email})
 
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
+        return redirect("/login")
+    return render_template("settings.html")
         return redirect("/login")
     return render_template("settings.html")
