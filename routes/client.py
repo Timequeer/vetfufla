@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect
+from flask import Blueprint, render_template, session, redirect, jsonify
 from models import User
 
 client_bp = Blueprint('client', __name__)
