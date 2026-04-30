@@ -67,14 +67,14 @@ class EnoteClient:
         return self._cached(f"visits:{owner_guid}", fetch)
 
     def get_visits_by_pet(self, pet_guid):
-    url = self._build_url("Document_Посещение")
-    def fetch():
-        return self._get(url, {
-            "$filter": f"Карточка_Key eq guid'{pet_guid}'",
-            "$orderby": "Date desc",
-            "$top": 10   # ← тільки 10 останніх на тварину
-        })
-    return self._cached(f"visits_pet:{pet_guid}", fetch)
+        url = self._build_url("Document_Посещение")
+        def fetch():
+            return self._get(url, {
+                "$filter": f"Карточка_Key eq guid'{pet_guid}'",
+                "$orderby": "Date desc",
+                "$top": 10
+            })
+        return self._cached(f"visits_pet:{pet_guid}", fetch)
 
     # ---------- Аналізи ----------
     def get_analyses_by_pet(self, pet_guid):
