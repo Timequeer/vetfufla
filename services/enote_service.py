@@ -106,26 +106,26 @@ class EnoteClient:
                 return []
             pet_guids = {p['Ref_Key'] for p in pets}
             pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
-            url = self._build_url("Document_Анализы")
-            all_analyses = []
-            page_size = 50
-            max_pages = 20
-            skip = 0
-            for _ in range(max_pages):
-                batch = self._get(url, {"$top": page_size, "$skip": skip})
-                if not batch:
-                    break
-                for a in batch:
-                    if a.get('Карточка_Key') in pet_guids:
-                        a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
-                        all_analyses.append(a)
-                skip += page_size
-                if all_analyses and skip >= 200:
-                    break
-            all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return all_analyses
+            # Завантажуємо ВСІ аналізи (один раз, кешується в self._all_analyses)
+            if not hasattr(self, '_all_analyses'):
+                self._all_analyses = []
+                url = self._build_url("Document_Анализы")
+                skip = 0
+                while True:
+                    batch = self._get(url, {"$top": 200, "$skip": skip})
+                    if not batch:
+                        break
+                    self._all_analyses.extend(batch)
+                    skip += 200
+            # Фільтруємо
+            result = []
+            for a in self._all_analyses:
+                if a.get('Карточка_Key') in pet_guids:
+                    a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
+                    result.append(a)
+            result.sort(key=lambda x: x.get('Date', ''), reverse=True)
+            return result
         return self._cached(f"analyses_owner_pets:{owner_guid}", fetch)
-
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
