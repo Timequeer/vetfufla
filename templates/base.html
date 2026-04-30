@@ -161,6 +161,18 @@
     .animate-fade-in {
         animation: fadeIn 0.3s ease-out;
     }
+
+    /* Безпечні зони для iPhone (notch) */
+    body {
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    padding-top: calc(env(safe-area-inset-top) + 60px);
+    }
+
+header#mainHeader {
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    }
 </style>
 
 <script>
