@@ -107,4 +107,15 @@ class EnoteClient:
                     return c
             skip += 100
 
+   # ---------- Записи на прийом ----------
+   def get_appointments_by_owner(self, owner_guid):
+       url = self._build_url("Task_ПредварительнаяЗапись")
+       def fetch():
+         return self._get(url, {
+            "$filter": f"Хозяин_Key eq guid'{owner_guid}'",
+            "$orderby": "ЗаписьНаДату desc",
+            "$top": 20
+         })
+         return self._cached(f"appointments:{owner_guid}", fetch)
+
 enote = EnoteClient()
