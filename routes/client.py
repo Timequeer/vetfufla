@@ -53,9 +53,18 @@ def my_visits():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
-    # Один запит замість N запитів по кожній тварині
-    visits = enote.get_visits_by_owner(user.enote_guid)
-    return jsonify(visits)
+    
+    pets = enote.get_pets_by_owner(user.enote_guid)  # вже закешовано
+    all_visits = []
+    for pet in pets:
+        visits = enote.get_visits_by_pet(pet['Ref_Key'])
+        for v in visits:
+            v['_pet_name'] = pet.get('Description', '')
+            all_visits.append(v)
+    
+    # Сортуємо по даті, найновіші першими
+    all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
+    return jsonify(all_visits)
 
 @client_bp.route('/api/my-profile')
 def my_profile():
