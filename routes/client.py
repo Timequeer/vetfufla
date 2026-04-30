@@ -54,27 +54,29 @@ def my_analyses():
 
     from services.enote_service import enote
     pets = enote.get_pets_by_owner(user.enote_guid)
-    all_analyses = []
+    
+    if not pets:
+        return jsonify({"debug": "немає тварин"})
 
-    for pet in pets:
-        url = enote._build_url("Document_Анализы")
-        params = {
-            "$format": "json",
-            "$filter": f"Карточка_Key eq guid'{pet['Ref_Key']}'",
-            "$top": 20
-        }
-        try:
-            r = enote.session.get(url, params=params, timeout=30)
-            if r.ok:
-                analyses = r.json().get('value', [])
-                for a in analyses:
-                    a['_pet_name'] = pet.get('Description', '')
-                    all_analyses.extend(analyses)
-        except Exception as e:
-            print(f"Помилка отримання аналізів для {pet.get('Description')}: {e}")
-
-    all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
-    return jsonify(all_analyses)
+    pet = pets[0]  # Беремо першу тварину (Льолік)
+    url = enote._build_url("Document_Анализы")
+    params = {
+        "$format": "json",
+        "$filter": f"Карточка_Key eq guid'{pet['Ref_Key']}'",
+        "$top": 3
+    }
+    
+    try:
+        r = enote.session.get(url, params=params, timeout=30)
+        # Повертаємо сиру відповідь, щоб побачити, що саме прийшло
+        return jsonify({
+            "pet_guid": pet['Ref_Key'],
+            "pet_name": pet.get('Description'),
+            "status_code": r.status_code,
+            "response_text": r.text[:500]  # перші 500 символів
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @client_bp.route('/api/my-visits')
 def my_visits():
