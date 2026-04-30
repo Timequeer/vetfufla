@@ -104,6 +104,12 @@ def clear_cache():
     enote.clear_cache()
     return jsonify({"message": "Кеш очищено"})
 
+@client_bp.route('/test-auth')
+def test_auth():
+    url = enote._build_url("Catalog_Карточки")
+    r = enote.session.get(url, params={"$top": 1, "$format": "json"})
+    return jsonify({"status": r.status_code, "body": r.text[:200]})
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
