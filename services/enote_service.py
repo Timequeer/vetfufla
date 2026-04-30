@@ -87,15 +87,20 @@ class EnoteClient:
         return self._cached(f"analyses:{pet_guid}", fetch)
 
     def get_analyses_by_owner(self, owner_guid):
-        pets = self.get_pets_by_owner(owner_guid)
-        all_analyses = []
-        for pet in pets:
-            analyses = self.get_analyses_by_pet(pet['Ref_Key'])
-            for a in analyses:
-                a['_pet_name'] = pet.get('Description', '')
-                all_analyses.append(a)
-        all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
-        return all_analyses
+        # Отримуємо контактну особу власника
+        contact = self.get_contact_by_owner(owner_guid)
+        if not contact:
+            # Якщо немає контакту – повертаємо порожній список
+            return []
+        contact_guid = contact['Ref_Key']
+        url = self._build_url("Document_Анализы")
+        def fetch():
+            return self._get(url, {
+                "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
+                "$orderby": "Date desc",
+                "$top": 20
+            })
+        return self._cached(f"analyses_owner:{owner_guid}", fetch)
 
     # ---------- Записи на приём ----------
     def get_appointments_by_owner(self, owner_guid):
