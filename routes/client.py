@@ -83,6 +83,17 @@ def my_profile():
         })
     return jsonify({"phone": user.phone, "email": user.email})
 
+@client_bp.route('/api/my-appointments')
+def my_appointments():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    appointments = enote.get_appointments_by_owner(user.enote_guid)
+    return jsonify(appointments)
+
 @client_bp.route('/api/clear-cache')
 def clear_cache():
     enote.clear_cache()
