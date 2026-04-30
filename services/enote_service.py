@@ -103,7 +103,7 @@ class EnoteClient:
             })
         return self._cached(f"analyses_owner:{owner_guid}", fetch)
 
-    def get_analyses_by_owner_via_pets(self, owner_guid):
+     def get_analyses_by_owner_via_pets(self, owner_guid):
         def fetch():
             pets = self.get_pets_by_owner(owner_guid)
             if not pets:
@@ -112,20 +112,20 @@ class EnoteClient:
             pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
             url = self._build_url("Document_Анализы")
             all_analyses = []
+            page_size = 50
+            max_pages = 20  # максимум 20 сторінок (1000 записів)
             skip = 0
-            # Проходимо по всіх аналізах один раз, шукаємо збіги з нашими тваринами
-            while True:
-                batch = self._get(url, {"$top": 50, "$skip": skip})
+            for _ in range(max_pages):
+                batch = self._get(url, {"$top": page_size, "$skip": skip})
                 if not batch:
                     break
                 for a in batch:
-                    pet_key = a.get('Карточка_Key')
-                    if pet_key in pet_guids:
-                        a['_pet_name'] = pet_names.get(pet_key, '')
+                    if a.get('Карточка_Key') in pet_guids:
+                        a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
                         all_analyses.append(a)
-                skip += 50
-                # Якщо вже знайшли достатньо, припиняємо
-                if all_analyses and skip > 200:
+                skip += page_size
+                # Якщо знайшли хоч щось і пройшли трохи, можна зупинитись
+                if all_analyses and skip >= 200:
                     break
             all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
             return all_analyses
