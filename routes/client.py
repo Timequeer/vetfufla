@@ -45,16 +45,6 @@ def my_pets():
         return jsonify([])
     return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
-@client_bp.route('/api/my-analyses')
-def my_analyses():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    return jsonify(get_cached_analyses(user.enote_guid))
-
 @client_bp.route('/api/my-visits')
 def my_visits():
     user_id = session.get("user_id")
