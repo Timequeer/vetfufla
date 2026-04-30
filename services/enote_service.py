@@ -72,7 +72,7 @@ class EnoteClient:
         url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
         if client_guid:
-            params["$filter"] = f"Хозяин_Key eq guid'{self._format_guid(client_guid)}'"
+            params["$filter"] = f"Хозяин_Key eq '{self._format_guid(client_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
