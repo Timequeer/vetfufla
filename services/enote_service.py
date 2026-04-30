@@ -105,4 +105,20 @@ class EnoteClient:
                     return c
             skip += 100
 
+    def find_client_by_phone(self, phone):
+    """Шукає клієнта в ENOTE по номеру телефону"""
+    # Нормалізуємо: залишаємо тільки цифри без +38
+    digits = ''.join(filter(str.isdigit, phone))
+    if digits.startswith('38'):
+        digits = digits[2:]  # 0685442567
+    
+    url = self._build_url("Catalog_Клиенты")
+    data = self._get(url, {
+        "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
+        "$top": 1
+    })
+    if data:
+        return data[0]
+    return None
+
 enote = EnoteClient()
