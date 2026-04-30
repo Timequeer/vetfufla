@@ -14,7 +14,6 @@ class EnoteClient:
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
     def _format_guid(self, guid: str) -> str:
-        """Перетворює GUID без дефісів (32 символи) у стандартний UUID (36 символів)"""
         if not guid:
             return guid
         if '-' in guid:
@@ -33,8 +32,43 @@ class EnoteClient:
             return r.json().get('value', [])
         return []
 
+    def get_client_by_phone(self, phone):
+        """Знаходить GUID клієнта за номером телефону через регістр контактної інформації"""
+        # Нормалізуємо телефон (тільки цифри, без +)
+        digits = ''.join(filter(str.isdigit, phone))
+        # Пробуємо різні формати
+        for fmt_phone in [digits, f'+{digits}', f'38{digits}' if not digits.startswith('38') else digits]:
+            url = self._build_url("InformationRegister_КонтактнаяИнформация")
+            params = {
+                "$format": "json",
+                "$filter": f"Представление eq '{fmt_phone}' and Тип eq 'Телефон'"
+            }
+            r = self.session.get(url, params=params)
+            if r.ok:
+                data = r.json().get('value', [])
+                if data:
+                    obj_ref = data[0].get('Объект')  # це може бути рядок з GUID клієнта
+                    if obj_ref:
+                        # витягаємо GUID з рядка (формат "guid'xxxx-...'")
+                        import re
+                        match = re.search(r"guid'([a-f0-9\-]+)'", obj_ref)
+                        if match:
+                            return match.group(1)
+            # якщо не спрацювало, спробуємо інший фільтр
+            params["$filter"] = f"Поле1 eq '{fmt_phone}' and Тип eq 'Телефон'"
+            r = self.session.get(url, params=params)
+            if r.ok:
+                data = r.json().get('value', [])
+                if data:
+                    obj_ref = data[0].get('Объект')
+                    if obj_ref:
+                        import re
+                        match = re.search(r"guid'([a-f0-9\-]+)'", obj_ref)
+                        if match:
+                            return match.group(1)
+        return None
+
     def get_pets(self, client_guid=None):
-        """Отримати тварин за GUID клієнта (Хозяин_Key)"""
         url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
         if client_guid:
@@ -45,7 +79,6 @@ class EnoteClient:
         return []
 
     def get_analyses(self, pet_guid=None):
-        """Отримати аналізи за GUID тварини (Карточка_Key)"""
         url = self._build_url("Document_Анализы")
         params = {"$format": "json"}
         if pet_guid:
