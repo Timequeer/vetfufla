@@ -55,32 +55,16 @@ def my_visits():
     all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
     return jsonify(all_visits)
 
-def get_appointments_by_owner(self, owner_guid):
-    pets = self.get_pets_by_owner(owner_guid)
-    all_appointments = []
-    for pet in pets:
-        pet_key = pet.get('Ref_Key')
-        if not pet_key:
-            continue
-        url = self._build_url("Task_ПредварительнаяЗапись")
-        params = {
-            "$filter": f"Карточка_Key eq guid'{pet_key}'",
-            "$orderby": "ЗаписьНаДату desc",
-            "$top": 20,
-            "$format": "json"
-        }
-        try:
-            r = self.session.get(url, params=params, timeout=25)
-            if r.ok:
-                data = r.json().get('value', [])
-                for a in data:
-                    a['_pet_name'] = pet.get('Description', '')
-                    all_appointments.append(a)
-        except Exception:
-            pass
-    all_appointments.sort(key=lambda x: x.get('ЗаписьНаДату', ''), reverse=True)
-    self._cache[f"appointments:{owner_guid}"] = (time.time(), all_appointments)
-    return all_appointments
+@client_bp.route('/api/my-appointments')
+def my_appointments():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    appointments = enote.get_appointments_by_owner(user.enote_guid)
+    return jsonify(appointments if appointments else [])
     
 @client_bp.route('/api/my-profile')
 def my_profile():
