@@ -124,6 +124,11 @@
   </main>
 </div>
 
+<div class="text-xs text-gray-400 mb-4">
+  🕒 Оновлено: <span id="lastRefresh">—</span>
+  <button onclick="location.reload()" class="ml-2 text-red-600 underline hover:text-red-800">Оновити зараз</button>
+</div>
+
 <!-- Нижня мобільна навігація -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around items-center py-2 shadow-lg">
   <a href="#profile" class="mobile-nav-link flex flex-col items-center text-red-600" data-section="profile">
@@ -453,6 +458,140 @@
         }).join('');
       }
     });
+
+    // ========== LOCAL STORAGE CACHE ==========
+  function saveToCache(key, data) {
+    try {
+      localStorage.setItem('vetfuture_' + key, JSON.stringify({
+        timestamp: Date.now(),
+        data: data
+      }));
+    } catch(e) {}
+  }
+
+  function loadFromCache(key) {
+    try {
+      const raw = localStorage.getItem('vetfuture_' + key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Кеш живе 30 хвилин
+      if (Date.now() - parsed.timestamp > 30 * 60 * 1000) {
+        localStorage.removeItem('vetfuture_' + key);
+        return null;
+      }
+      return parsed.data;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  // Рендерить тварин (використовується і для кеша, і для живих даних)
+  function renderPets(pets) {
+    const container = document.getElementById('animalsContainer');
+    if (!pets || pets.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Немає тварин</div>';
+    } else {
+      container.innerHTML = pets.map(p => `
+        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+              ${p.Пол === 'Female' ? '🐱' : '🐶'}
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">${p.Description || 'Без імені'}</h3>
+              <p class="text-xs text-gray-500">${p.ДатаРождения ? new Date(p.ДатаРождения).toLocaleDateString('uk-UA') : ''}</p>
+            </div>
+          </div>
+          <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Рендерить аналізи
+  function renderAnalyses(analyses) {
+    const tbody = document.getElementById('analysesBody');
+    if (!analyses || analyses.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+    } else {
+      tbody.innerHTML = analyses.map(a => `
+        <tr class="border-b">
+          <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
+          <td class="py-3 pr-4 text-gray-800">${a.Description || a.Назва || 'Аналіз'}</td>
+          <td class="py-3 pr-4">${a._pet_name || '—'}</td>
+          <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
+          <td class="py-3">PDF</td>
+        </tr>
+      `).join('');
+    }
+    updateCount();   // оновлює лічильник вибраних
+  }
+
+  // Рендерить візити
+  function renderVisits(visits) {
+    const container = document.getElementById('historyContainer');
+    if (!visits || visits.length === 0) {
+      container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
+    } else {
+      container.innerHTML = visits.map(v => `
+        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
+          <div>
+            <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
+            <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Фонове завантаження з оновленням кеша
+  function fetchAndCache(url, cacheKey, renderFn) {
+    return fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (data && (Array.isArray(data) ? data.length > 0 : true)) {
+          saveToCache(cacheKey, data);
+        }
+        renderFn(data);
+        updateLastRefreshTime();
+      })
+      .catch(err => console.warn('Помилка оновлення ' + cacheKey, err));
+  }
+
+  // Показує час останнього оновлення
+  function updateLastRefreshTime() {
+    const el = document.getElementById('lastRefresh');
+    if (el) el.textContent = new Date().toLocaleTimeString('uk-UA');
+  }
+
+  // ========== ІНІЦІАЛІЗАЦІЯ З КЕШЕМ ==========
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. Спочатку показуємо кешовані дані (якщо є)
+    const cachedPets = loadFromCache('pets');
+    if (cachedPets) renderPets(cachedPets);
+
+    const cachedAnalyses = loadFromCache('analyses');
+    if (cachedAnalyses) renderAnalyses(cachedAnalyses);
+
+    const cachedVisits = loadFromCache('visits');
+    if (cachedVisits) renderVisits(cachedVisits);
+
+    // Показуємо час кеша (якщо він є)
+    const raw = localStorage.getItem('vetfuture_pets');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const el = document.getElementById('lastRefresh');
+        if (el) el.textContent = new Date(parsed.timestamp).toLocaleTimeString('uk-UA');
+      } catch(e) {}
+    }
+
+    // 2. Потім фоново оновлюємо всі дані
+    fetchAndCache('/api/my-pets', 'pets', renderPets);
+    fetchAndCache('/api/my-analyses', 'analyses', renderAnalyses);
+    fetchAndCache('/api/my-visits', 'visits', renderVisits);
+  });
+  
 </script>
 
 {% endblock %}
