@@ -44,30 +44,22 @@ def my_pets():
         return jsonify([])
     return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
-@client_bp.route('/api/my-analyses')
-def my_analyses():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    # Використовуємо кешовану функцію
-    return jsonify(get_cached_analyses(user.enote_guid))
-
-    from services.enote_service import enote
-    pets = enote.get_pets_by_owner(user.enote_guid)
-    
-    if not pets:
-        return jsonify({"debug": "немає тварин"})
-
-    pet = pets[0]  # Беремо першу тварину (Льолік)
-    url = enote._build_url("Document_Анализы")
-    params = {
-        "$format": "json",
-        "$filter": f"Карточка_Key eq guid'{pet['Ref_Key']}'",
-        "$top": 3
-    }
+def get_cached_analyses(owner_guid):
+    import logging
+    logging.info(f"[ANALYSES] Запит для owner_guid={owner_guid}")
+    data = enote.get_analyses_by_owner_via_pets(owner_guid)
+    logging.info(f"[ANALYSES] Отримано {len(data) if data else 0} записів")
+    if not data:
+        # Спробуємо отримати хоча б одну тварину та подивитись, чи є аналізи
+        pets = enote.get_pets_by_owner(owner_guid)
+        if pets:
+            pet = pets[0]
+            logging.info(f"[ANALYSES] Тварина: {pet.get('Description')}, guid={pet['Ref_Key']}")
+            url = enote._build_url("Document_Анализы")
+            params = {"$format": "json", "$top": 3}
+            r = enote.session.get(url, params=params, timeout=90)
+            logging.info(f"[ANALYSES] ENOTE status: {r.status_code}, text: {r.text[:200]}")
+    return data if data else []
     
     try:
         r = enote.session.get(url, params=params, timeout=30)
