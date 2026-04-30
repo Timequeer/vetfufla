@@ -174,7 +174,7 @@
 </div>
 
 <script>
-  // --- Завантаження тварин (реальні дані) ---
+  // ========== ЗАВАНТАЖЕННЯ ТВАРИН ==========
   fetch('/api/my-pets')
     .then(r => r.json())
     .then(pets => {
@@ -193,16 +193,53 @@
                 <p class="text-xs text-gray-500">${p.ДатаРождения ? new Date(p.ДатаРождения).toLocaleDateString('uk-UA') : ''}</p>
               </div>
             </div>
-            <div class="text-sm text-gray-600 space-y-1">
-              <p><span class="text-gray-400">Вид:</span> ${p.Пол === 'Male' ? 'Пес' : 'Кішка'}</p>
-            </div>
             <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
           </div>
         `).join('');
       }
     });
 
-  // --- Модальні вікна ---
+  // ========== ЗАВАНТАЖЕННЯ АНАЛІЗІВ ==========
+  fetch('/api/my-analyses')
+    .then(r => r.json())
+    .then(analyses => {
+      const tbody = document.getElementById('analysesBody');
+      if (!analyses || analyses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+      } else {
+        tbody.innerHTML = analyses.map(a => `
+          <tr class="border-b">
+            <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
+            <td class="py-3 pr-4 text-gray-800">${a.Description || a.Назва || 'Аналіз'}</td>
+            <td class="py-3 pr-4">${a._pet_name || '—'}</td>
+            <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
+            <td class="py-3">PDF</td>
+          </tr>
+        `).join('');
+      }
+      updateCount();   // оновлює лічильник вибраних
+    });
+
+  // ========== ЗАВАНТАЖЕННЯ ІСТОРІЇ ВІЗИТІВ ==========
+  fetch('/api/my-visits')
+    .then(r => r.json())
+    .then(visits => {
+      const container = document.getElementById('historyContainer');
+      if (!visits || visits.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
+      } else {
+        container.innerHTML = visits.map(v => `
+          <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
+            <div>
+              <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
+              <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+    });
+
+  // ========== МОДАЛЬНІ ВІКНА ==========
   function openSendModal() {
     document.getElementById('send-modal').classList.remove('hidden');
     document.getElementById('send-modal').classList.add('flex');
@@ -228,21 +265,19 @@
     if (e.target.id === 'calendar-modal') closeCalendarModal();
   });
 
-  // --- Лічильник аналізів (делегування) ---
-  const tbodyAnalyses = document.getElementById('analysesBody');
-  const selectAll = document.getElementById('select-all');
-  const countSpan = document.getElementById('selected-count');
+  // ========== ЛІЧИЛЬНИК АНАЛІЗІВ ==========
   function updateCount() {
     const checkboxes = document.querySelectorAll('.analysis-checkbox');
     const checked = document.querySelectorAll('.analysis-checkbox:checked').length;
+    const countSpan = document.getElementById('selected-count');
+    const selectAll = document.getElementById('select-all');
     if (countSpan) countSpan.textContent = checked;
     if (selectAll) selectAll.checked = checkboxes.length > 0 && checkboxes.length === checked;
   }
-  if (tbodyAnalyses) {
-    tbodyAnalyses.addEventListener('change', function(e) {
-      if (e.target.classList.contains('analysis-checkbox')) updateCount();
-    });
-  }
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('analysis-checkbox')) updateCount();
+  });
+  const selectAll = document.getElementById('select-all');
   if (selectAll) {
     selectAll.addEventListener('change', function() {
       document.querySelectorAll('.analysis-checkbox').forEach(cb => cb.checked = this.checked);
@@ -250,7 +285,7 @@
     });
   }
 
-  // --- Підсвічування активної навігації ---
+  // ========== ПІДСВІЧУВАННЯ АКТИВНОЇ НАВІГАЦІЇ ==========
   function highlightNav() {
     const sections = document.querySelectorAll('section[id]');
     const desktopLinks = document.querySelectorAll('#desktop-nav .nav-link');
@@ -280,255 +315,144 @@
   window.addEventListener('scroll', highlightNav);
   window.addEventListener('load', highlightNav);
 
-  // --- Загрузка анализов ---
-fetch('/api/my-analyses')
-  .then(r => r.json())
-  .then(analyses => {
-    const tbody = document.getElementById('analysesBody');
-    if (!analyses || analyses.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
-    } else {
-      tbody.innerHTML = analyses.map(a => `
-        <tr class="border-b">
-          <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
-          <td class="py-3 pr-4 text-gray-800">${a.Description || a.Назва || 'Аналіз'}</td>
-          <td class="py-3 pr-4">${a._pet_name || '—'}</td>
-          <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
-          <td class="py-3">PDF</td>
-        </tr>
-      `).join('');
-    }
-    updateCount(); // эта функция уже есть в твоём dashboard
-  });
-
-// --- Загрузка истории визитов ---
-fetch('/api/my-visits')
-  .then(r => r.json())
-  .then(visits => {
-    const container = document.getElementById('historyContainer');
-    if (!visits || visits.length === 0) {
-      container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
-    } else {
-      container.innerHTML = visits.map(v => `
-        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-          <div>
-            <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
-            <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-  });
-
-// --- Загрузка профілю та списку телефонів ---
-// --- Загрузка профілю та списку телефонів (з можливістю додавання/редагування) ---
-function renderPhones(phones, containerId) {
-    const phonesDiv = document.getElementById(containerId);
-    if (!phonesDiv) return;
-    if (phones.length === 0) {
-        phonesDiv.innerHTML = '<div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">Немає додаткових номерів. Додайте перший.</div>';
-        return;
-    }
-    phonesDiv.innerHTML = phones.map(p => `
-        <div class="flex items-center justify-between gap-2 bg-gray-100 p-2 rounded-lg" data-id="${p.id}">
-            <div class="flex items-center gap-2 flex-1">
-                <span class="font-semibold text-gray-800 phone-number">${p.phone}</span>
-                <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full phone-comment">${p.comment || ''}</span>
-            </div>
-            <div class="flex gap-1">
-                <button class="edit-phone-btn text-blue-600 hover:text-blue-800 text-sm px-2" title="Редагувати">✏️</button>
-                <button class="delete-phone-btn text-red-600 hover:text-red-800 text-sm px-2" title="Видалити">🗑️</button>
-            </div>
-        </div>
-    `).join('');
-
-    // Обробники для кнопок редагування/видалення
-    document.querySelectorAll(`#${containerId} .edit-phone-btn`).forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const div = btn.closest('[data-id]');
-            const id = div.dataset.id;
-            const currentPhone = div.querySelector('.phone-number').innerText;
-            const currentComment = div.querySelector('.phone-comment').innerText;
-            const newPhone = prompt('Введіть номер телефону:', currentPhone);
-            if (newPhone === null) return;
-            const newComment = prompt('Коментар (наприклад, робочий, особистий):', currentComment);
-            try {
-                const res = await fetch(`/api/my-phones/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: newPhone, comment: newComment || '' })
-                });
-                if (res.ok) {
-                    loadProfileAndPhones(); // перезавантажити
-                } else {
-                    alert('Помилка оновлення');
-                }
-            } catch (err) { alert('Помилка'); }
-        });
-    });
-    document.querySelectorAll(`#${containerId} .delete-phone-btn`).forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const div = btn.closest('[data-id]');
-            const id = div.dataset.id;
-            if (!confirm('Видалити номер?')) return;
-            try {
-                const res = await fetch(`/api/my-phones/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    loadProfileAndPhones();
-                } else {
-                    alert('Помилка видалення');
-                }
-            } catch (err) { alert('Помилка'); }
-        });
-    });
-}
-
-async function loadProfileAndPhones() {
+  // ========== ЗАВАНТАЖЕННЯ ПРОФІЛЮ (ПІБ, ТЕЛЕФОНИ) ==========
+  async function loadProfileAndPhones() {
     try {
-        const [profile, phones] = await Promise.all([
-            fetch('/api/my-profile').then(r => r.json()),
-            fetch('/api/my-phones').then(r => r.json()).catch(() => [])
-        ]);
-        const container = document.getElementById('profileContainer');
-        if (profile.full_name) {
-            const parts = profile.full_name.trim().split(' ');
-            const surname = parts[0] || '';
-            const name = parts[1] || '';
-            const patronymic = parts[2] || '';
+      const [profileRes, phonesRes] = await Promise.all([
+        fetch('/api/my-profile').then(r => r.json()),
+        fetch('/api/my-phones').then(r => r.json()).catch(() => [])
+      ]);
+      const container = document.getElementById('profileContainer');
+      if (!container) return;
 
-            // Генеруємо HTML для списку номерів з можливістю додавання
-            let phonesHtml = `
-                <div class="mt-4">
-                    <label class="text-sm text-gray-500 block mb-2">Додаткові номери</label>
-                    <div id="additionalPhonesList" class="space-y-2"></div>
-                    <div class="mt-2 flex gap-2">
-                        <input type="text" id="newPhone" placeholder="+380XXXXXXXXX" class="flex-1 p-2 border border-gray-200 rounded-lg text-sm">
-                        <input type="text" id="newPhoneComment" placeholder="Коментар" class="flex-1 p-2 border border-gray-200 rounded-lg text-sm">
-                        <button id="addPhoneBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Додати</button>
-                    </div>
-                </div>
-            `;
+      if (profileRes.full_name) {
+        const parts = profileRes.full_name.trim().split(' ');
+        const surname = parts[0] || '';
+        const name = parts[1] || '';
+        const patronymic = parts[2] || '';
 
-            container.innerHTML = `
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
-                    <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
-                    <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
-                    <div class="md:col-span-2"><label class="text-sm text-gray-500">Основний номер телефону</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profile.phone || ''}</p></div>
-                    ${phonesHtml}
-                    <div><label class="text-sm text-gray-500">Email</label><input id="email" type="email" value="${profile.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
-                </div>
-                <div class="mt-6 flex gap-3 justify-end">
-                    <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
-                    <button id="saveProfileBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
-                </div>`;
-            
-            // Рендер списку додаткових номерів
-            renderPhones(phones, 'additionalPhonesList');
+        container.innerHTML = `
+          <div class="grid md:grid-cols-2 gap-4">
+            <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
+            <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
+            <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
+            <div class="md:col-span-2"><label class="text-sm text-gray-500">Основний номер телефону</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profileRes.phone || ''}</p></div>
+            <div id="additionalPhonesSection" class="md:col-span-2 mt-4">
+              <label class="text-sm text-gray-500">Додаткові номери</label>
+              <div id="additionalPhonesList" class="space-y-2"></div>
+              <div class="mt-2 flex gap-2">
+                <input id="newPhone" placeholder="+380XXXXXXXXX" class="flex-1 p-2 border border-gray-200 rounded-lg text-sm">
+                <input id="newPhoneComment" placeholder="Коментар" class="flex-1 p-2 border border-gray-200 rounded-lg text-sm">
+                <button id="addPhoneBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Додати</button>
+              </div>
+            </div>
+            <div><label class="text-sm text-gray-500">Email</label><input id="email" type="email" value="${profileRes.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
+          </div>
+          <div class="mt-6 flex gap-3 justify-end">
+            <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
+            <button id="saveProfileBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
+          </div>`;
 
-            // Додавання нового номера
-            document.getElementById('addPhoneBtn').onclick = async () => {
-                const phone = document.getElementById('newPhone').value.trim();
-                const comment = document.getElementById('newPhoneComment').value.trim();
-                if (!phone) {
-                    alert('Введіть номер телефону');
-                    return;
-                }
-                try {
-                    const res = await fetch('/api/my-phones', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone, comment })
-                    });
-                    if (res.ok) {
-                        document.getElementById('newPhone').value = '';
-                        document.getElementById('newPhoneComment').value = '';
-                        loadProfileAndPhones();
-                    } else {
-                        alert('Помилка додавання');
-                    }
-                } catch (err) { alert('Помилка'); }
+        // Додаткові номери
+        const phonesList = document.getElementById('additionalPhonesList');
+        if (phonesRes && phonesRes.length > 0) {
+          phonesList.innerHTML = phonesRes.map(p => `
+            <div class="flex items-center justify-between bg-gray-100 p-2 rounded-lg" data-id="${p.id}">
+              <span class="font-semibold">${p.phone}</span>
+              <div class="flex gap-2">
+                <button class="editPhoneBtn text-blue-600 text-sm">✏️</button>
+                <button class="deletePhoneBtn text-red-600 text-sm">🗑️</button>
+              </div>
+            </div>`).join('');
+          // Вішаємо події
+          document.querySelectorAll('.editPhoneBtn').forEach(btn => {
+            btn.onclick = async () => {
+              const div = btn.closest('[data-id]');
+              const id = div.dataset.id;
+              const newPhone = prompt('Новий номер:', div.querySelector('span').innerText);
+              if (!newPhone) return;
+              await fetch(`/api/my-phones/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: newPhone})
+              });
+              loadProfileAndPhones();
             };
-
-            // Збереження email (можна реалізувати)
-            document.getElementById('saveProfileBtn').onclick = async () => {
-                const email = document.getElementById('email').value.trim();
-                const res = await fetch('/api/my-profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                if (res.ok) alert('Email збережено');
-                else alert('Помилка');
+          });
+          document.querySelectorAll('.deletePhoneBtn').forEach(btn => {
+            btn.onclick = async () => {
+              const div = btn.closest('[data-id]');
+              if (!confirm('Видалити номер?')) return;
+              await fetch(`/api/my-phones/${div.dataset.id}`, {method: 'DELETE'});
+              loadProfileAndPhones();
             };
-
-            const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
-            if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
+          });
         } else {
-            container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>${profile.phone || ''}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
-                <div class="mt-4 flex justify-center"><a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a></div>`;
+          phonesList.innerHTML = '<div class="text-sm text-gray-500">Немає додаткових номерів</div>';
         }
+
+        document.getElementById('addPhoneBtn').onclick = async () => {
+          const phone = document.getElementById('newPhone').value.trim();
+          const comment = document.getElementById('newPhoneComment').value.trim();
+          if (!phone) return alert('Введіть номер');
+          await fetch('/api/my-phones', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone, comment})
+          });
+          loadProfileAndPhones();
+        };
+
+        document.getElementById('saveProfileBtn').onclick = async () => {
+          const email = document.getElementById('email').value.trim();
+          await fetch('/api/my-profile', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email})
+          });
+          alert('Збережено');
+        };
+
+        // Оновлюємо сайдбар
+        const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
+        if (sidebarName) sidebarName.textContent = 'Кабінет ' + profileRes.full_name;
+
+      } else {
+        container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>${profileRes.phone || ''}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
+          <div class="mt-4 flex justify-center">
+            <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
+          </div>`;
+      }
     } catch (err) {
-        console.error(err);
-        document.getElementById('profileContainer').innerHTML = '<p class="text-red-500 text-center">Помилка завантаження профілю</p>';
+      console.error('Помилка завантаження профілю:', err);
     }
-}
-
-// Викликаємо при завантаженні сторінки
-loadProfileAndPhones();
-
-    container.innerHTML = `
-      <div class="grid md:grid-cols-2 gap-4">
-        <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${surname}</p></div>
-        <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${name}</p></div>
-        <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${patronymic}</p></div>
-        <div class="md:col-span-2">
-          <label class="text-sm text-gray-500">Основний номер телефону</label>
-          <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">${profile.phone || ''}</p>
-        </div>
-        ${phonesHtml}
-        <div><label class="text-sm text-gray-500">Email</label>
-          <input id="email" type="email" value="${profile.email || ''}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
-        </div>
-      </div>
-      <div class="mt-6 flex gap-3 justify-end">
-        <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
-        <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
-      </div>`;
-    
-    // Оновлюємо сайдбар
-    const sidebarName = document.querySelector('.text-sm.text-gray-500.mt-1');
-    if (sidebarName) sidebarName.textContent = 'Кабінет ' + profile.full_name;
-  } else {
-    container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>${profile.phone || ''}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
-      <div class="mt-4 flex justify-center">
-        <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium">Вийти</a>
-      </div>`;
   }
-});
 
+  loadProfileAndPhones();
+
+  // ========== ЗАВАНТАЖЕННЯ ЗАПИСІВ НА ПРИЙОМ ==========
   fetch('/api/my-appointments')
-  .then(r => r.json())
-  .then(appointments => {
-    const list = document.getElementById('appointmentsList');
-    const future = appointments.filter(a => !a.Executed && a.ЗаписьНаДату);
-    if (!future || future.length === 0) {
-      list.innerHTML = '<p class="text-gray-400 text-sm">Немає запланованих записів</p>';
-    } else {
-      list.innerHTML = future.map(a => {
-        const date = new Date(a.ЗаписьНаДату);
-        const dateStr = date.toLocaleDateString('uk-UA') + ', ' + date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
-        const badge = a.Подтверждено
-          ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Підтверджено</span>'
-          : '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Очікує</span>';
-        return `<div class="flex justify-between items-center border-b pb-2">
-          <div><p class="font-medium">${a.Кличка || 'Тварина'}</p><p class="text-sm text-gray-500">${dateStr}</p></div>
-          ${badge}
-        </div>`;
-      }).join('');
-    }
-  });
-  
+    .then(r => r.json())
+    .then(appointments => {
+      const list = document.getElementById('appointmentsList');
+      if (!list) return;
+      const future = appointments.filter(a => !a.Executed && a.ЗаписьНаДату);
+      if (!future || future.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm">Немає запланованих записів</p>';
+      } else {
+        list.innerHTML = future.map(a => {
+          const date = new Date(a.ЗаписьНаДату);
+          const dateStr = date.toLocaleDateString('uk-UA') + ', ' + date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+          const badge = a.Подтверждено
+            ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Підтверджено</span>'
+            : '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Очікує</span>';
+          return `<div class="flex justify-between items-center border-b pb-2">
+            <div><p class="font-medium">${a.Кличка || 'Тварина'}</p><p class="text-sm text-gray-500">${dateStr}</p></div>
+            ${badge}
+          </div>`;
+        }).join('');
+      }
+    });
 </script>
 
 {% endblock %}
