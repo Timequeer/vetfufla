@@ -68,7 +68,7 @@ class EnoteClient:
 
     # ---------- Аналізи (ФІНАЛЬНИЙ РОБОЧИЙ МЕТОД) ----------
     def get_analyses_by_owner(self, owner_guid):
-        """Завантажує перші 200 аналізів і фільтрує за тваринами власника"""
+        """Завантажує до 500 аналізів (5 сторінок по 100) і фільтрує за тваринами"""
         def fetch():
             pets = self.get_pets_by_owner(owner_guid)
             if not pets:
@@ -78,8 +78,8 @@ class EnoteClient:
 
             url = self._build_url("Document_Анализы")
             all_analyses = []
-            # Завантажуємо лише 2 сторінки по 100 записів
-            for skip in [0, 100]:
+            # Завантажуємо 5 сторінок по 100 записів
+            for skip in [0, 100, 200, 300, 400]:
                 batch = self._get(url, {"$top": 100, "$skip": skip})
                 if not batch:
                     break
@@ -89,7 +89,7 @@ class EnoteClient:
                         all_analyses.append(a)
 
             all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return all_analyses[:50]   # максимум 50 останніх
+            return all_analyses[:50]
         return self._cached(f"analyses_owner_final:{owner_guid}", fetch)
 
     # ---------- Записи на прийом ----------
