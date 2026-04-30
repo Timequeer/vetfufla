@@ -36,7 +36,7 @@ class EnoteClient:
     def get_all_analyses(self):
         """Получить все анализы (без фильтра)"""
         url = self._build_url("Document_Анализы")
-        params = {"$format": "json"}
+        params = {"$format": "json", "$top": 500
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
@@ -46,7 +46,7 @@ class EnoteClient:
     def get_all_visits(self):
         """Получить все посещения (без фильтра)"""
         url = self._build_url("Document_Посещение")
-        params = {"$format": "json"}
+        params = {"$format": "json", "$top": 500}
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
@@ -56,7 +56,7 @@ class EnoteClient:
     def get_all_contacts(self):
         """Получить все контактные лица"""
         url = self._build_url("Catalog_КонтактныеЛица")
-        params = {"$format": "json"}
+        params = {"$format": "json", "$top": 500}
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
