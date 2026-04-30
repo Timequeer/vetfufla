@@ -39,21 +39,39 @@ class EnoteClient:
         self._cache.clear()
 
     # ---------- Тварини ----------
-    def get_pets_by_owner(self, owner_guid):
-        url = self._build_url("Catalog_Карточки")
+    def get_analyses_by_owner(self, owner_guid):
+        """Завантажує аналізи з ENOTE та фільтрує локально (fallback)"""
         def fetch():
-            data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
-            if data:
-                return data
-            result, skip = [], 0
-            while True:
+            # Отримуємо контактну особу власника
+            contact = self.get_contact_by_owner(owner_guid)
+            if not contact:
+                return []
+            contact_guid = contact['Ref_Key']
+            
+            url = self._build_url("Document_Анализы")
+            all_analyses = []
+            skip = 0
+            limit = 2000  # максимальна кількість записів для завантаження
+            
+            while len(all_analyses) < limit:
                 batch = self._get(url, {"$top": 100, "$skip": skip})
                 if not batch:
                     break
-                result += [p for p in batch if p.get('Хозяин_Key') == owner_guid]
+                for a in batch:
+                    if a.get('КонтактноеЛицо_Key') == contact_guid:
+                        all_analyses.append(a)
                 skip += 100
-            return result
-        return self._cached(f"pets:{owner_guid}", fetch)
+            
+            # Додаємо клички тварин
+            pets = self.get_pets_by_owner(owner_guid)
+            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+            for a in all_analyses:
+                a['_pet_name'] = pet_names.get(a.get('Карточка_Key'), '')
+            
+            all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+            return all_analyses[:50]  # повертаємо максимум 50 останніх
+        
+        return self._cached(f"analyses_owner_fallback:{owner_guid}", fetch)
 
     # ---------- Візити ----------
     def get_visits_by_pet(self, pet_guid):
