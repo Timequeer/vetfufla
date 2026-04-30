@@ -68,10 +68,11 @@ class EnoteClient:
                             return match.group(1)
         return None
 
-    def get_pets(self, client_guid=None):
+       def get_pets(self, client_guid=None):
         url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
         if client_guid:
+            # Правильный формат: просто GUID в кавычках без 'guid'
             params["$filter"] = f"Хозяин_Key eq '{self._format_guid(client_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
