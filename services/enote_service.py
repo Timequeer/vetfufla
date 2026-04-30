@@ -66,31 +66,9 @@ class EnoteClient:
             })
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
-    # ---------- Аналізи (ФІНАЛЬНИЙ РОБОЧИЙ МЕТОД) ----------
+    # ---------- Аналізи (тимчасово порожньо) ----------
     def get_analyses_by_owner(self, owner_guid):
-        """Завантажує до 500 аналізів (5 сторінок по 100) і фільтрує за тваринами"""
-        def fetch():
-            pets = self.get_pets_by_owner(owner_guid)
-            if not pets:
-                return []
-            pet_guids = {p['Ref_Key'] for p in pets}
-            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
-
-            url = self._build_url("Document_Анализы")
-            all_analyses = []
-            # Завантажуємо 5 сторінок по 100 записів
-            for skip in [0, 100, 200, 300, 400]:
-                batch = self._get(url, {"$top": 100, "$skip": skip})
-                if not batch:
-                    break
-                for a in batch:
-                    if a.get('Карточка_Key') in pet_guids:
-                        a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
-                        all_analyses.append(a)
-
-            all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return all_analyses[:50]
-        return self._cached(f"analyses_owner_final:{owner_guid}", fetch)
+        return []
 
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
