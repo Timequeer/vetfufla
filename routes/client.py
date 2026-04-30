@@ -91,6 +91,13 @@ def my_profile():
         })
     return jsonify({"phone": user.phone, "email": user.email})
 
+@client_bp.route('/api/clear-cache')
+def clear_cache():
+    enote.clear_cache()
+    global _analyses_cache
+    _analyses_cache = {"data": None, "timestamp": 0, "ttl": 30 * 60}
+    return jsonify({"message": "Кеш очищено"})
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
