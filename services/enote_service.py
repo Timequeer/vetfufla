@@ -68,7 +68,35 @@ class EnoteClient:
 
     # ---------- Аналізи (тимчасово порожньо, основний метод буде замінено після тесту) ----------
     def get_analyses_by_owner(self, owner_guid):
-        return []
+        """Мінімальний безпечний fallback – завантажує до 5 аналізів"""
+        def fetch():
+            contact = self.get_contact_by_owner(owner_guid)
+            if not contact:
+                return []
+            contact_guid = contact['Ref_Key']
+            url = self._build_url("Document_Анализы")
+            found = []
+            skip = 0
+            # Завантажуємо сторінки по 20, поки не знайдемо 5 аналізів або не пройдемо 300 записів
+            while len(found) < 5 and skip < 300:
+                batch = self._get(url, {"$top": 20, "$skip": skip})
+                if not batch:
+                    break
+                for a in batch:
+                    if a.get('КонтактноеЛицо_Key') == contact_guid:
+                        found.append(a)
+                        if len(found) >= 5:
+                            break
+                skip += 20
+            # Додаємо клички тварин
+            if found:
+                pets = self.get_pets_by_owner(owner_guid)
+                pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
+                for a in found:
+                    a['_pet_name'] = pet_names.get(a.get('Карточка_Key'), '')
+                found.sort(key=lambda x: x.get('Date', ''), reverse=True)
+            return found
+        return self._cached(f"analyses_owner_light:{owner_guid}", fetch)
 
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
