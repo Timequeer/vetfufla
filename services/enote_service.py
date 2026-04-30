@@ -1,6 +1,5 @@
 import requests
 import os
-from flask import current_app
 
 class EnoteClient:
     def __init__(self):
@@ -12,11 +11,9 @@ class EnoteClient:
         self.session.auth = (self.user, self.password)
 
     def _build_url(self, endpoint):
-        """Будує повний URL до OData endpoint"""
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
     def get_clients(self, phone=None):
-        """Отримати список клінік або конкретного за номером телефону"""
         url = self._build_url("Catalog_Клиенты")
         params = {"$format": "json"}
         if phone:
@@ -27,7 +24,6 @@ class EnoteClient:
         return None
 
     def get_pets(self, client_guid=None):
-        """Отримати тварин клієнта за його GUID"""
         url = self._build_url("Catalog_Питомцы")
         params = {"$format": "json"}
         if client_guid:
@@ -38,7 +34,6 @@ class EnoteClient:
         return None
 
     def get_analyses(self, pet_guid=None):
-        """Отримати аналізи тварини"""
         url = self._build_url("Document_Анализы")
         params = {"$format": "json"}
         if pet_guid:
@@ -49,7 +44,6 @@ class EnoteClient:
         return None
 
     def get_appointments(self, doctor_guid=None, date_from=None, date_to=None):
-        """Отримати записи на прийом"""
         url = self._build_url("Document_Приемы")
         params = {"$format": "json"}
         filters = []
@@ -64,5 +58,4 @@ class EnoteClient:
             return r.json().get('value', [])
         return None
 
-# Екземпляр для використання в інших модулях
 enote = EnoteClient()
