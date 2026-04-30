@@ -67,66 +67,23 @@ class EnoteClient:
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
     # ---------- Аналізи ----------
-    def get_analyses_by_pet(self, pet_guid):
-        url = self._build_url("Document_Анализы")
-        def fetch():
-            result = []
-            skip = 0
-            while True:
-                batch = self._get(url, {"$top": 50, "$skip": skip})
-                if not batch:
-                    break
-                for a in batch:
-                    if a.get('Карточка_Key') == pet_guid:
-                        result.append(a)
-                skip += 50
-                if result and skip >= 200:
-                    break
-            return result
-        return self._cached(f"analyses_pet:{pet_guid}", fetch)
-
     def get_analyses_by_owner(self, owner_guid):
         contact = self.get_contact_by_owner(owner_guid)
         if not contact:
-            return self.get_analyses_by_owner_via_pets(owner_guid)
+            return []
         contact_guid = contact['Ref_Key']
         url = self._build_url("Document_Анализы")
         def fetch():
             return self._get(url, {
                 "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
                 "$orderby": "Date desc",
-                "$top": 20
+                "$top": 50
             })
         return self._cached(f"analyses_owner:{owner_guid}", fetch)
 
     def get_analyses_by_owner_via_pets(self, owner_guid):
-        # Завантажуємо всі аналізи один раз (кешуємо в self._all_analyses)
-        if not hasattr(self, '_all_analyses') or self._all_analyses is None:
-            self._all_analyses = []
-            url = self._build_url("Document_Анализы")
-            skip = 0
-            # Завантажуємо до 2000 записів
-            while len(self._all_analyses) < 2000:
-                batch = self._get(url, {"$top": 200, "$skip": skip})
-                if not batch:
-                    break
-                self._all_analyses.extend(batch)
-                skip += 200
-        # Фільтруємо для конкретного власника
-        def fetch():
-            pets = self.get_pets_by_owner(owner_guid)
-            if not pets:
-                return []
-            pet_guids = {p['Ref_Key'] for p in pets}
-            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
-            result = []
-            for a in self._all_analyses:
-                if a.get('Карточка_Key') in pet_guids:
-                    a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
-                    result.append(a)
-            result.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return result[:50]
-        return self._cached(f"analyses_owner_pets:{owner_guid}", fetch)
+        # більше не використовується, але щоб уникнути помилок – повертаємо порожній список
+        return []
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
