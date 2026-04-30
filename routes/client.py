@@ -100,6 +100,11 @@ def my_profile():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@client_bp.route('/api/clear-cache')
+def clear_cache():
+    enote.clear_cache()
+    return jsonify({"message": "Кэш очищен"})
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
