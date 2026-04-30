@@ -26,6 +26,24 @@ def my_pets():
     pets = enote.get_pets(client_guid=user.enote_guid)
     return jsonify(pets if pets else [])
 
+@client_bp.route('/api/debug-enote')
+def debug_enote():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify({"error": "Немає enote_guid"}), 400
+    from services.enote_service import enote
+    url = enote._build_url("Catalog_Карточки")
+    params = {"$format": "json", "$filter": f"Хозяин_Key eq guid'{user.enote_guid}'"}
+    r = enote.session.get(url, params=params)
+    return jsonify({
+        "status_code": r.status_code,
+        "ok": r.ok,
+        "text": r.text[:500]  # перші 500 символів відповіді
+    })
+
 @client_bp.route('/api/my-analyses')
 def my_analyses():
     user_id = session.get("user_id")
