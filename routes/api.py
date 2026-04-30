@@ -8,12 +8,6 @@ from services.enote_service import enote
 
 api_bp = Blueprint('api', __name__)
 
-# Ініціалізація клієнта ENOTE
-enote_client = ENoteClient(
-    base_url=Config.ENOTE_BASE_URL,
-    login=Config.ENOTE_LOGIN,
-    password=Config.ENOTE_PASSWORD
-)
 
 # Список тварин
 @api_bp.route('/api/pets', methods=['GET'])
