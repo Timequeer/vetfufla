@@ -57,23 +57,22 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Візити ----------
-def get_visits_by_pet(self, pet_guid):
-    url = self._build_url("Document_Посещение")
-    params = {
-        "$orderby": "Date desc",
-        "$top": 200,
-        "$format": "json"
-    }
-    try:
-        r = self.session.get(url, params=params, timeout=25)
-        if r.ok:
-            all_data = r.json().get('value', [])
-            filtered = [v for v in all_data if v.get('Карточка_Key') == pet_guid]
-            return filtered
-    except Exception:
-        pass
-    return []
+    # ---------- Візити (без фільтра, вибірка по Карточка_Key в Python) ----------
+    def get_visits_by_pet(self, pet_guid):
+        url = self._build_url("Document_Посещение")
+        params = {
+            "$orderby": "Date desc",
+            "$top": 500,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                all_data = r.json().get('value', [])
+                return [v for v in all_data if v.get('Карточка_Key') == pet_guid]
+        except Exception:
+            pass
+        return []
 
     # ---------- Контакти ----------
     def get_contact_by_owner(self, owner_guid):
@@ -92,27 +91,26 @@ def get_visits_by_pet(self, pet_guid):
     def get_analyses_by_owner(self, owner_guid):
         return []
 
-    # ---------- Записи на прийом (через Карточка_Key) ----------
+    # ---------- Записи на прийом (без фільтра, вибірка по Хозяин_Key в Python) ----------
     def get_appointments_by_owner(self, owner_guid):
-    url = self._build_url("Task_ПредварительнаяЗапись")
-    params = {
-        "$orderby": "ЗаписьНаДату desc",
-        "$top": 200,
-        "$format": "json"
-       }
-       try:
-        r = self.session.get(url, params=params, timeout=25)
-        if r.ok:
-            all_data = r.json().get('value', [])
-            filtered = [a for a in all_data if a.get('Хозяин_Key') == owner_guid]
-            # додаємо імена тварин
-            pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-            for a in filtered:
-                a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-            self._cache[f"appointments:{owner_guid}"] = (time.time(), filtered)
-            return filtered
+        url = self._build_url("Task_ПредварительнаяЗапись")
+        params = {
+            "$orderby": "ЗаписьНаДату desc",
+            "$top": 500,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                all_data = r.json().get('value', [])
+                filtered = [a for a in all_data if a.get('Хозяин_Key') == owner_guid]
+                pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
+                for a in filtered:
+                    a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
+                self._cache[f"appointments:{owner_guid}"] = (time.time(), filtered)
+                return filtered
         except Exception:
-        pass
+            pass
         return []
 
     # ---------- Пошук клієнта за телефоном ----------
