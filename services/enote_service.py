@@ -18,9 +18,12 @@ class EnoteClient:
 
     def _get(self, url, params):
         params.setdefault("$format", "json")
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                return r.json().get('value', [])
+        except Exception:
+            return []
         return []
 
     def _cached(self, key, fn):
@@ -35,16 +38,12 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ---------- Тварини ----------
     def get_pets_by_owner(self, owner_guid):
-        """Спроба прямого фільтра, fallback — посторінково"""
         url = self._build_url("Catalog_Карточки")
         def fetch():
-            # Спроба 1: прямий фільтр
             data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
             if data:
                 return data
-            # Fallback: посторінково
             result, skip = [], 0
             while True:
                 batch = self._get(url, {"$top": 100, "$skip": skip})
@@ -54,17 +53,6 @@ class EnoteClient:
                 skip += 100
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
-
-    # ---------- Візити ----------
-    def get_visits_by_owner(self, owner_guid):
-        """Пряме отримання всіх візитів власника через КонтактноеЛицо_Key"""
-        url = self._build_url("Document_Посещение")
-        def fetch():
-            return self._get(url, {
-                "$filter": f"КонтактноеЛицо_Key eq guid'{owner_guid}'",
-                "$orderby": "Date desc"
-            })
-        return self._cached(f"visits:{owner_guid}", fetch)
 
     def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
@@ -76,14 +64,15 @@ class EnoteClient:
             })
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
-    # ---------- Аналізи ----------
     def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
         def fetch():
-            data = self._get(url, {"$filter": f"Карточка_Key eq guid'{pet_guid}'"})
+            data = self._get(url, {
+                "$filter": f"Карточка_Key eq guid'{pet_guid}'",
+                "$top": 20
+            })
             if data:
                 return data
-            # Fallback посторінково
             result, skip = [], 0
             while True:
                 batch = self._get(url, {"$top": 100, "$skip": skip})
@@ -94,7 +83,16 @@ class EnoteClient:
             return result
         return self._cached(f"analyses:{pet_guid}", fetch)
 
-    # ---------- Контакти ----------
+    def get_appointments_by_owner(self, owner_guid):
+        url = self._build_url("Task_ПредварительнаяЗапись")
+        def fetch():
+            return self._get(url, {
+                "$filter": f"Хозяин_Key eq guid'{owner_guid}'",
+                "$orderby": "ЗаписьНаДату desc",
+                "$top": 20
+            })
+        return self._cached(f"appointments:{owner_guid}", fetch)
+
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
@@ -106,16 +104,5 @@ class EnoteClient:
                 if c.get('ОбъектВладелец') == owner_guid:
                     return c
             skip += 100
-
-   # ---------- Записи на прийом ----------
-   def get_appointments_by_owner(self, owner_guid):
-       url = self._build_url("Task_ПредварительнаяЗапись")
-       def fetch():
-         return self._get(url, {
-            "$filter": f"Хозяин_Key eq guid'{owner_guid}'",
-            "$orderby": "ЗаписьНаДату desc",
-            "$top": 20
-         })
-         return self._cached(f"appointments:{owner_guid}", fetch)
 
 enote = EnoteClient()
