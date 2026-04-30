@@ -6,52 +6,13 @@ import logging
 
 client_bp = Blueprint('client', __name__)
 
-# Простий кеш у пам'яті для аналізів
+# Простий кеш у пам'яті для аналізів (на майбутнє)
 _analyses_cache = {
     "data": None,
     "timestamp": 0,
     "ttl": 30 * 60  # 30 хвилин
 }
 
-@client_bp.route('/api/my-analyses')
-def my_analyses():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify([])
-    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
-
-    from services.enote_service import enote
-    pets = enote.get_pets_by_owner(user.enote_guid)
-    if not pets:
-        return jsonify({"debug": "немає тварин"})
-
-    # Примусово викликаємо метод, який заповнює _all_analyses
-    analyses = enote.get_analyses_by_owner_via_pets(user.enote_guid)
-
-    # Отримуємо доступ до внутрішнього списку
-    all_analyses = getattr(enote, '_all_analyses', None)
-    total_loaded = len(all_analyses) if all_analyses else 0
-
-    first_pet = pets[0]
-    sample_analyses = []
-    if all_analyses:
-        # Беремо перші 3 аналізи для прикладу
-        sample_analyses = all_analyses[:3]
-
-    return jsonify({
-        "owner_guid": user.enote_guid,
-        "total_pets": len(pets),
-        "first_pet_ref": first_pet.get('Ref_Key'),
-        "first_pet_name": first_pet.get('Description'),
-        "total_analyses_loaded": total_loaded,
-        "sample_analyses_keys": [a.get('Карточка_Key') for a in sample_analyses],
-        "sample_analyses_desc": [a.get('Description','') for a in sample_analyses],
-        "found_analyses_count": len(analyses) if analyses else 0
-    })
-    
 @client_bp.route('/dashboard')
 def dashboard():
     if "user_id" not in session:
@@ -72,6 +33,17 @@ def my_pets():
     if not user or not user.enote_guid:
         return jsonify([])
     return jsonify(enote.get_pets_by_owner(user.enote_guid))
+
+@client_bp.route('/api/my-analyses')
+def my_analyses():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    # Новий метод, який шукає через контактну особу
+    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
 
 @client_bp.route('/api/my-visits')
 def my_visits():
