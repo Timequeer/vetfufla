@@ -10,150 +10,133 @@ class EnoteClient:
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
         self.session = requests.Session()
         self.session.auth = (self.user, self.password)
-        # Кеш на 10 хвилин
-        self._cache = {}
-        self._cache_ttl = 600
 
     def _build_url(self, endpoint):
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
-    def _cached_get(self, cache_key, url, params=None):
-        """Повертає дані з кешу або завантажує і кешує"""
-        now = time.time()
-        cached = self._cache.get(cache_key)
-        if cached and (now - cached[0]) < self._cache_ttl:
-            return cached[1]
-
-        if params is None:
-            params = {}
-        params.setdefault("$format", "json")
-        r = self.session.get(url, params=params)
-        if r.ok:
-            data = r.json().get('value', [])
-            self._cache[cache_key] = (now, data)
-            return data
+    def _get_with_retry(self, url, params=None, max_tries=3):
+        """Виконати GET-запит із повторними спробами при помилках з'єднання"""
+        for attempt in range(max_tries):
+            try:
+                r = self.session.get(url, params=params, timeout=30)
+                if r.ok:
+                    return r.json().get('value', [])
+                # Якщо помилка не тимчасова, не повторюємо
+                if r.status_code >= 500:
+                    time.sleep(1)
+                    continue
+                return []
+            except requests.exceptions.RequestException as e:
+                if attempt == max_tries - 1:
+                    raise e
+                time.sleep(2)
         return []
 
-    def clear_cache(self):
-        self._cache.clear()
-
-    # ---------- Тварини (через навігацію або посторінково) ----------
+    # ---------- Тварини (ефективний пошук) ----------
     def get_pets_by_owner(self, owner_guid):
-        """Отримати тварин конкретного власника"""
+        """Знайти всіх тварин конкретного власника за допомогою маленьких сторінок"""
         url = self._build_url("Catalog_Карточки")
-        # Спроба 1: навігаційний фільтр
-        r = self.session.get(url, params={
-            "$format": "json",
-            "$filter": f"Хозяин/Ref_Key eq guid'{owner_guid}'"
-        })
-        if r.ok:
-            data = r.json().get('value', [])
-            if data:
-                return data
-        # Спроба 2: посторінкове завантаження з фільтрацією на клієнті
-        all_pets = []
-        top = 100
+        top = 10  # дуже маленькі сторінки
         skip = 0
+        found = []
+        empty_pages = 0
         while True:
-            r = self.session.get(url, params={
+            batch = self._get_with_retry(url, {
                 "$format": "json",
                 "$top": top,
                 "$skip": skip
             })
-            if not r.ok:
-                break
-            batch = r.json().get('value', [])
             if not batch:
-                break
-            # Фільтруємо на льоту
-            for pet in batch:
-                if pet.get('Хозяин_Key') == owner_guid:
-                    all_pets.append(pet)
+                empty_pages += 1
+                if empty_pages > 3:  # три порожні сторінки підряд → кінець
+                    break
+            else:
+                empty_pages = 0
+                for pet in batch:
+                    if pet.get('Хозяин_Key') == owner_guid:
+                        found.append(pet)
             skip += top
-        return all_pets
+            # Якщо знайшли хоч одну тварину і пройшли багато сторінок, можна зупинитись
+            if found and skip > 500:  # після 500 записів зупиняємось
+                break
+        return found
 
-    # ---------- Аналізи (теж через навігацію, інакше посторінково) ----------
+    # ---------- Аналізи (тільки для конкретної тварини) ----------
     def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
-        r = self.session.get(url, params={
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
-        })
-        if r.ok:
-            data = r.json().get('value', [])
-            if data:
-                return data
-        # fallback: посторінково
-        all_analyses = []
-        top = 100
+        top = 10
         skip = 0
+        found = []
+        empty_pages = 0
         while True:
-            r = self.session.get(url, params={
+            batch = self._get_with_retry(url, {
                 "$format": "json",
                 "$top": top,
                 "$skip": skip
             })
-            if not r.ok:
-                break
-            batch = r.json().get('value', [])
             if not batch:
-                break
-            for a in batch:
-                if a.get('Карточка_Key') == pet_guid:
-                    all_analyses.append(a)
+                empty_pages += 1
+                if empty_pages > 3:
+                    break
+            else:
+                empty_pages = 0
+                for a in batch:
+                    if a.get('Карточка_Key') == pet_guid:
+                        found.append(a)
+                # Якщо знайшли хоч один аналіз, можна припинити після певної кількості сторінок
+                if found and skip > 200:
+                    break
             skip += top
-        return all_analyses
+        return found
 
-    # ---------- Візити ----------
+    # ---------- Візити (аналогічно) ----------
     def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
-        r = self.session.get(url, params={
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
-        })
-        if r.ok:
-            data = r.json().get('value', [])
-            if data:
-                return data
-        all_visits = []
-        top = 100
+        top = 10
         skip = 0
+        found = []
+        empty_pages = 0
         while True:
-            r = self.session.get(url, params={
+            batch = self._get_with_retry(url, {
                 "$format": "json",
                 "$top": top,
                 "$skip": skip
             })
-            if not r.ok:
-                break
-            batch = r.json().get('value', [])
             if not batch:
-                break
-            for v in batch:
-                if v.get('Карточка_Key') == pet_guid:
-                    all_visits.append(v)
+                empty_pages += 1
+                if empty_pages > 3:
+                    break
+            else:
+                empty_pages = 0
+                for v in batch:
+                    if v.get('Карточка_Key') == pet_guid:
+                        found.append(v)
+                if found and skip > 200:
+                    break
             skip += top
-        return all_visits
+        return found
 
-    # ---------- Контакти (посторінково, бо навігація може не працювати) ----------
+    # ---------- Контакт ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
-        top = 100
+        top = 10
         skip = 0
+        empty_pages = 0
         while True:
-            r = self.session.get(url, params={
+            batch = self._get_with_retry(url, {
                 "$format": "json",
                 "$top": top,
                 "$skip": skip
             })
-            if not r.ok:
-                break
-            batch = r.json().get('value', [])
             if not batch:
-                break
-            for c in batch:
-                if c.get('ОбъектВладелец') == owner_guid:
-                    return c
+                empty_pages += 1
+                if empty_pages > 3:
+                    break
+            else:
+                empty_pages = 0
+                for c in batch:
+                    if c.get('ОбъектВладелец') == owner_guid:
+                        return c
             skip += top
         return None
 
