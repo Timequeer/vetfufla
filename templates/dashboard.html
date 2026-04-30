@@ -3,9 +3,7 @@
 {% block content %}
 
 <style>
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 </style>
 
 <div class="flex min-h-screen bg-gray-50 pb-20 md:pb-0">
@@ -50,39 +48,13 @@
       <h2 class="text-2xl font-bold text-gray-800 mb-6">Профіль</h2>
 
       {% if user and user.full_name %}
-      <!-- Повний профіль -->
       <div class="grid md:grid-cols-2 gap-4">
-        <div>
-          <label class="text-sm text-gray-500">Прізвище</label>
-          <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.surname }}</p>
-        </div>
-        <div>
-          <label class="text-sm text-gray-500">Ім'я</label>
-          <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.name }}</p>
-        </div>
-        <div>
-          <label class="text-sm text-gray-500">По батькові</label>
-          <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.patronymic or '' }}</p>
-        </div>
-        <div>
-          <!-- порожнє місце, щоб номер займав два стовпці -->
-        </div>
-        <div class="md:col-span-2">
-          <label class="text-sm text-gray-500">Номер телефону</label>
-          <div class="flex items-center gap-2">
-            <p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg flex-1">{{ user.phone }}</p>
-            <button class="text-red-600 hover:text-red-700 text-sm font-medium whitespace-nowrap">+ Додати номер</button>
-          </div>
-          <p class="text-xs text-gray-400 mt-1">Основний номер (тільки для читання)</p>
-        </div>
-        <div>
-          <label for="email" class="text-sm text-gray-500">Email</label>
-          <input id="email" type="email" value="{{ user.email or '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
-        </div>
-        <div>
-          <label for="address" class="text-sm text-gray-500">Адреса</label>
-          <input id="address" type="text" value="{{ user.address or '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
-        </div>
+        <div><label class="text-sm text-gray-500">Прізвище</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.surname }}</p></div>
+        <div><label class="text-sm text-gray-500">Ім'я</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.name }}</p></div>
+        <div><label class="text-sm text-gray-500">По батькові</label><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg">{{ user.patronymic or '' }}</p></div>
+        <div class="md:col-span-2"><label class="text-sm text-gray-500">Номер телефону</label><div class="flex items-center gap-2"><p class="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-lg flex-1">{{ user.phone }}</p><button class="text-red-600 hover:text-red-700 text-sm font-medium whitespace-nowrap">+ Додати номер</button></div><p class="text-xs text-gray-400 mt-1">Основний номер (тільки для читання)</p></div>
+        <div><label for="email" class="text-sm text-gray-500">Email</label><input id="email" type="email" value="{{ user.email or '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
+        <div><label for="address" class="text-sm text-gray-500">Адреса</label><input id="address" type="text" value="{{ user.address or '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
       </div>
       <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <p class="text-xs text-gray-400 max-w-sm">Дані синхронізовано через E-Note. Для зміни ПІБ зверніться до адміністратора.</p>
@@ -91,30 +63,15 @@
           <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
         </div>
       </div>
-
       {% else %}
-      <!-- Очікування даних -->
       <div class="text-center py-8">
-        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
+        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Очікування даних</h3>
-        <p class="text-gray-500 text-sm max-w-md mx-auto">
-          Ваш кабінет прив'язано до номеру <strong>{{ user.phone if user else 'невідомий номер' }}</strong>. 
-          Як тільки адміністратор внесе ваші дані до E-Note, вони автоматично з'являться тут.
-        </p>
+        <p class="text-gray-500 text-sm max-w-md mx-auto">Ваш кабінет прив'язано до номеру <strong>{{ user.phone if user else 'невідомий номер' }}</strong>. Як тільки адміністратор внесе ваші дані до E-Note, вони автоматично з'являться тут.</p>
         <p class="text-gray-400 text-xs mt-4">Якщо ви вже є клієнтом клініки, зверніться до адміністратора для синхронізації.</p>
         <div class="grid md:grid-cols-2 gap-4 mt-6 text-left max-w-xl mx-auto">
-          <div>
-            <label for="email2" class="text-sm text-gray-500">Email</label>
-            <input id="email2" type="email" value="{{ user.email if user else '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
-          </div>
-          <div>
-            <label for="address2" class="text-sm text-gray-500">Адреса</label>
-            <input id="address2" type="text" value="{{ user.address if user else '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400">
-          </div>
+          <div><label for="email2" class="text-sm text-gray-500">Email</label><input id="email2" type="email" value="{{ user.email if user else '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
+          <div><label for="address2" class="text-sm text-gray-500">Адреса</label><input id="address2" type="text" value="{{ user.address if user else '' }}" class="w-full p-2 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-red-400"></div>
         </div>
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
           <a href="/logout" class="py-2 px-5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">Вийти</a>
@@ -143,17 +100,11 @@
           <h3 class="font-semibold text-gray-700 mb-3">Мої записи</h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center border-b pb-2">
-              <div>
-                <p class="font-medium">Консультація терапевта</p>
-                <p class="text-sm text-gray-500">15 липня 2025, 10:00</p>
-              </div>
+              <div><p class="font-medium">Консультація терапевта</p><p class="text-sm text-gray-500">15 липня 2025, 10:00</p></div>
               <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Підтверджено</span>
             </div>
             <div class="flex justify-between items-center border-b pb-2">
-              <div>
-                <p class="font-medium">Вакцинація (Барон)</p>
-                <p class="text-sm text-gray-500">22 липня 2025, 14:30</p>
-              </div>
+              <div><p class="font-medium">Вакцинація (Льолік)</p><p class="text-sm text-gray-500">22 липня 2025, 14:30</p></div>
               <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Очікує</span>
             </div>
           </div>
@@ -168,7 +119,7 @@
     </section>
 
     <!-- Мої аналізи -->
-       <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
+    <section id="analyses" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Мої аналізи</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -181,15 +132,33 @@
               <th class="py-2">Формат</th>
             </tr>
           </thead>
-          <tbody id="analysesBody">
-            <tr><td colspan="5" class="text-center text-gray-500 py-8">Завантаження...</td></tr>
+          <tbody>
+            <tr class="border-b">
+              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
+              <td class="py-3 pr-4 text-gray-800">Загальний аналіз крові</td>
+              <td class="py-3 pr-4">Льолік</td>
+              <td class="py-3 pr-4 text-gray-500">10.07.2025</td>
+              <td class="py-3">PDF</td>
+            </tr>
+            <tr class="border-b">
+              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
+              <td class="py-3 pr-4 text-gray-800">Біохімія крові</td>
+              <td class="py-3 pr-4">Нефтида</td>
+              <td class="py-3 pr-4 text-gray-500">08.07.2025</td>
+              <td class="py-3">PDF</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600"></td>
+              <td class="py-3 pr-4 text-gray-800">УЗД черевної порожнини</td>
+              <td class="py-3 pr-4">Льолік</td>
+              <td class="py-3 pr-4 text-gray-500">01.07.2025</td>
+              <td class="py-3">PDF</td>
+            </tr>
           </tbody>
         </table>
       </div>
       <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <button onclick="openSendModal()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition-colors">
-          Відправити обрані
-        </button>
+        <button onclick="openSendModal()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition-colors">Відправити обрані</button>
         <span class="text-sm text-gray-500">обрано: <span id="selected-count">0</span></span>
       </div>
     </section>
@@ -199,16 +168,10 @@
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Історія візитів</h2>
       <div class="space-y-3">
         <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-          <div>
-            <p class="font-semibold">Огляд хірурга</p>
-            <p class="text-sm text-gray-500">05.06.2025 – Лікар Петренко</p>
-          </div>
+          <div><p class="font-semibold">Огляд хірурга</p><p class="text-sm text-gray-500">05.06.2025 – Лікар Петренко</p></div>
         </div>
         <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-          <div>
-            <p class="font-semibold">Вакцинація (Мурка)</p>
-            <p class="text-sm text-gray-500">12.05.2025 – Лікар Іваненко</p>
-          </div>
+          <div><p class="font-semibold">Вакцинація (Нефтида)</p><p class="text-sm text-gray-500">12.05.2025 – Лікар Іваненко</p></div>
         </div>
       </div>
     </section>
@@ -254,12 +217,8 @@
     <h3 class="text-xl font-bold text-gray-800 mb-4">Відправити аналізи</h3>
     <p class="text-sm text-gray-500 mb-4">Оберіть спосіб отримання:</p>
     <div class="space-y-3">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input type="radio" name="send-method" value="telegram" class="accent-red-600" checked> Telegram
-      </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input type="radio" name="send-method" value="email" class="accent-red-600"> Email
-      </label>
+      <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="send-method" value="telegram" class="accent-red-600" checked> Telegram</label>
+      <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="send-method" value="email" class="accent-red-600"> Email</label>
     </div>
     <div class="flex gap-3 mt-6">
       <button onclick="closeSendModal()" class="flex-1 py-2 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50">Скасувати</button>
@@ -272,122 +231,13 @@
 <div id="calendar-modal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl max-w-lg w-full p-6 transform transition-all">
     <h3 class="text-xl font-bold text-gray-800 mb-4">Оберіть дату та лікаря</h3>
-    <div class="text-center text-gray-400 py-8">
-      Календар та список лікарів з'являться тут (інтеграція з E-Note)
-    </div>
+    <div class="text-center text-gray-400 py-8">Календар та список лікарів з'являться тут (інтеграція з E-Note)</div>
     <button onclick="closeCalendarModal()" class="mt-4 w-full py-2 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50">Закрити</button>
   </div>
 </div>
 
 <script>
-  // Лічильник обраних аналізів
-    // Лічильник обраних аналізів (з делегуванням)
-  // Лічильник обраних аналізів (з делегуванням)
-  const tbodyAnalyses = document.getElementById('analysesBody');
-  const selectAll = document.getElementById('select-all');
-  const countSpan = document.getElementById('selected-count');
-
-  function updateCount() {
-    const checkboxes = document.querySelectorAll('.analysis-checkbox');
-    const checked = document.querySelectorAll('.analysis-checkbox:checked').length;
-    if (countSpan) countSpan.textContent = checked;
-    if (selectAll) {
-      selectAll.checked = checkboxes.length > 0 && checkboxes.length === checked;
-    }
-  }
-
-  // Делегування подій на таблиці
-  if (tbodyAnalyses) {
-    tbodyAnalyses.addEventListener('change', function(e) {
-      if (e.target.classList.contains('analysis-checkbox')) {
-        updateCount();
-      }
-    });
-  }
-
-  if (selectAll) {
-    selectAll.addEventListener('change', function() {
-      document.querySelectorAll('.analysis-checkbox').forEach(cb => {
-        cb.checked = this.checked;
-      });
-      updateCount();
-    });
-  }
-  function openSendModal() {
-    const modal = document.getElementById('send-modal');
-    if (modal) {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-  function closeSendModal() {
-    const modal = document.getElementById('send-modal');
-    if (modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-  }
-
-  function openCalendarModal() {
-    const modal = document.getElementById('calendar-modal');
-    if (modal) {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-  function closeCalendarModal() {
-    const modal = document.getElementById('calendar-modal');
-    if (modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-  }
-
-  window.addEventListener('click', function(e) {
-    if (e.target.id === 'send-modal') closeSendModal();
-    if (e.target.id === 'calendar-modal') closeCalendarModal();
-  });
-
-  // Підсвічування активної навігації
-  function highlightNav() {
-    const sections = document.querySelectorAll('section[id]');
-    const desktopLinks = document.querySelectorAll('#desktop-nav .nav-link');
-    const mobileLinks = document.querySelectorAll('.mobile-nav-link');
-    let current = '';
-
-    sections.forEach(section => {
-      const sectionTop = section.offsetTop - 120;
-      if (window.scrollY >= sectionTop) {
-        current = section.getAttribute('id');
-      }
-    });
-
-    desktopLinks.forEach(link => {
-      link.classList.remove('bg-red-50', 'text-red-700');
-      link.classList.add('text-gray-700');
-      if (link.dataset.section === current) {
-        link.classList.add('bg-red-50', 'text-red-700');
-        link.classList.remove('text-gray-700');
-      }
-    });
-
-    mobileLinks.forEach(link => {
-      link.classList.remove('text-red-600');
-      link.classList.add('text-gray-500');
-      if (link.dataset.section === current) {
-        link.classList.add('text-red-600');
-        link.classList.remove('text-gray-500');
-      }
-    });
-  }
-
-  window.addEventListener('scroll', highlightNav);
-  window.addEventListener('load', highlightNav);
-    // --- Завантаження тварин ---
+  // --- Завантаження тварин (реальні дані) ---
   fetch('/api/my-pets')
     .then(r => r.json())
     .then(pets => {
@@ -399,12 +249,15 @@
           <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-                ${p.Вид === 'Собака' ? '🐶' : p.Вид === 'Кішка' ? '🐱' : '🐾'}
+                ${p.Пол === 'Female' ? '🐱' : '🐶'}
               </div>
               <div>
-                <h3 class="font-semibold text-gray-800">${p.Кличка || 'Без імені'}</h3>
-                <p class="text-xs text-gray-500">${p.Порода || ''}, ${p.Возраст || ''} р.</p>
+                <h3 class="font-semibold text-gray-800">${p.Description || 'Без імені'}</h3>
+                <p class="text-xs text-gray-500">${p.ДатаРождения ? new Date(p.ДатаРождения).toLocaleDateString('uk-UA') : ''}</p>
               </div>
+            </div>
+            <div class="text-sm text-gray-600 space-y-1">
+              <p><span class="text-gray-400">Стать:</span> ${p.Пол === 'Male' ? 'Пес' : 'Кішка'}</p>
             </div>
             <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
           </div>
@@ -412,27 +265,83 @@
       }
     });
 
-  // --- Завантаження аналізів ---
-  fetch('/api/my-analyses')
-    .then(r => r.json())
-    .then(analyses => {
-      const tbody = document.getElementById('analysesBody');
-      if (!analyses || analyses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
-      } else {
-        tbody.innerHTML = analyses.map(a => `
-          <tr class="border-b">
-            <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
-            <td class="py-3 pr-4 text-gray-800">${a.Назва || 'Аналіз'}</td>
-            <td class="py-3 pr-4">${a.Питомец || '—'}</td>
-            <td class="py-3 pr-4 text-gray-500">${a.Дата || ''}</td>
-            <td class="py-3">PDF</td>
-          </tr>
-        `).join('');
-      }
-      // Переприв'язуємо лічильник
+  // --- Модальні вікна ---
+  function openSendModal() {
+    document.getElementById('send-modal').classList.remove('hidden');
+    document.getElementById('send-modal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSendModal() {
+    document.getElementById('send-modal').classList.add('hidden');
+    document.getElementById('send-modal').classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+  function openCalendarModal() {
+    document.getElementById('calendar-modal').classList.remove('hidden');
+    document.getElementById('calendar-modal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeCalendarModal() {
+    document.getElementById('calendar-modal').classList.add('hidden');
+    document.getElementById('calendar-modal').classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+  window.addEventListener('click', function(e) {
+    if (e.target.id === 'send-modal') closeSendModal();
+    if (e.target.id === 'calendar-modal') closeCalendarModal();
+  });
+
+  // --- Лічильник аналізів (делегування) ---
+  const tbodyAnalyses = document.getElementById('analysesBody');
+  const selectAll = document.getElementById('select-all');
+  const countSpan = document.getElementById('selected-count');
+  function updateCount() {
+    const checkboxes = document.querySelectorAll('.analysis-checkbox');
+    const checked = document.querySelectorAll('.analysis-checkbox:checked').length;
+    if (countSpan) countSpan.textContent = checked;
+    if (selectAll) selectAll.checked = checkboxes.length > 0 && checkboxes.length === checked;
+  }
+  if (tbodyAnalyses) {
+    tbodyAnalyses.addEventListener('change', function(e) {
+      if (e.target.classList.contains('analysis-checkbox')) updateCount();
+    });
+  }
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      document.querySelectorAll('.analysis-checkbox').forEach(cb => cb.checked = this.checked);
       updateCount();
     });
+  }
+
+  // --- Підсвічування активної навігації ---
+  function highlightNav() {
+    const sections = document.querySelectorAll('section[id]');
+    const desktopLinks = document.querySelectorAll('#desktop-nav .nav-link');
+    const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop - 120;
+      if (window.scrollY >= sectionTop) current = section.getAttribute('id');
+    });
+    desktopLinks.forEach(link => {
+      link.classList.remove('bg-red-50', 'text-red-700');
+      link.classList.add('text-gray-700');
+      if (link.dataset.section === current) {
+        link.classList.add('bg-red-50', 'text-red-700');
+        link.classList.remove('text-gray-700');
+      }
+    });
+    mobileLinks.forEach(link => {
+      link.classList.remove('text-red-600');
+      link.classList.add('text-gray-500');
+      if (link.dataset.section === current) {
+        link.classList.add('text-red-600');
+        link.classList.remove('text-gray-500');
+      }
+    });
+  }
+  window.addEventListener('scroll', highlightNav);
+  window.addEventListener('load', highlightNav);
 </script>
 
 {% endblock %}
