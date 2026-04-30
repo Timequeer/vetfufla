@@ -104,27 +104,28 @@ class EnoteClient:
             pets = self.get_pets_by_owner(owner_guid)
             if not pets:
                 return []
-            pet_guids = {p['Ref_Key'] for p in pets}
-            pet_names = {p['Ref_Key']: p.get('Description', '') for p in pets}
-            # Завантажуємо ВСІ аналізи (один раз, кешується в self._all_analyses)
-            if not hasattr(self, '_all_analyses'):
-                self._all_analyses = []
+            all_analyses = []
+            # Для кожної тварини отримуємо аналізи невеликими порціями
+            for pet in pets:
                 url = self._build_url("Document_Анализы")
                 skip = 0
                 while True:
-                    batch = self._get(url, {"$top": 200, "$skip": skip})
+                    batch = self._get(url, {"$top": 20, "$skip": skip})
                     if not batch:
                         break
-                    self._all_analyses.extend(batch)
-                    skip += 200
-            # Фільтруємо
-            result = []
-            for a in self._all_analyses:
-                if a.get('Карточка_Key') in pet_guids:
-                    a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
-                    result.append(a)
-            result.sort(key=lambda x: x.get('Date', ''), reverse=True)
-            return result
+                    for a in batch:
+                        if a.get('Карточка_Key') == pet['Ref_Key']:
+                            a['_pet_name'] = pet.get('Description', '')
+                            all_analyses.append(a)
+                    skip += 20
+                    # Припиняємо для цієї тварини, якщо знайшли хоч щось і пройшли 5 сторінок
+                    if all_analyses and skip >= 100:
+                        break
+                # Загальне обмеження – максимум 50 аналізів
+                if len(all_analyses) >= 50:
+                    break
+            all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+            return all_analyses[:50]
         return self._cached(f"analyses_owner_pets:{owner_guid}", fetch)
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
