@@ -38,7 +38,7 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ---------- Животные ----------
+    # ---------- Тварини ----------
     def get_pets_by_owner(self, owner_guid):
         url = self._build_url("Catalog_Карточки")
         def fetch():
@@ -55,7 +55,7 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Визиты ----------
+    # ---------- Візити ----------
     def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
         def fetch():
@@ -66,7 +66,7 @@ class EnoteClient:
             })
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
-    # ---------- Анализы ----------
+    # ---------- Аналізи ----------
     def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
         def fetch():
@@ -80,19 +80,15 @@ class EnoteClient:
                     if a.get('Карточка_Key') == pet_guid:
                         result.append(a)
                 skip += 50
-                # Якщо знайшли хоч щось, припиняємо після 200 записів
                 if result and skip >= 200:
                     break
             return result
         return self._cached(f"analyses_pet:{pet_guid}", fetch)
 
     def get_analyses_by_owner(self, owner_guid):
-        # Спроба отримати контактну особу власника
         contact = self.get_contact_by_owner(owner_guid)
         if not contact:
-            # Якщо контакту немає – використовуємо fallback через тварин
             return self.get_analyses_by_owner_via_pets(owner_guid)
-
         contact_guid = contact['Ref_Key']
         url = self._build_url("Document_Анализы")
         def fetch():
@@ -103,7 +99,7 @@ class EnoteClient:
             })
         return self._cached(f"analyses_owner:{owner_guid}", fetch)
 
-     def get_analyses_by_owner_via_pets(self, owner_guid):
+    def get_analyses_by_owner_via_pets(self, owner_guid):
         def fetch():
             pets = self.get_pets_by_owner(owner_guid)
             if not pets:
@@ -113,7 +109,7 @@ class EnoteClient:
             url = self._build_url("Document_Анализы")
             all_analyses = []
             page_size = 50
-            max_pages = 20  # максимум 20 сторінок (1000 записів)
+            max_pages = 20
             skip = 0
             for _ in range(max_pages):
                 batch = self._get(url, {"$top": page_size, "$skip": skip})
@@ -124,14 +120,13 @@ class EnoteClient:
                         a['_pet_name'] = pet_names.get(a['Карточка_Key'], '')
                         all_analyses.append(a)
                 skip += page_size
-                # Якщо знайшли хоч щось і пройшли трохи, можна зупинитись
                 if all_analyses and skip >= 200:
                     break
             all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
             return all_analyses
         return self._cached(f"analyses_owner_pets:{owner_guid}", fetch)
 
-    # ---------- Записи на приём ----------
+    # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
         def fetch():
@@ -142,7 +137,7 @@ class EnoteClient:
             })
         return self._cached(f"appointments:{owner_guid}", fetch)
 
-    # ---------- Контакты ----------
+    # ---------- Контакти ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
@@ -155,18 +150,18 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Поиск клиента по телефону ----------
+    # ---------- Пошук клієнта за телефоном ----------
     def find_client_by_phone(self, phone):
         digits = ''.join(filter(str.isdigit, phone))
         if digits.startswith('38'):
-            digits = digits[2:]  # 0685442567
+            digits = digits[2:]
         url = self._build_url("Catalog_Клиенты")
         data = self._get(url, {
             "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
             "$top": 1
         })
         if data:
-            return data[0]          # вернёт объект клиента
+            return data[0]
         return None
 
 enote = EnoteClient()
