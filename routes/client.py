@@ -6,12 +6,6 @@ import logging
 
 client_bp = Blueprint('client', __name__)
 
-_analyses_cache = {
-    "data": None,
-    "timestamp": 0,
-    "ttl": 30 * 60
-}
-
 @client_bp.route('/dashboard')
 def dashboard():
     if "user_id" not in session:
@@ -92,8 +86,6 @@ def my_profile():
 @client_bp.route('/api/clear-cache')
 def clear_cache():
     enote.clear_cache()
-    global _analyses_cache
-    _analyses_cache = {"data": None, "timestamp": 0, "ttl": 30 * 60}
     return jsonify({"message": "Кеш очищено"})
 
 @client_bp.route('/settings')
