@@ -16,8 +16,9 @@ def get_cached_analyses(owner_guid):
     now = time.time()
     if _analyses_cache["data"] is not None and (now - _analyses_cache["timestamp"]) < _analyses_cache["ttl"]:
         return _analyses_cache["data"]
-    # Інакше отримуємо свіжі дані
+    print(f"[CACHE] Запитую аналізи для {owner_guid}...")
     data = enote.get_analyses_by_owner_via_pets(owner_guid)
+    print(f"[CACHE] Отримано аналізів: {len(data) if data else 0}")
     _analyses_cache["data"] = data
     _analyses_cache["timestamp"] = now
     return data
@@ -97,6 +98,17 @@ def my_visits():
             all_visits.append(v)
     all_visits.sort(key=lambda x: x.get('Date', ''), reverse=True)
     return jsonify(all_visits)
+
+@client_bp.route('/api/my-appointments')
+def my_appointments():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    appointments = enote.get_appointments_by_owner(user.enote_guid)
+    return jsonify(appointments if appointments else [])
 
 @client_bp.route('/api/my-profile')
 def my_profile():
