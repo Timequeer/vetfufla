@@ -231,7 +231,7 @@ def fix_enote():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "Користувача не знайдено"}), 404
-    user.enote_guid = '953c3d36-4cbff-11ee-2294-2ae983d8a0f0'
+    user.enote_guid = '953c3d364cbff11ee22942ae983d8a0f0'
     db.session.commit()
     return jsonify({"message": "GUID Кошик прив’язано", "enote_guid": user.enote_guid})
 
