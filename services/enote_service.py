@@ -2,8 +2,6 @@ import requests
 import os
 import time
 
-MAX_ITEMS = 200  # максимальна кількість записів, яку повертає один метод
-
 class EnoteClient:
     def __init__(self):
         self.base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
@@ -18,204 +16,94 @@ class EnoteClient:
     def _build_url(self, endpoint):
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
-    def _get_json(self, url, params=None, max_tries=3):
-        """GET-запит із повторними спробами та логуванням помилок"""
-        for attempt in range(max_tries):
-            try:
-                r = self.session.get(url, params=params, timeout=30)
-                if r.ok:
-                    return r.json().get('value', [])
-                # Логуємо помилку (тільки в консоль, не клієнту)
-                print(f"[ENOTE ERROR] {r.status_code}: {r.text[:200]}")
-                if r.status_code >= 500:
-                    time.sleep(1)
-                    continue
-                return []
-            except requests.exceptions.RequestException as e:
-                print(f"[ENOTE EXCEPTION] {e}")
-                if attempt == max_tries - 1:
-                    raise e
-                time.sleep(2)
+    def _get(self, url, params):
+        params.setdefault("$format", "json")
+        r = self.session.get(url, params=params)
+        if r.ok:
+            return r.json().get('value', [])
         return []
 
-    def _cached_or_fetch(self, cache_key, fetcher):
-        """Загальна логіка кешування"""
+    def _cached(self, key, fn):
         now = time.time()
-        cached = self._cache.get(cache_key)
-        if cached and (now - cached[0]) < self._cache_ttl:
-            return cached[1]
-
-        data = fetcher()
-        # Обмежуємо розмір кеша
-        if len(self._cache) > 100:
-            self._cache.clear()
-        self._cache[cache_key] = (now, data)
+        hit = self._cache.get(key)
+        if hit and (now - hit[0]) < self._cache_ttl:
+            return hit[1]
+        data = fn()
+        self._cache[key] = (now, data)
         return data
 
     def clear_cache(self):
         self._cache.clear()
 
     # ---------- Тварини ----------
-    def _fetch_pets_by_owner(self, owner_guid):
-        url = self._build_url("Catalog_Карточки")
-        # Спроба 1: навігація з guid'...'
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Хозяин/Ref_Key eq guid'{owner_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-
-        # Спроба 2: навігація з рядковим GUID
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Хозяин/Ref_Key eq '{owner_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-
-        # Спроба 3: посторінкове сканування (обмежене)
-        found = []
-        top = 10
-        skip = 0
-        empty_pages = 0
-        while len(found) < MAX_ITEMS:
-            page = self._get_json(url, {
-                "$format": "json",
-                "$top": top,
-                "$skip": skip
-            })
-            if not page:
-                empty_pages += 1
-                if empty_pages > 3:
-                    break
-            else:
-                empty_pages = 0
-                for pet in page:
-                    if pet.get('Хозяин_Key') == owner_guid:
-                        found.append(pet)
-            skip += top
-            if skip > 500:  # після 500 записів припиняємо
-                break
-        return found[:MAX_ITEMS]
-
     def get_pets_by_owner(self, owner_guid):
-        return self._cached_or_fetch(f"pets_{owner_guid}", lambda: self._fetch_pets_by_owner(owner_guid))
-
-    # ---------- Аналізи ----------
-    def _fetch_analyses_by_pet(self, pet_guid):
-        url = self._build_url("Document_Анализы")
-        # Спроба 1: навігація
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq '{pet_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-
-        # Спроба 2: посторінково
-        found = []
-        top = 10
-        skip = 0
-        empty_pages = 0
-        while len(found) < MAX_ITEMS:
-            page = self._get_json(url, {
-                "$format": "json",
-                "$top": top,
-                "$skip": skip
-            })
-            if not page:
-                empty_pages += 1
-                if empty_pages > 3:
+        """Спроба прямого фільтра, fallback — посторінково"""
+        url = self._build_url("Catalog_Карточки")
+        def fetch():
+            # Спроба 1: прямий фільтр
+            data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
+            if data:
+                return data
+            # Fallback: посторінково
+            result, skip = [], 0
+            while True:
+                batch = self._get(url, {"$top": 100, "$skip": skip})
+                if not batch:
                     break
-            else:
-                empty_pages = 0
-                for a in page:
-                    if a.get('Карточка_Key') == pet_guid:
-                        found.append(a)
-            skip += top
-            if skip > 300:
-                break
-        return found[:MAX_ITEMS]
-
-    def get_analyses_by_pet(self, pet_guid):
-        return self._cached_or_fetch(f"analyses_{pet_guid}", lambda: self._fetch_analyses_by_pet(pet_guid))
+                result += [p for p in batch if p.get('Хозяин_Key') == owner_guid]
+                skip += 100
+            return result
+        return self._cached(f"pets:{owner_guid}", fetch)
 
     # ---------- Візити ----------
-    def _fetch_visits_by_pet(self, pet_guid):
+    def get_visits_by_owner(self, owner_guid):
+        """Пряме отримання всіх візитів власника через КонтактноеЛицо_Key"""
         url = self._build_url("Document_Посещение")
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-        batch = self._get_json(url, {
-            "$format": "json",
-            "$filter": f"Карточка/Ref_Key eq '{pet_guid}'"
-        })
-        if batch:
-            return batch[:MAX_ITEMS]
-
-        found = []
-        top = 10
-        skip = 0
-        empty_pages = 0
-        while len(found) < MAX_ITEMS:
-            page = self._get_json(url, {
-                "$format": "json",
-                "$top": top,
-                "$skip": skip
+        def fetch():
+            return self._get(url, {
+                "$filter": f"КонтактноеЛицо_Key eq guid'{owner_guid}'",
+                "$orderby": "Date desc"
             })
-            if not page:
-                empty_pages += 1
-                if empty_pages > 3:
-                    break
-            else:
-                empty_pages = 0
-                for v in page:
-                    if v.get('Карточка_Key') == pet_guid:
-                        found.append(v)
-            skip += top
-            if skip > 300:
-                break
-        return found[:MAX_ITEMS]
+        return self._cached(f"visits:{owner_guid}", fetch)
 
     def get_visits_by_pet(self, pet_guid):
-        return self._cached_or_fetch(f"visits_{pet_guid}", lambda: self._fetch_visits_by_pet(pet_guid))
+        url = self._build_url("Document_Посещение")
+        def fetch():
+            return self._get(url, {
+                "$filter": f"Карточка_Key eq guid'{pet_guid}'",
+                "$orderby": "Date desc"
+            })
+        return self._cached(f"visits_pet:{pet_guid}", fetch)
 
-    # ---------- Контакт ----------
-    def get_contact_by_owner(self, owner_guid):
-        def fetcher():
-            url = self._build_url("Catalog_КонтактныеЛица")
-            top = 10
-            skip = 0
-            empty_pages = 0
+    # ---------- Аналізи ----------
+    def get_analyses_by_pet(self, pet_guid):
+        url = self._build_url("Document_Анализы")
+        def fetch():
+            data = self._get(url, {"$filter": f"Карточка_Key eq guid'{pet_guid}'"})
+            if data:
+                return data
+            # Fallback посторінково
+            result, skip = [], 0
             while True:
-                page = self._get_json(url, {
-                    "$format": "json",
-                    "$top": top,
-                    "$skip": skip
-                })
-                if not page:
-                    empty_pages += 1
-                    if empty_pages > 3:
-                        break
-                else:
-                    empty_pages = 0
-                    for c in page:
-                        if c.get('ОбъектВладелец') == owner_guid:
-                            return c
-                skip += top
-                if skip > 200:
+                batch = self._get(url, {"$top": 100, "$skip": skip})
+                if not batch:
                     break
-            return None
-        return self._cached_or_fetch(f"contact_{owner_guid}", fetcher)
+                result += [a for a in batch if a.get('Карточка_Key') == pet_guid]
+                skip += 100
+            return result
+        return self._cached(f"analyses:{pet_guid}", fetch)
+
+    # ---------- Контакти ----------
+    def get_contact_by_owner(self, owner_guid):
+        url = self._build_url("Catalog_КонтактныеЛица")
+        skip = 0
+        while True:
+            batch = self._get(url, {"$top": 100, "$skip": skip})
+            if not batch:
+                return None
+            for c in batch:
+                if c.get('ОбъектВладелец') == owner_guid:
+                    return c
+            skip += 100
 
 enote = EnoteClient()
