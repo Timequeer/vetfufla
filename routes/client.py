@@ -51,6 +51,8 @@ def my_analyses():
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
         return jsonify([])
+    # Використовуємо кешовану функцію
+    return jsonify(get_cached_analyses(user.enote_guid))
 
     from services.enote_service import enote
     pets = enote.get_pets_by_owner(user.enote_guid)
