@@ -150,6 +150,76 @@ def bind_telegram():
     
     return jsonify({"message": "Telegram успішно прив'язано!"}), 200
 
+from models import UserPhone
+
+# ---------- Додаткові номери телефонів ----------
+@api_bp.route('/my-phones', methods=['GET'])
+def get_my_phones():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    phones = UserPhone.query.filter_by(user_id=user_id).all()
+    return jsonify([{
+        "id": p.id,
+        "phone": p.phone,
+        "comment": p.comment
+    } for p in phones])
+
+@api_bp.route('/my-phones', methods=['POST'])
+def add_phone():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    data = request.get_json()
+    phone = data.get("phone")
+    comment = data.get("comment", "")
+    if not phone:
+        return jsonify({"error": "Номер телефону обов'язковий"}), 400
+    # Нормалізація номера (можна використати вже існуючу функцію з auth.py, але я продублюю)
+    import re
+    def normalize_phone(p):
+        digits = re.sub(r'\D', '', p)
+        if digits.startswith('0') and len(digits) == 10:
+            digits = '38' + digits
+        if digits.startswith('380') and len(digits) == 12:
+            digits = '+' + digits
+        if digits.startswith('38') and len(digits) == 12:
+            digits = '+' + digits
+        return digits if digits.startswith('+') else '+' + digits
+    phone = normalize_phone(phone)
+    new_phone = UserPhone(user_id=user_id, phone=phone, comment=comment)
+    db.session.add(new_phone)
+    db.session.commit()
+    return jsonify({"id": new_phone.id, "phone": new_phone.phone, "comment": new_phone.comment}), 201
+
+@api_bp.route('/my-phones/<int:phone_id>', methods=['PUT'])
+def update_phone(phone_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    phone_entry = UserPhone.query.filter_by(id=phone_id, user_id=user_id).first()
+    if not phone_entry:
+        return jsonify({"error": "Номер не знайдено"}), 404
+    data = request.get_json()
+    if "phone" in data:
+        phone_entry.phone = data["phone"]
+    if "comment" in data:
+        phone_entry.comment = data["comment"]
+    db.session.commit()
+    return jsonify({"id": phone_entry.id, "phone": phone_entry.phone, "comment": phone_entry.comment})
+
+@api_bp.route('/my-phones/<int:phone_id>', methods=['DELETE'])
+def delete_phone(phone_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    phone_entry = UserPhone.query.filter_by(id=phone_id, user_id=user_id).first()
+    if not phone_entry:
+        return jsonify({"error": "Номер не знайдено"}), 404
+    db.session.delete(phone_entry)
+    db.session.commit()
+    return jsonify({"message": "Видалено"}), 200
+
 @api_bp.route('/api/telegram/unbind', methods=['POST'])
 def unbind_telegram():
     user_id = session.get("user_id")
