@@ -41,21 +41,33 @@ class EnoteClient:
         self._cache.clear()
 
     # ---------- Тварини ----------
-    def get_pets_by_owner(self, owner_guid):
-        url = self._build_url("Catalog_Карточки")
-        def fetch():
-            data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
-            if data:
-                return data
-            result, skip = [], 0
-            while True:
-                batch = self._get(url, {"$top": 100, "$skip": skip})
-                if not batch:
-                    break
-                result += [p for p in batch if p.get('Хозяин_Key') == owner_guid]
-                skip += 100
-            return result
-        return self._cached(f"pets:{owner_guid}", fetch)
+def get_appointments_by_owner(self, owner_guid):
+    pets = self.get_pets_by_owner(owner_guid)
+    all_appointments = []
+    for pet in pets:
+        pet_key = pet.get('Ref_Key')
+        if not pet_key:
+            continue
+        url = self._build_url("Task_ПредварительнаяЗапись")
+        params = {
+            "$filter": f"Карточка_Key eq guid'{pet_key}'",
+            "$orderby": "ЗаписьНаДату desc",
+            "$top": 20,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                data = r.json().get('value', [])
+                for a in data:
+                    a['_pet_name'] = pet.get('Description', '')
+                    all_appointments.append(a)
+        except Exception:
+            pass
+    all_appointments.sort(key=lambda x: x.get('ЗаписьНаДату', ''), reverse=True)
+    # Кешуємо результат
+    self._cache[f"appointments:{owner_guid}"] = (time.time(), all_appointments)
+    return all_appointments
 
     # ---------- Візити ----------
     def get_visits_by_pet(self, pet_guid):
