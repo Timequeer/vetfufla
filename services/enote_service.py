@@ -10,15 +10,15 @@ class EnoteClient:
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
         self.session = requests.Session()
         self.session.auth = (self.user, self.password)
-        # Кэш: ключ -> (время сохранения, данные)
+        # Кеш на 10 хвилин
         self._cache = {}
-        self._cache_ttl = 600  # 10 минут
+        self._cache_ttl = 600
 
     def _build_url(self, endpoint):
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{endpoint}"
 
     def _cached_get(self, cache_key, url, params=None):
-        """Вернуть данные из кэша или загрузить и закэшировать"""
+        """Повертає дані з кешу або завантажує і кешує"""
         now = time.time()
         cached = self._cache.get(cache_key)
         if cached and (now - cached[0]) < self._cache_ttl:
@@ -32,30 +32,129 @@ class EnoteClient:
             data = r.json().get('value', [])
             self._cache[cache_key] = (now, data)
             return data
-        # если ошибка — вернуть пустой список, но кэш не обновлять
         return []
 
     def clear_cache(self):
         self._cache.clear()
 
-    # ---------- Животные ----------
-    def get_all_pets(self):
+    # ---------- Тварини (через навігацію або посторінково) ----------
+    def get_pets_by_owner(self, owner_guid):
+        """Отримати тварин конкретного власника"""
         url = self._build_url("Catalog_Карточки")
-        return self._cached_get("pets", url)
+        # Спроба 1: навігаційний фільтр
+        r = self.session.get(url, params={
+            "$format": "json",
+            "$filter": f"Хозяин/Ref_Key eq guid'{owner_guid}'"
+        })
+        if r.ok:
+            data = r.json().get('value', [])
+            if data:
+                return data
+        # Спроба 2: посторінкове завантаження з фільтрацією на клієнті
+        all_pets = []
+        top = 100
+        skip = 0
+        while True:
+            r = self.session.get(url, params={
+                "$format": "json",
+                "$top": top,
+                "$skip": skip
+            })
+            if not r.ok:
+                break
+            batch = r.json().get('value', [])
+            if not batch:
+                break
+            # Фільтруємо на льоту
+            for pet in batch:
+                if pet.get('Хозяин_Key') == owner_guid:
+                    all_pets.append(pet)
+            skip += top
+        return all_pets
 
-    # ---------- Анализы ----------
-    def get_all_analyses(self):
+    # ---------- Аналізи (теж через навігацію, інакше посторінково) ----------
+    def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
-        return self._cached_get("analyses", url)
+        r = self.session.get(url, params={
+            "$format": "json",
+            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
+        })
+        if r.ok:
+            data = r.json().get('value', [])
+            if data:
+                return data
+        # fallback: посторінково
+        all_analyses = []
+        top = 100
+        skip = 0
+        while True:
+            r = self.session.get(url, params={
+                "$format": "json",
+                "$top": top,
+                "$skip": skip
+            })
+            if not r.ok:
+                break
+            batch = r.json().get('value', [])
+            if not batch:
+                break
+            for a in batch:
+                if a.get('Карточка_Key') == pet_guid:
+                    all_analyses.append(a)
+            skip += top
+        return all_analyses
 
-    # ---------- Визиты ----------
-    def get_all_visits(self):
+    # ---------- Візити ----------
+    def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
-        return self._cached_get("visits", url)
+        r = self.session.get(url, params={
+            "$format": "json",
+            "$filter": f"Карточка/Ref_Key eq guid'{pet_guid}'"
+        })
+        if r.ok:
+            data = r.json().get('value', [])
+            if data:
+                return data
+        all_visits = []
+        top = 100
+        skip = 0
+        while True:
+            r = self.session.get(url, params={
+                "$format": "json",
+                "$top": top,
+                "$skip": skip
+            })
+            if not r.ok:
+                break
+            batch = r.json().get('value', [])
+            if not batch:
+                break
+            for v in batch:
+                if v.get('Карточка_Key') == pet_guid:
+                    all_visits.append(v)
+            skip += top
+        return all_visits
 
-    # ---------- Контактные лица ----------
-    def get_all_contacts(self):
+    # ---------- Контакти (посторінково, бо навігація може не працювати) ----------
+    def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
-        return self._cached_get("contacts", url)
+        top = 100
+        skip = 0
+        while True:
+            r = self.session.get(url, params={
+                "$format": "json",
+                "$top": top,
+                "$skip": skip
+            })
+            if not r.ok:
+                break
+            batch = r.json().get('value', [])
+            if not batch:
+                break
+            for c in batch:
+                if c.get('ОбъектВладелец') == owner_guid:
+                    return c
+            skip += top
+        return None
 
 enote = EnoteClient()
