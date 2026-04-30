@@ -225,10 +225,11 @@
     }
   }
 
-  function renderAnalyses(analyses) {
+function renderAnalyses(analyses) {
     const tbody = document.getElementById('analysesBody');
-    if (!analyses || analyses.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+    if (!analyses || !Array.isArray(analyses) || analyses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+        return;
     } else {
       tbody.innerHTML = analyses.map(a => `
         <tr class="border-b">
