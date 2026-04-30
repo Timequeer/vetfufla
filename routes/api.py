@@ -4,7 +4,16 @@ from services.ai_service import ask_gpt
 from config import Config
 from datetime import datetime
 from models import AuthCode
-from services.enote_service import enote
+from services.enote_service import ENoteClient
+from config import Config
+
+# Ініціалізація клієнта ENOTE
+enote_client = ENoteClient(
+    base_url=Config.ENOTE_BASE_URL,
+    login=Config.ENOTE_LOGIN,
+    password=Config.ENOTE_PASSWORD
+)
+
 
 api_bp = Blueprint('api', __name__)
 
