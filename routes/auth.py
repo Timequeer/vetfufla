@@ -138,7 +138,7 @@ def verify_code():
         return jsonify({"error": "Невірний або застарілий код"}), 401
     
     # Успішна верифікація
-    auth_code.used = True
+       auth_code.used = True
     db.session.commit()
     
     user = User.query.filter_by(phone=phone).first()
@@ -147,7 +147,7 @@ def verify_code():
         db.session.add(user)
         db.session.commit()
 
-     if not user.enote_guid:
+    if not user.enote_guid:
         enote_clients = enote.get_clients(phone=phone)
         if enote_clients:
             user.enote_guid = enote_clients[0]['Ref_Key']
