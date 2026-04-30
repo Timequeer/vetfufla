@@ -38,6 +38,7 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
+    # ---------- Животные ----------
     def get_pets_by_owner(self, owner_guid):
         url = self._build_url("Catalog_Карточки")
         def fetch():
@@ -54,6 +55,7 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
+    # ---------- Визиты ----------
     def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
         def fetch():
@@ -64,6 +66,7 @@ class EnoteClient:
             })
         return self._cached(f"visits_pet:{pet_guid}", fetch)
 
+    # ---------- Анализы ----------
     def get_analyses_by_pet(self, pet_guid):
         url = self._build_url("Document_Анализы")
         def fetch():
@@ -84,15 +87,17 @@ class EnoteClient:
         return self._cached(f"analyses:{pet_guid}", fetch)
 
     def get_analyses_by_owner(self, owner_guid):
-        url = self._build_url("Document_Анализы")
-        def fetch():
-            return self._get(url, {
-                "$filter": f"КонтактноеЛицо_Key eq guid'{owner_guid}'",
-                "$orderby": "Date desc",
-                "$top": 20
-            })
-        return self._cached(f"analyses_owner:{owner_guid}", fetch)
+        pets = self.get_pets_by_owner(owner_guid)
+        all_analyses = []
+        for pet in pets:
+            analyses = self.get_analyses_by_pet(pet['Ref_Key'])
+            for a in analyses:
+                a['_pet_name'] = pet.get('Description', '')
+                all_analyses.append(a)
+        all_analyses.sort(key=lambda x: x.get('Date', ''), reverse=True)
+        return all_analyses
 
+    # ---------- Записи на приём ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
         def fetch():
@@ -103,6 +108,7 @@ class EnoteClient:
             })
         return self._cached(f"appointments:{owner_guid}", fetch)
 
+    # ---------- Контакты ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
@@ -115,20 +121,18 @@ class EnoteClient:
                     return c
             skip += 100
 
-    def get_client_by_phone(self, phone):
+    # ---------- Поиск клиента по телефону ----------
+    def find_client_by_phone(self, phone):
         digits = ''.join(filter(str.isdigit, phone))
-        if digits.startswith('380'):
-            digits = digits[2:]
-        elif digits.startswith('38'):
-            digits = digits[2:]
-        search = digits[-9:] if len(digits) >= 9 else digits
+        if digits.startswith('38'):
+            digits = digits[2:]  # 0685442567
         url = self._build_url("Catalog_Клиенты")
         data = self._get(url, {
-            "$filter": f"substringof('{search}',КонтактнаяИнформация)",
+            "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
             "$top": 1
         })
         if data:
-            return data[0].get('Ref_Key')
+            return data[0]          # вернёт объект клиента
         return None
 
 enote = EnoteClient()
