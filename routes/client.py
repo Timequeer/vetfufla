@@ -23,8 +23,13 @@ def my_pets():
     if not user or not user.enote_guid:
         return jsonify([])
     from services.enote_service import enote
-    pets = enote.get_pets()
-    return jsonify(pets if pets else [])
+    # Получаем всех животных (без фильтра)
+    all_pets = enote.get_pets()
+    if not all_pets:
+        return jsonify([])
+    # Фильтруем по GUID клиента на стороне Python
+    my_pets = [pet for pet in all_pets if pet.get('Хозяин_Key') == user.enote_guid]
+    return jsonify(my_pets)
 
 @client_bp.route('/api/debug-enote')
 def debug_enote():
