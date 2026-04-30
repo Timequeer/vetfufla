@@ -2,7 +2,7 @@ import requests
 import os
 import time
 
-class EnoteClient:
+class ENoteClient:
     def __init__(self):
         self.base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
         self.clinic_guid = os.getenv('ENOTE_CLINIC_GUID')
