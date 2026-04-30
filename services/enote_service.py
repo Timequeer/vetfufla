@@ -22,77 +22,41 @@ class EnoteClient:
             return f"{guid[:8]}-{guid[8:12]}-{guid[12:16]}-{guid[16:20]}-{guid[20:]}"
         return guid
 
-    def get_clients(self, phone=None):
-        url = self._build_url("Catalog_Клиенты")
-        params = {"$format": "json"}
-        if phone:
-            params["$filter"] = f"Телефон eq '{phone}'"
-        r = self.session.get(url, params=params)
-        if r.ok:
-            return r.json().get('value', [])
-        return []
-
-    def get_client_by_phone(self, phone):
-        digits = ''.join(filter(str.isdigit, phone))
-        for fmt_phone in [digits, f'+{digits}', f'38{digits}' if not digits.startswith('38') else digits]:
-            url = self._build_url("InformationRegister_КонтактнаяИнформация")
-            params = {
-                "$format": "json",
-                "$filter": f"Представление eq '{fmt_phone}' and Тип eq 'Телефон'"
-            }
-            r = self.session.get(url, params=params)
-            if r.ok:
-                data = r.json().get('value', [])
-                if data:
-                    obj_ref = data[0].get('Объект')
-                    if obj_ref:
-                        import re
-                        match = re.search(r"guid'([a-f0-9\-]+)'", obj_ref)
-                        if match:
-                            return match.group(1)
-            params["$filter"] = f"Поле1 eq '{fmt_phone}' and Тип eq 'Телефон'"
-            r = self.session.get(url, params=params)
-            if r.ok:
-                data = r.json().get('value', [])
-                if data:
-                    obj_ref = data[0].get('Объект')
-                    if obj_ref:
-                        import re
-                        match = re.search(r"guid'([a-f0-9\-]+)'", obj_ref)
-                        if match:
-                            return match.group(1)
-        return None
-
-    def get_pets(self, client_guid=None):
+    # ---------- Животные ----------
+    def get_all_pets(self):
+        """Получить вообще все карточки животных (без фильтра)"""
         url = self._build_url("Catalog_Карточки")
         params = {"$format": "json"}
-        if client_guid:
-            params["$filter"] = f"Хозяин_Key eq '{self._format_guid(client_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
         return []
 
-    def get_analyses(self, pet_guid=None):
+    # ---------- Анализы ----------
+    def get_all_analyses(self):
+        """Получить все анализы (без фильтра)"""
         url = self._build_url("Document_Анализы")
         params = {"$format": "json"}
-        if pet_guid:
-            params["$filter"] = f"Карточка_Key eq '{self._format_guid(pet_guid)}'"
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
         return []
 
-    def get_appointments(self, doctor_guid=None, date_from=None, date_to=None):
-        url = self._build_url("Document_Приемы")
+    # ---------- Визиты (посещения) ----------
+    def get_all_visits(self):
+        """Получить все посещения (без фильтра)"""
+        url = self._build_url("Document_Посещение")
         params = {"$format": "json"}
-        filters = []
-        if doctor_guid:
-            filters.append(f"Врач_Key eq '{self._format_guid(doctor_guid)}'")
-        if date_from and date_to:
-            filters.append(f"ДатаДата gt {date_from} and ДатаДата lt {date_to}")
-        if filters:
-            params["$filter"] = " and ".join(filters)
+        r = self.session.get(url, params=params)
+        if r.ok:
+            return r.json().get('value', [])
+        return []
+
+    # ---------- Контактные лица ----------
+    def get_all_contacts(self):
+        """Получить все контактные лица"""
+        url = self._build_url("Catalog_КонтактныеЛица")
+        params = {"$format": "json"}
         r = self.session.get(url, params=params)
         if r.ok:
             return r.json().get('value', [])
