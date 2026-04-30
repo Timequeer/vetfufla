@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session, redirect, jsonify
 from models import User
 from services.enote_service import enote
 import time
+import logging
 
 client_bp = Blueprint('client', __name__)
 
@@ -13,15 +14,26 @@ _analyses_cache = {
 }
 
 def get_cached_analyses(owner_guid):
+    logging.info(f"[ANALYSES] Запит для owner_guid={owner_guid}")
     now = time.time()
     if _analyses_cache["data"] is not None and (now - _analyses_cache["timestamp"]) < _analyses_cache["ttl"]:
+        logging.info("[ANALYSES] Повертаємо з кешу")
         return _analyses_cache["data"]
-    print(f"[CACHE] Запитую аналізи для {owner_guid}...")
+
     data = enote.get_analyses_by_owner_via_pets(owner_guid)
-    print(f"[CACHE] Отримано аналізів: {len(data) if data else 0}")
-    _analyses_cache["data"] = data
+    logging.info(f"[ANALYSES] Отримано {len(data) if data else 0} записів")
+    if not data:
+        pets = enote.get_pets_by_owner(owner_guid)
+        if pets:
+            pet = pets[0]
+            logging.info(f"[ANALYSES] Тварина: {pet.get('Description')}, guid={pet['Ref_Key']}")
+            url = enote._build_url("Document_Анализы")
+            params = {"$format": "json", "$top": 3}
+            r = enote.session.get(url, params=params, timeout=90)
+            logging.info(f"[ANALYSES] ENOTE status: {r.status_code}, text: {r.text[:200]}")
+    _analyses_cache["data"] = data if data else []
     _analyses_cache["timestamp"] = now
-    return data
+    return _analyses_cache["data"]
 
 @client_bp.route('/dashboard')
 def dashboard():
@@ -44,34 +56,15 @@ def my_pets():
         return jsonify([])
     return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
-def get_cached_analyses(owner_guid):
-    import logging
-    logging.info(f"[ANALYSES] Запит для owner_guid={owner_guid}")
-    data = enote.get_analyses_by_owner_via_pets(owner_guid)
-    logging.info(f"[ANALYSES] Отримано {len(data) if data else 0} записів")
-    if not data:
-        # Спробуємо отримати хоча б одну тварину та подивитись, чи є аналізи
-        pets = enote.get_pets_by_owner(owner_guid)
-        if pets:
-            pet = pets[0]
-            logging.info(f"[ANALYSES] Тварина: {pet.get('Description')}, guid={pet['Ref_Key']}")
-            url = enote._build_url("Document_Анализы")
-            params = {"$format": "json", "$top": 3}
-            r = enote.session.get(url, params=params, timeout=90)
-            logging.info(f"[ANALYSES] ENOTE status: {r.status_code}, text: {r.text[:200]}")
-    return data if data else []
-    
-    try:
-        r = enote.session.get(url, params=params, timeout=30)
-        # Повертаємо сиру відповідь, щоб побачити, що саме прийшло
-        return jsonify({
-            "pet_guid": pet['Ref_Key'],
-            "pet_name": pet.get('Description'),
-            "status_code": r.status_code,
-            "response_text": r.text[:500]  # перші 500 символів
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@client_bp.route('/api/my-analyses')
+def my_analyses():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    return jsonify(get_cached_analyses(user.enote_guid))
 
 @client_bp.route('/api/my-visits')
 def my_visits():
