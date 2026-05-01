@@ -55,7 +55,6 @@
     <section id="animals" class="bg-white rounded-2xl shadow-sm p-6 mb-6 max-w-4xl">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Мої тварини</h2>
-        <button class="text-red-600 hover:text-red-700 text-sm font-medium">+ Додати</button>
       </div>
       <div id="animalsContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="col-span-full text-center text-gray-500 py-8">Завантаження...</div>
@@ -74,9 +73,9 @@
         </div>
         <div class="md:w-80">
           <h3 class="font-semibold text-gray-700 mb-3">Новий запис</h3>
-          <button onclick="openCalendarModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+          <a href="/online-appointment" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors inline-block text-center">
             Обрати дату та лікаря
-          </button>
+          </a>
         </div>
       </div>
     </section>
@@ -124,9 +123,9 @@
   </main>
 </div>
 
-<div class="text-xs text-gray-400 mb-4">
+<div class="text-xs text-gray-400 mb-4 text-center">
   🕒 Оновлено: <span id="lastRefresh">—</span>
-  <button onclick="location.reload()" class="ml-2 text-red-600 underline hover:text-red-800">Оновити зараз</button>
+  <button onclick="refreshAllData()" class="ml-2 text-red-600 underline hover:text-red-800">Оновити зараз</button>
 </div>
 
 <!-- Нижня мобільна навігація -->
@@ -178,71 +177,228 @@
   </div>
 </div>
 
+<!-- Модальне вікно: Детальна картка тварини -->
+<div id="pet-detail-modal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 transform transition-all">
+    <h3 class="text-xl font-bold text-gray-800 mb-4" id="pet-detail-name">Картка тварини</h3>
+    <div id="pet-detail-content" class="space-y-3 text-sm text-gray-700"></div>
+    <button onclick="closePetDetailModal()" class="mt-4 w-full py-2 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50">Закрити</button>
+  </div>
+</div>
+
 <script>
-  // ========== ЗАВАНТАЖЕННЯ ТВАРИН ==========
-  fetch('/api/my-pets')
-    .then(r => r.json())
-    .then(pets => {
-      const container = document.getElementById('animalsContainer');
-      if (!pets || pets.length === 0) {
-        container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Немає тварин</div>';
-      } else {
-        container.innerHTML = pets.map(p => `
-          <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-                ${p.Пол === 'Female' ? '🐱' : '🐶'}
-              </div>
-              <div>
-                <h3 class="font-semibold text-gray-800">${p.Description || 'Без імені'}</h3>
-                <p class="text-xs text-gray-500">${p.ДатаРождения ? new Date(p.ДатаРождения).toLocaleDateString('uk-UA') : ''}</p>
-              </div>
-            </div>
-            <a href="#" class="mt-3 inline-block text-red-600 text-sm hover:underline">Повна картка →</a>
-          </div>
-        `).join('');
+  const CACHE_KEY_PREFIX = 'vetfuture_cache_';
+  const CACHE_DURATION = 10 * 60 * 1000; // 10 хвилин
+
+  // ========== ДОПОМІЖНІ ФУНКЦІЇ ДЛЯ КЕШУВАННЯ ==========
+  function getCache(key) {
+    try {
+      const item = localStorage.getItem(CACHE_KEY_PREFIX + key);
+      if (!item) return null;
+      const parsed = JSON.parse(item);
+      if (Date.now() - parsed.timestamp > CACHE_DURATION) {
+        localStorage.removeItem(CACHE_KEY_PREFIX + key);
+        return null;
       }
-    });
+      return parsed.data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setCache(key, data) {
+    try {
+      localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify({
+        timestamp: Date.now(),
+        data: data
+      }));
+    } catch (e) {
+      // localStorage переповнений
+    }
+  }
+
+  function updateLastRefreshTime() {
+    const span = document.getElementById('lastRefresh');
+    if (span) {
+      span.textContent = new Date().toLocaleTimeString('uk-UA');
+    }
+  }
+
+  async function fetchWithCache(url, cacheKey) {
+    const cached = getCache(cacheKey);
+    if (cached) {
+      updateLastRefreshTime();
+      return cached;
+    }
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('Network error');
+      const data = await r.json();
+      setCache(cacheKey, data);
+      updateLastRefreshTime();
+      return data;
+    } catch (e) {
+      console.error('Помилка завантаження:', url, e);
+      return cached || [];
+    }
+  }
+
+  async function refreshAllData() {
+    const keys = ['pets', 'analyses', 'visits', 'appointments', 'profile', 'phones'];
+    keys.forEach(k => localStorage.removeItem(CACHE_KEY_PREFIX + k));
+    location.reload();
+  }
+
+  // ========== ЗАВАНТАЖЕННЯ ТВАРИН ==========
+  async function loadAnimals() {
+    const container = document.getElementById('animalsContainer');
+    const pets = await fetchWithCache('/api/my-pets', 'pets');
+    
+    if (!pets || pets.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Немає тварин</div>';
+    } else {
+      container.innerHTML = pets.map(p => `
+        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+              ${p.Пол === 'Female' ? '🐱' : '🐶'}
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">${p.Description || 'Без імені'}</h3>
+              <p class="text-xs text-gray-500">${p.ДатаРождения ? new Date(p.ДатаРождения).toLocaleDateString('uk-UA') : ''}</p>
+            </div>
+          </div>
+          <button onclick='openPetDetail(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="mt-3 inline-block text-red-600 text-sm hover:underline bg-transparent border-none cursor-pointer">
+            Повна картка →
+          </button>
+        </div>
+      `).join('');
+    }
+  }
+
+  // ========== ДЕТАЛЬНА КАРТКА ТВАРИНИ ==========
+  function openPetDetail(pet) {
+    const modal = document.getElementById('pet-detail-modal');
+    document.getElementById('pet-detail-name').textContent = pet.Description || 'Без імені';
+    document.getElementById('pet-detail-content').innerHTML = `
+      <p><strong>Вид:</strong> ${pet.Вид_Key || '—'}</p>
+      <p><strong>Порода:</strong> ${pet.Порода_Key || '—'}</p>
+      <p><strong>Стать:</strong> ${pet.Пол === 'Female' ? 'Жіноча' : 'Чоловіча'}</p>
+      <p><strong>Дата народження:</strong> ${pet.ДатаРождения ? new Date(pet.ДатаРождения).toLocaleDateString('uk-UA') : '—'}</p>
+      <p><strong>Стерилізовано:</strong> ${pet.Кастрировано ? 'Так' : 'Ні'}</p>
+      <p><strong>Номер чіпу:</strong> ${pet.НомерЧипа || '—'}</p>
+    `;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePetDetailModal() {
+    const modal = document.getElementById('pet-detail-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  window.addEventListener('click', function(e) {
+    if (e.target.id === 'pet-detail-modal') closePetDetailModal();
+  });
 
   // ========== ЗАВАНТАЖЕННЯ АНАЛІЗІВ ==========
-  fetch('/api/my-analyses')
-    .then(r => r.json())
-    .then(analyses => {
-      const tbody = document.getElementById('analysesBody');
-      if (!analyses || analyses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
-      } else {
-        tbody.innerHTML = analyses.map(a => `
-          <tr class="border-b">
-            <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
-            <td class="py-3 pr-4 text-gray-800">${a.Description || 'Аналіз'}</td>
-            <td class="py-3 pr-4">${a._pet_name || '—'}</td>
-            <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
-            <td class="py-3">PDF</td>
-          </tr>
-        `).join('');
-      }
-      updateCount();
-    });
+  async function loadAnalyses() {
+    const tbody = document.getElementById('analysesBody');
+    const analyses = await fetchWithCache('/api/my-analyses', 'analyses');
+    
+    if (!analyses || analyses.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Немає аналізів</td></tr>';
+    } else {
+      tbody.innerHTML = analyses.map(a => `
+        <tr class="border-b">
+          <td class="py-3 pr-4"><input type="checkbox" class="analysis-checkbox accent-red-600" value="${a.Ref_Key}"></td>
+          <td class="py-3 pr-4 text-gray-800">${a.Description || 'Аналіз'}</td>
+          <td class="py-3 pr-4">${a._pet_name || '—'}</td>
+          <td class="py-3 pr-4 text-gray-500">${a.Date ? new Date(a.Date).toLocaleDateString('uk-UA') : ''}</td>
+          <td class="py-3">PDF</td>
+        </tr>
+      `).join('');
+    }
+    updateCount();
+  }
 
   // ========== ЗАВАНТАЖЕННЯ ІСТОРІЇ ВІЗИТІВ ==========
-  fetch('/api/my-visits')
-    .then(r => r.json())
-    .then(visits => {
-      const container = document.getElementById('historyContainer');
-      if (!visits || visits.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
-      } else {
-        container.innerHTML = visits.map(v => `
-          <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
-            <div>
-              <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
-              <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
-            </div>
+  async function loadVisits() {
+    const container = document.getElementById('historyContainer');
+    const visits = await fetchWithCache('/api/my-visits', 'visits');
+    
+    if (!visits || visits.length === 0) {
+      container.innerHTML = '<div class="text-center text-gray-500 py-8">Немає візитів</div>';
+    } else {
+      container.innerHTML = visits.map(v => `
+        <div class="flex gap-4 items-start border-l-2 border-red-200 pl-4">
+          <div>
+            <p class="font-semibold">${v.Description || 'Візит'} (${v._pet_name || ''})</p>
+            <p class="text-sm text-gray-500">${v.Date ? new Date(v.Date).toLocaleDateString('uk-UA') : ''}</p>
           </div>
-        `).join('');
-      }
+        </div>
+      `).join('');
+    }
+  }
+
+  // ========== ЗАВАНТАЖЕННЯ ЗАПИСІВ НА ПРИЙОМ ==========
+  async function loadAppointments() {
+    const list = document.getElementById('appointmentsList');
+    if (!list) return;
+
+    const appointments = await fetchWithCache('/api/my-appointments', 'appointments');
+
+    if (!appointments || appointments.length === 0) {
+      list.innerHTML = '<p class="text-gray-400 text-sm">Немає записів</p>';
+      return;
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const past = [], today = [], future = [];
+
+    appointments.forEach(a => {
+      const date = new Date(a.ЗаписьНаДату);
+      if (date < todayStart) past.push(a);
+      else if (date >= todayStart && date < todayEnd) today.push(a);
+      else future.push(a);
     });
+
+    let html = '';
+    if (today.length) {
+      html += '<h4 class="font-medium text-red-600 mb-2">Сьогодні</h4>';
+      html += renderAppointments(today);
+    }
+    if (future.length) {
+      html += '<h4 class="font-medium text-green-600 mb-2 mt-4">Заплановані</h4>';
+      html += renderAppointments(future);
+    }
+    if (past.length) {
+      html += '<h4 class="font-medium text-gray-400 mb-2 mt-4">Минулі</h4>';
+      html += renderAppointments(past, true);
+    }
+
+    list.innerHTML = html || '<p class="text-gray-400 text-sm">Немає записів</p>';
+  }
+
+  function renderAppointments(list, isPast = false) {
+    return list.map(a => {
+      const date = new Date(a.ЗаписьНаДату);
+      const dateStr = date.toLocaleDateString('uk-UA') + ', ' + date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+      const petName = a.Кличка || 'Тварина';
+      const status = a.Подтверждено ? 'Підтверджено' : (a.Executed ? 'Виконано' : 'Очікує');
+      const badgeColor = a.Подтверждено ? 'bg-green-100 text-green-700' : (a.Executed ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700');
+      return `<div class="flex justify-between items-center border-b pb-2 ${isPast ? 'opacity-60' : ''}">
+        <div><p class="font-medium">${petName}</p><p class="text-sm text-gray-500">${dateStr}</p></div>
+        <span class="text-xs px-2 py-1 rounded-full ${badgeColor}">${status}</span>
+      </div>`;
+    }).join('');
+  }
 
   // ========== МОДАЛЬНІ ВІКНА ==========
   function openSendModal() {
@@ -324,8 +480,8 @@
   async function loadProfileAndPhones() {
     try {
       const [profileRes, phonesRes] = await Promise.all([
-        fetch('/api/my-profile').then(r => r.json()),
-        fetch('/api/my-phones').then(r => r.json()).catch(() => [])
+        fetchWithCache('/api/my-profile', 'profile'),
+        fetchWithCache('/api/my-phones', 'phones')
       ]);
       const container = document.getElementById('profileContainer');
       if (!container) return;
@@ -358,7 +514,6 @@
             <button id="saveProfileBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-xl transition">Зберегти зміни</button>
           </div>`;
 
-        // Додаткові номери (функції renderPhones і обробники залишаються тими самими)
         function renderPhones(phones) {
           const list = document.getElementById('additionalPhonesList');
           if (!phones || phones.length === 0) {
@@ -373,9 +528,8 @@
                 <button class="deletePhoneBtn text-red-600 text-sm">🗑️</button>
               </div>
             </div>`).join('');
-          // ... (обробники edit/delete залишаються тими самими, що й раніше)
         }
-        renderPhones(phonesRes);
+        renderPhones(phonesRes || []);
       } else {
         container.innerHTML = `<p class="text-gray-500 text-center py-8">Ваш кабінет прив'язано до номеру <strong>${profileRes.phone || ''}</strong>.<br>Зверніться до адміністратора для синхронізації.</p>
           <div class="mt-4 flex justify-center">
@@ -387,61 +541,12 @@
     }
   }
 
+  // ========== ІНІЦІАЛІЗАЦІЯ ==========
   loadProfileAndPhones();
-
-  fetch('/api/my-appointments')
-    .then(r => r.json())
-    .then(appointments => {
-      const list = document.getElementById('appointmentsList');
-      if (!list) return;
-
-      if (!appointments || appointments.length === 0) {
-        list.innerHTML = '<p class="text-gray-400 text-sm">Немає записів</p>';
-        return;
-      }
-
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-      const past = [], today = [], future = [];
-
-      appointments.forEach(a => {
-        const date = new Date(a.ЗаписьНаДату);
-        if (date < todayStart) past.push(a);
-        else if (date >= todayStart && date < todayEnd) today.push(a);
-        else future.push(a);
-      });
-
-      let html = '';
-      if (today.length) {
-        html += '<h4 class="font-medium text-red-600 mb-2">Сьогодні</h4>';
-        html += renderAppointments(today);
-      }
-      if (future.length) {
-        html += '<h4 class="font-medium text-green-600 mb-2 mt-4">Заплановані</h4>';
-        html += renderAppointments(future);
-      }
-      if (past.length) {
-        html += '<h4 class="font-medium text-gray-400 mb-2 mt-4">Минулі</h4>';
-        html += renderAppointments(past, true);
-      }
-
-      list.innerHTML = html || '<p class="text-gray-400 text-sm">Немає записів</p>';
-    });
-
-  function renderAppointments(list, isPast = false) {
-    return list.map(a => {
-      const date = new Date(a.ЗаписьНаДату);
-      const dateStr = date.toLocaleDateString('uk-UA') + ', ' + date.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
-      const petName = a.Кличка || 'Тварина';
-      const status = a.Подтверждено ? 'Підтверджено' : (a.Executed ? 'Виконано' : 'Очікує');
-      const badgeColor = a.Подтверждено ? 'bg-green-100 text-green-700' : (a.Executed ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700');
-      return `<div class="flex justify-between items-center border-b pb-2 ${isPast ? 'opacity-60' : ''}">
-        <div><p class="font-medium">${petName}</p><p class="text-sm text-gray-500">${dateStr}</p></div>
-        <span class="text-xs px-2 py-1 rounded-full ${badgeColor}">${status}</span>
-      </div>`;
-    }).join('');
-  }
+  loadAnimals();
+  loadAppointments();
+  loadAnalyses();
+  loadVisits();
+  updateLastRefreshTime();
 </script>
 {% endblock %}
