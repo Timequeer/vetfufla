@@ -114,12 +114,11 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Довідник лікарів ----------
+    # ---------- Довідник лікарів (безпечний) ----------
     def get_doctors(self):
         url = self._build_url("Catalog_ФизическиеЛица")
-        params = {"$format": "json"}
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params={"$top": 200, "$format": "json"}, timeout=25)
             if r.ok:
                 doctors = {}
                 for d in r.json().get('value', []):
@@ -129,12 +128,11 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Довідник змін ----------
+    # ---------- Довідник змін (безпечний) ----------
     def get_shifts(self):
         url = self._build_url("Catalog_Смены")
-        params = {"$format": "json"}
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params={"$top": 200, "$format": "json"}, timeout=25)
             if r.ok:
                 shifts = {}
                 for s in r.json().get('value', []):
@@ -148,7 +146,7 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Графік роботи ----------
+    # ---------- Графік роботи (фінальний) ----------
     def get_schedule(self, start_date=None, days=7):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {
@@ -156,14 +154,16 @@ class EnoteClient:
             "$top": 5000,
             "$format": "json"
         }
+        result = []
         try:
             r = self.session.get(url, params=params, timeout=30)
             if r.ok:
-                data = r.json().get('value', [])
+                raw_data = r.json().get('value', [])
+                if not raw_data:
+                    return []
                 doctors = self.get_doctors()
                 shifts = self.get_shifts()
-                result = []
-                for entry in data:
+                for entry in raw_data:
                     period = entry.get('Period')
                     if not period:
                         continue
@@ -178,10 +178,9 @@ class EnoteClient:
                         'works': entry.get('Работает'),
                         'allow_online': entry.get('РазрешитьОнлайнЗапись')
                     })
-                return result
-        except Exception:
-            pass
-        return []
+        except Exception as e:
+            print(f"Schedule error: {e}")
+        return result
 
     # ---------- Пошук клієнта за телефоном ----------
     def find_client_by_phone(self, phone):
