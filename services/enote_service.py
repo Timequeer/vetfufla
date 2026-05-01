@@ -2,6 +2,7 @@ import requests
 import os
 import time
 from urllib.parse import quote
+from datetime import datetime
 
 class EnoteClient:
     def __init__(self):
@@ -126,5 +127,35 @@ class EnoteClient:
         if data:
             return data[0]
         return None
+
+def get_schedule(self, start_date=None, days=7):
+    url = self._build_url("InformationRegister_ГрафикРаботы")
+    params = {
+        "$top": 500,
+        "$format": "json"
+    }
+    try:
+        r = self.session.get(url, params=params, timeout=25)
+        if r.ok:
+            entries = r.json().get('value', [])
+            # Перетворюємо і фільтруємо за періодом, якщо потрібно
+            result = []
+            for e in entries:
+                period = e.get('Period')
+                if period:
+                    dt = datetime.fromisoformat(period.replace('T', ' '))
+                    if start_date and dt.date() < start_date:
+                        continue
+                    result.append({
+                        'doctor_key': e.get('ФизЛицо_Key'),
+                        'date': dt.strftime('%Y-%m-%d'),
+                        'shift_key': e.get('Смена_Key'),
+                        'works': e.get('Работает'),
+                        'allow_online': e.get('РазрешитьОнлайнЗапись')
+                    })
+            return result
+    except Exception:
+        pass
+    return []
 
 enote = EnoteClient()
