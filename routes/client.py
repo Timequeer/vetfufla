@@ -135,6 +135,13 @@ def test_appointments():
 
     return jsonify(result)
 
+@client_bp.route('/online-appointment')
+def online_appointment():
+    if "user_id" not in session:
+        return redirect("/login")
+    # Поки що просто відкриваємо сторінку графіка
+    return render_template("schedule.html", user=User.query.get(session["user_id"]))
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
