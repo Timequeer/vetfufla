@@ -58,7 +58,7 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Візити (без фільтра, вибірка по Карточка_Key в Python) ----------
+    # ---------- Візити ----------
     def get_visits_by_pet(self, pet_guid):
         url = self._build_url("Document_Посещение")
         params = {
@@ -88,11 +88,11 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Аналізи (поки порожньо) ----------
+    # ---------- Аналізи ----------
     def get_analyses_by_owner(self, owner_guid):
         return []
 
-    # ---------- Записи на прийом (без фільтра, вибірка по Хозяин_Key в Python) ----------
+    # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
         params = {
@@ -114,6 +114,33 @@ class EnoteClient:
             pass
         return []
 
+    # ---------- Графік роботи ----------
+    def get_schedule(self, start_date=None, days=7):
+        url = self._build_url("InformationRegister_ГрафикРаботы")
+        params = {
+            "$top": 500,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                data = r.json().get('value', [])
+                result = []
+                for entry in data:
+                    period = entry.get('Period')
+                    if period:
+                        result.append({
+                            'doctor_key': entry.get('ФизЛицо_Key'),
+                            'date': period,
+                            'shift_key': entry.get('Смена_Key'),
+                            'works': entry.get('Работает'),
+                            'allow_online': entry.get('РазрешитьОнлайнЗапись')
+                        })
+                return result
+        except Exception:
+            pass
+        return []
+
     # ---------- Пошук клієнта за телефоном ----------
     def find_client_by_phone(self, phone):
         digits = ''.join(filter(str.isdigit, phone))
@@ -127,35 +154,5 @@ class EnoteClient:
         if data:
             return data[0]
         return None
-
-def get_schedule(self, start_date=None, days=7):
-    url = self._build_url("InformationRegister_ГрафикРаботы")
-    params = {
-        "$top": 500,
-        "$format": "json"
-    }
-    try:
-        r = self.session.get(url, params=params, timeout=25)
-        if r.ok:
-            entries = r.json().get('value', [])
-            # Перетворюємо і фільтруємо за періодом, якщо потрібно
-            result = []
-            for e in entries:
-                period = e.get('Period')
-                if period:
-                    dt = datetime.fromisoformat(period.replace('T', ' '))
-                    if start_date and dt.date() < start_date:
-                        continue
-                    result.append({
-                        'doctor_key': e.get('ФизЛицо_Key'),
-                        'date': dt.strftime('%Y-%m-%d'),
-                        'shift_key': e.get('Смена_Key'),
-                        'works': e.get('Работает'),
-                        'allow_online': e.get('РазрешитьОнлайнЗапись')
-                    })
-            return result
-    except Exception:
-        pass
-    return []
 
 enote = EnoteClient()
