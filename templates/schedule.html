@@ -1,34 +1,149 @@
 {% extends "base.html" %}
 {% block title %}Графік роботи | VetFuture{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-  <h2 class="text-3xl font-bold text-red-600 mb-6">Графік роботи лікарів</h2>
-  <div class="bg-white rounded-2xl shadow p-4 md:p-6">
-    <div class="flex flex-wrap gap-2 mb-6">
-      <button class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">Сьогодні</button>
-      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">3 дні</button>
-      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
-      <!-- кнопки перемикання періоду -->
-    </div>
+<div class="container mx-auto px-4 py-6">
+  <h2 class="text-3xl font-bold text-red-600 mb-4">Графік роботи лікарів</h2>
+  
+  <!-- Перемикач періоду -->
+  <div class="flex flex-wrap gap-2 mb-6">
+    <button onclick="switchPeriod('today')" id="btn-today" class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">Сьогодні</button>
+    <button onclick="switchPeriod('3days')" id="btn-3days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">3 дні</button>
+    <button onclick="switchPeriod('week')" id="btn-week" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
+  </div>
+
+  <!-- Таблиця -->
+  <div class="bg-white rounded-2xl shadow overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="border-b text-gray-500 text-sm">
-            <th class="py-2 px-3">Лікар</th>
-            <th class="py-2 px-3">Пн 12.05</th>
-            <th class="py-2 px-3">Вт 13.05</th>
-            <th class="py-2 px-3">Ср 14.05</th>
-            <!-- додати дні динамічно -->
-          </tr>
-        </thead>
-        <tbody id="schedule-body">
-          <tr><td colspan="4" class="text-center py-8 text-gray-400">Завантаження...</td></tr>
-        </tbody>
+      <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead id="schedule-header" class="bg-red-50 text-red-700 text-sm uppercase"></thead>
+        <tbody id="schedule-body" class="divide-y divide-gray-100"></tbody>
       </table>
     </div>
+    <div id="loading-msg" class="text-center py-12 text-gray-400">Завантаження…</div>
   </div>
 </div>
+
 <script>
-  // Тимчасово – потім замінимо на fetch до API
+let scheduleData = [];
+let currentPeriod = 'today';
+
+// Завантаження даних із сервера
+async function loadSchedule() {
+  try {
+    const res = await fetch('/api/schedule');
+    scheduleData = await res.json();
+    document.getElementById('loading-msg').classList.add('hidden');
+    renderSchedule();
+  } catch (e) {
+    document.getElementById('loading-msg').innerHTML = '<span class="text-red-500">Помилка завантаження даних</span>';
+  }
+}
+
+// Отримати масив дат для вибраного періоду
+function getDates(period) {
+  const today = new Date();
+  const dates = [];
+  
+  if (period === 'today') {
+    dates.push(formatDate(today));
+  } else if (period === '3days') {
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      dates.push(formatDate(d));
+    }
+  } else if (period === 'week') {
+    const dayOfWeek = today.getDay();           // 0 – неділя
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(formatDate(d));
+    }
+  }
+  return dates;
+}
+
+// Форматувати дату у YYYY-MM-DD
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Відмалювати таблицю
+function renderSchedule() {
+  const dates = getDates(currentPeriod);
+  const daysOfWeek = dates.map(d => {
+    const day = new Date(d).toLocaleDateString('uk-UA', { weekday: 'short' });
+    const dayNum = new Date(d).getDate();
+    const month = new Date(d).toLocaleDateString('uk-UA', { month: 'short' });
+    return `${day} ${dayNum} ${month}`;
+  });
+
+  // Шапка таблиці
+  let header = '<tr>';
+  header += '<th class="py-3 px-4 font-semibold w-40">Лікар</th>';
+  daysOfWeek.forEach(day => {
+    header += `<th class="py-3 px-4 font-semibold text-center">${day}</th>`;
+  });
+  header += '</tr>';
+  document.getElementById('schedule-header').innerHTML = header;
+
+  // Збираємо лікарів та їхні зміни за потрібні дати
+  const doctorMap = new Map();
+  scheduleData.forEach(item => {
+    if (!dates.includes(item.date)) return;
+    if (!item.works) return;                 // показуємо тільки робочі слоти
+
+    if (!doctorMap.has(item.doctor)) {
+      doctorMap.set(item.doctor, new Map());
+    }
+    // Зберігаємо години для цього лікаря на цю дату
+    doctorMap.get(item.doctor).set(item.date, {
+      start: item.start ? item.start.slice(0,5) : '',
+      end: item.end ? item.end.slice(0,5) : ''
+    });
+  });
+
+  // Формуємо рядки таблиці
+  let body = '';
+  if (doctorMap.size === 0) {
+    body = `<tr><td colspan="${dates.length + 1}" class="py-8 text-center text-gray-400">Немає даних для вибраного періоду</td></tr>`;
+  } else {
+    for (let [doctor, dateSlots] of doctorMap) {
+      body += `<tr class="hover:bg-gray-50"><td class="py-3 px-4 font-medium text-gray-800">${doctor}</td>`;
+      dates.forEach(date => {
+        const slot = dateSlots.get(date);
+        if (slot && slot.start && slot.end) {
+          body += `<td class="py-3 px-4 text-center"><span class="bg-green-50 text-green-700 px-2 py-1 rounded text-sm font-medium">${slot.start} – ${slot.end}</span></td>`;
+        } else {
+          body += `<td class="py-3 px-4 text-center text-gray-300">—</td>`;
+        }
+      });
+      body += '</tr>';
+    }
+  }
+  document.getElementById('schedule-body').innerHTML = body;
+}
+
+// Перемикання періоду
+function switchPeriod(period) {
+  currentPeriod = period;
+  ['today','3days','week'].forEach(p => {
+    const btn = document.getElementById('btn-' + p);
+    if (p === period) {
+      btn.className = 'px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium';
+    } else {
+      btn.className = 'px-4 py-2 bg-gray-100 text-gray-700 rounded-full';
+    }
+  });
+  renderSchedule();
+}
+
+// Старт
+loadSchedule();
 </script>
 {% endblock %}
