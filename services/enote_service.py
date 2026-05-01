@@ -152,8 +152,8 @@ class EnoteClient:
     def get_schedule(self, start_date=None, days=7):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {
-            "$orderby": "Period desc",   # спочатку нові
-            "$top": 5000,                # більше записів
+            "$orderby": "Period desc",
+            "$top": 5000,
             "$format": "json"
         }
         try:
@@ -166,8 +166,6 @@ class EnoteClient:
                 for entry in data:
                     period = entry.get('Period')
                     if not period:
-                        continue
-                    if start_date and period < start_date:
                         continue
                     doctor_key = entry.get('ФизЛицо_Key')
                     shift_key = entry.get('Смена_Key')
