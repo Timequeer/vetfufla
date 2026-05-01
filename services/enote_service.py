@@ -152,7 +152,8 @@ class EnoteClient:
     def get_schedule(self, start_date=None, days=7):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {
-            "$top": 2000,
+            "$orderby": "Period desc",   # спочатку нові
+            "$top": 5000,                # більше записів
             "$format": "json"
         }
         try:
