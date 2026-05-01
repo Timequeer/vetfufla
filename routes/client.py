@@ -142,6 +142,11 @@ def online_appointment():
     # Поки що просто відкриваємо сторінку графіка
     return render_template("schedule.html", user=User.query.get(session["user_id"]))
 
+@client_bp.route('/api/schedule')
+def api_schedule():
+    data = enote.get_schedule()
+    return jsonify(data)
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
