@@ -114,32 +114,76 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Графік роботи ----------
-    def get_schedule(self, start_date=None, days=7):
-        url = self._build_url("InformationRegister_ГрафикРаботы")
-        params = {
-            "$top": 500,
-            "$format": "json"
-        }
-        try:
-            r = self.session.get(url, params=params, timeout=25)
-            if r.ok:
-                data = r.json().get('value', [])
-                result = []
-                for entry in data:
-                    period = entry.get('Period')
-                    if period:
-                        result.append({
-                            'doctor_key': entry.get('ФизЛицо_Key'),
-                            'date': period,
-                            'shift_key': entry.get('Смена_Key'),
-                            'works': entry.get('Работает'),
-                            'allow_online': entry.get('РазрешитьОнлайнЗапись')
-                        })
-                return result
-        except Exception:
-            pass
-        return []
+# ---------- Графік роботи ----------
+def get_schedule(self, start_date=None, days=7):
+    url = self._build_url("InformationRegister_ГрафикРаботы")
+    params = {
+        "$top": 2000,          # беремо більше, щоб захопити потрібний період
+        "$format": "json"
+    }
+    try:
+        r = self.session.get(url, params=params, timeout=30)
+        if r.ok:
+            data = r.json().get('value', [])
+            # отримуємо довідники
+            doctors = self.get_doctors()
+            shifts = self.get_shifts()
+            result = []
+            for entry in data:
+                period = entry.get('Period')
+                if not period:
+                    continue
+                if start_date and period < start_date:
+                    continue
+                doctor_key = entry.get('ФизЛицо_Key')
+                shift_key = entry.get('Смена_Key')
+                shift_info = shifts.get(shift_key, {})
+                result.append({
+                    'doctor': doctors.get(doctor_key, doctor_key),
+                    'date': period[:10],  # YYYY-MM-DD
+                    'start': shift_info.get('start', ''),
+                    'end': shift_info.get('end', ''),
+                    'works': entry.get('Работает'),
+                    'allow_online': entry.get('РазрешитьОнлайнЗапись')
+                })
+            return result
+    except Exception:
+        pass
+    return []
+    
+# ---------- Довідник лікарів ----------
+def get_doctors(self):
+    url = self._build_url("Catalog_ФизическиеЛица")
+    params = {"$format": "json"}
+    try:
+        r = self.session.get(url, params=params, timeout=25)
+        if r.ok:
+            doctors = {}
+            for d in r.json().get('value', []):
+                doctors[d['Ref_Key']] = d.get('Description', '')
+            return doctors
+    except Exception:
+        pass
+    return {}
+
+# ---------- Довідник змін ----------
+def get_shifts(self):
+    url = self._build_url("Catalog_Смены")
+    params = {"$format": "json"}
+    try:
+        r = self.session.get(url, params=params, timeout=25)
+        if r.ok:
+            shifts = {}
+            for s in r.json().get('value', []):
+                shifts[s['Ref_Key']] = {
+                    'name': s.get('Description', ''),
+                    'start': s.get('Время1', ''),
+                    'end': s.get('Время2', '')
+                }
+            return shifts
+    except Exception:
+        pass
+    return {}
 
     # ---------- Пошук клієнта за телефоном ----------
     def find_client_by_phone(self, phone):
