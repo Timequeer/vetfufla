@@ -3,15 +3,19 @@
 {% block content %}
 <div class="container mx-auto px-4 py-6">
   <h2 class="text-3xl font-bold text-red-600 mb-4">Графік роботи лікарів</h2>
-  
-  <div class="flex flex-wrap gap-2 mb-6">
+
+  <!-- Панель керування -->
+  <div class="flex flex-wrap items-center gap-2 mb-6">
     <button onclick="switchPeriod('today')" id="btn-today" class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">Сьогодні</button>
     <button onclick="switchPeriod('3days')" id="btn-3days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">3 дні</button>
     <button onclick="switchPeriod('week')" id="btn-week" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
+    <span class="ml-auto text-sm text-gray-500" id="date-range-label"></span>
   </div>
 
+  <!-- Повідомлення про архів -->
   <div id="archive-hint" class="hidden bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg mb-4 text-sm"></div>
 
+  <!-- Таблиця-графік -->
   <div class="bg-white rounded-2xl shadow overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse min-w-[600px]">
@@ -26,24 +30,24 @@
 <script>
 let scheduleData = [];
 let currentPeriod = 'today';
+let customDate = null;   // якщо автоматично переключились на архів
 
 async function loadSchedule() {
   try {
     const res = await fetch('/api/schedule');
     scheduleData = await res.json();
     document.getElementById('loading-msg').classList.add('hidden');
-    // Перевіряємо, чи є дані для сьогодні
+    // Якщо сьогодні немає даних – показуємо останню дату, що є
     const todayStr = formatDate(new Date());
     if (!scheduleData.some(item => item.date === todayStr && item.works)) {
-      // Якщо сьогодні немає, шукаємо останню дату з даними
       const allDates = [...new Set(scheduleData.map(item => item.date))].sort();
       if (allDates.length > 0) {
         const lastDate = allDates[allDates.length - 1];
         document.getElementById('archive-hint').classList.remove('hidden');
         document.getElementById('archive-hint').textContent = 
           `Наразі графік недоступний для сьогодні. Показано архів за ${formatDisplayDate(lastDate)}.`;
-        // Перемикаємо період на останню дату
         currentPeriod = 'custom';
+        customDate = lastDate;
         renderScheduleForCustomDate(lastDate);
         return;
       }
@@ -91,40 +95,35 @@ function getDates(period) {
 }
 
 function renderScheduleForCustomDate(dateStr) {
+  // показуємо один день
   const dates = [dateStr];
+  document.getElementById('date-range-label').textContent = formatDisplayDate(dateStr);
   renderTable(dates);
 }
 
 function renderSchedule() {
   if (currentPeriod === 'custom') return;
   const dates = getDates(currentPeriod);
-  if (!scheduleData.some(item => dates.includes(item.date) && item.works)) {
-    document.getElementById('archive-hint').classList.remove('hidden');
-    document.getElementById('archive-hint').textContent = 'Немає даних для вибраного періоду.';
-    document.getElementById('schedule-body').innerHTML = '';
-    return;
-  } else {
-    document.getElementById('archive-hint').classList.add('hidden');
-  }
+  const start = new Date(dates[0]);
+  const end = new Date(dates[dates.length-1]);
+  document.getElementById('date-range-label').textContent = 
+    `${start.toLocaleDateString('uk-UA', {day:'numeric', month:'short'})} – ${end.toLocaleDateString('uk-UA', {day:'numeric', month:'short'})}`;
   renderTable(dates);
 }
 
 function renderTable(dates) {
-  const daysOfWeek = dates.map(d => {
+  // Заголовки
+  let header = '<tr><th class="py-3 px-4 w-40 font-semibold">Лікар</th>';
+  dates.forEach(d => {
     const day = new Date(d).toLocaleDateString('uk-UA', { weekday: 'short' });
     const dayNum = new Date(d).getDate();
     const month = new Date(d).toLocaleDateString('uk-UA', { month: 'short' });
-    return `${day} ${dayNum} ${month}`;
-  });
-
-  let header = '<tr>';
-  header += '<th class="py-3 px-4 font-semibold w-40">Лікар</th>';
-  daysOfWeek.forEach(day => {
-    header += `<th class="py-3 px-4 font-semibold text-center">${day}</th>`;
+    header += `<th class="py-3 px-4 font-semibold text-center">${day} ${dayNum} ${month}</th>`;
   });
   header += '</tr>';
   document.getElementById('schedule-header').innerHTML = header;
 
+  // Групуємо по лікарям
   const doctorMap = new Map();
   scheduleData.forEach(item => {
     if (!dates.includes(item.date)) return;
@@ -132,7 +131,7 @@ function renderTable(dates) {
     if (!doctorMap.has(item.doctor)) {
       doctorMap.set(item.doctor, new Map());
     }
-    // Витягуємо лише години:хвилини з полів start/end
+    // Витягуємо лише години
     const startTime = item.start ? item.start.slice(11,16) : '';
     const endTime = item.end ? item.end.slice(11,16) : '';
     doctorMap.get(item.doctor).set(item.date, { start: startTime, end: endTime });
@@ -147,7 +146,11 @@ function renderTable(dates) {
       dates.forEach(date => {
         const slot = dateSlots.get(date);
         if (slot && slot.start && slot.end) {
-          body += `<td class="py-3 px-4 text-center"><span class="bg-green-50 text-green-700 px-2 py-1 rounded text-sm font-medium">${slot.start} – ${slot.end}</span></td>`;
+          body += `<td class="py-3 px-4 text-center">
+            <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+              ${slot.start} – ${slot.end}
+            </span>
+          </td>`;
         } else {
           body += `<td class="py-3 px-4 text-center text-gray-300">—</td>`;
         }
@@ -160,6 +163,7 @@ function renderTable(dates) {
 
 function switchPeriod(period) {
   currentPeriod = period;
+  customDate = null;
   ['today','3days','week'].forEach(p => {
     const btn = document.getElementById('btn-' + p);
     btn.className = p === period 
