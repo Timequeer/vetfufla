@@ -1,3 +1,4 @@
+ось index по такому самому принципу
 {% extends "base.html" %}
 {% block title %}VetFuture — Ветеринарна клініка майбутнього{% endblock %}
 {% block content %}
@@ -11,12 +12,13 @@
             VetFuture — це поєднання передових технологій, досвіду та безмежної турботи про ваших улюбленців.
         </p>
         <button onclick="location.href='{{ url_for('client.online_appointment') }}'" class="bg-white text-red-600 hover:bg-gray-100 font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-full inline-flex items-center gap-2 sm:gap-3 shadow-xl transition">
-            Записатись онлайн <i class="fas fa-arrow-right"></i>
+    Записатись онлайн <i class="fas fa-arrow-right"></i>
         </button>
     </div>
 </section>
 
-<!-- Про клініку -->
+
+<!-- Про клініку (без змін) -->
 <section id="about" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
@@ -34,29 +36,29 @@
                 </div>
             </div>
             <div class="rounded-2xl overflow-hidden shadow-xl">
-                <img src="/static/images/clinic.jpg" alt="Клініка" class="w-full h-auto" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=Clinic+Photo'">
+                <img src="/static/images/clinic.jpg" alt="Клініка" class="w-full h-auto" onerror="this.src='https://placehold.co/600x400?text=Clinic+Photo'">
             </div>
         </div>
     </div>
 </section>
 
-<!-- Блок послуг -->
+<!-- Блок послуг (без змін, але таблиці адаптивні) -->
 <section id="services" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші послуги та ціни</h2>
         <div class="overflow-x-auto pb-3 mb-8 scrollbar-hide">
             <div class="flex flex-nowrap gap-3 justify-start md:justify-center">
-                <button data-service="surgery" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Хірургія</button>
-                <button data-service="ultrasound" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">УЗД</button>
-                <button data-service="inpatient" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Стаціонар</button>
-                <button data-service="lab" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Аналізи</button>
-                <button data-service="xray" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Рентген</button>
-                <button data-service="vaccination" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Вакцинація</button>
-                <button data-service="consultation" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Консультації</button>
-                <button data-service="chipping" class="service-btn min-w-fit px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Чіпування</button>
+                <button data-service="surgery" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Хірургія</button>
+                <button data-service="ultrasound" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">УЗД</button>
+                <button data-service="inpatient" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Стаціонар</button>
+                <button data-service="lab" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Аналізи</button>
+                <button data-service="xray" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Рентген</button>
+                <button data-service="vaccination" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Вакцинація</button>
+                <button data-service="consultation" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Консультації</button>
+                <button data-service="chipping" class="service-btn px-5 py-2 rounded-full bg-white shadow-md hover:bg-red-600 hover:text-white transition font-medium whitespace-nowrap">Чіпування</button>
             </div>
         </div>
-        <div id="service-content" class="bg-white rounded-xl shadow-md p-6 md:p-8 transition-all" style="max-width: 100vw; overflow-x: hidden;">
+        <div id="service-content" class="bg-white rounded-xl shadow-md p-6 md:p-8 transition-all">
             <div id="service-loading" class="hidden flex justify-center items-center py-12">
                 <div class="animate-pulse flex space-x-2"><div class="w-3 h-3 bg-red-400 rounded-full"></div><div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="w-3 h-3 bg-red-600 rounded-full"></div></div>
             </div>
@@ -65,19 +67,28 @@
     </div>
 </section>
 
-<!-- Акції та пропозиції -->
+<!-- Акції та пропозиції (у стилі Helsi) -->
 <section class="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-white">
   <div class="max-w-6xl mx-auto px-4">
-    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">Акції та пропозиції</h2>
-    <p class="text-center text-gray-500 mb-8 md:mb-10 text-sm md:text-base">Оберіть пропозицію, щоб дізнатися більше</p>
+    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">
+      Акції та пропозиції
+    </h2>
+    <p class="text-center text-gray-500 mb-8 md:mb-10 text-sm md:text-base">
+      Оберіть пропозицію, щоб дізнатися більше
+    </p>
 
+    <!-- Сітка з картками -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-      <!-- Картки акцій (без змін) -->
+
+      <!-- Картка 1: Перший візит -->
       <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
            onclick="openPromoModal('modal-promo-1')">
         <div class="flex items-start justify-between mb-4">
           <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <!-- Іконка "Знижка" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
           <span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">-10%</span>
         </div>
@@ -88,12 +99,16 @@
           <span class="text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
         </div>
       </div>
-      <!-- Друга картка -->
+
+      <!-- Картка 2: Вакцинація -->
       <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
            onclick="openPromoModal('modal-promo-2')">
         <div class="flex items-start justify-between mb-4">
           <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            <!-- Іконка "Щит" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
           </div>
           <span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">-15%</span>
         </div>
@@ -104,12 +119,16 @@
           <span class="text-green-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
         </div>
       </div>
-      <!-- Третя картка -->
+
+      <!-- Картка 3: Консультація хірурга -->
       <div class="promo-card group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-5 md:p-6 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
            onclick="openPromoModal('modal-promo-3')">
         <div class="flex items-start justify-between mb-4">
           <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform duration-300">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <!-- Іконка "Безкоштовно" -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
           <span class="text-xs font-semibold text-green-500 bg-green-50 px-2 py-1 rounded-full">Безкоштовно</span>
         </div>
@@ -120,19 +139,26 @@
           <span class="text-orange-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Детальніше →</span>
         </div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- Модальні вікна акцій (без змін) -->
-<div id="modal-promo-1" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 flex-col">
-  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0 overflow-y-auto max-h-[90vh]" id="modal-content-1">
+<!-- Модальні вікна для акцій -->
+<!-- Модальне вікно 1 -->
+<div id="modal-promo-1" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-1">
     <div class="relative p-6 md:p-8">
       <button onclick="closePromoModal('modal-promo-1')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
       <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
       </div>
       <h2 class="text-2xl font-bold text-gray-800 mb-3">Перший візит – знижка 10%</h2>
       <p class="text-gray-600 mb-4">Ласкаво просимо до VetFuture! Ми даруємо знижку 10% на будь-яку послугу для вашого улюбленця при першому зверненні до нашої клініки.</p>
@@ -141,19 +167,27 @@
         <p class="text-sm text-gray-600"><span class="font-semibold">Умови:</span> для нових клієнтів, які не обслуговувалися раніше</p>
       </div>
       <p class="text-gray-500 text-sm mb-6">Запишіться на прийом вже сьогодні та отримайте знижку на першу консультацію, вакцинацію або будь-яку іншу послугу.</p>
-      <a href="#contact" onclick="closePromoModal('modal-promo-1')" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">Записатись на прийом</a>
+      <a href="#contact" onclick="closePromoModal('modal-promo-1')" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на прийом
+      </a>
     </div>
   </div>
 </div>
 
-<div id="modal-promo-2" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 flex-col">
-  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0 overflow-y-auto max-h-[90vh]" id="modal-content-2">
+<!-- Модальне вікно 2 -->
+<div id="modal-promo-2" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-2">
     <div class="relative p-6 md:p-8">
       <button onclick="closePromoModal('modal-promo-2')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
       <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
       </div>
       <h2 class="text-2xl font-bold text-gray-800 mb-3">Комплексна вакцинація – 15%</h2>
       <p class="text-gray-600 mb-4">Подбайте про здоров'я всіх ваших улюбленців одночасно! При щепленні кількох тварин з однієї родини ви отримуєте знижку 15% на весь комплекс вакцинації.</p>
@@ -162,19 +196,27 @@
         <p class="text-sm text-gray-600"><span class="font-semibold">Вакцини:</span> використовуються сертифіковані препарати</p>
       </div>
       <p class="text-gray-500 text-sm mb-6">Захистіть своїх улюбленців від небезпечних інфекцій. Обов'язковий попередній запис.</p>
-      <a href="#contact" onclick="closePromoModal('modal-promo-2')" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">Записатись на вакцинацію</a>
+      <a href="#contact" onclick="closePromoModal('modal-promo-2')" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на вакцинацію
+      </a>
     </div>
   </div>
 </div>
 
-<div id="modal-promo-3" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 flex-col">
-  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0 overflow-y-auto max-h-[90vh]" id="modal-content-3">
+<!-- Модальне вікно 3 -->
+<div id="modal-promo-3" class="promo-modal fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0"
+       id="modal-content-3">
     <div class="relative p-6 md:p-8">
       <button onclick="closePromoModal('modal-promo-3')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
       <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mb-4">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
       </div>
       <h2 class="text-2xl font-bold text-gray-800 mb-3">Безкоштовна консультація хірурга</h2>
       <p class="text-gray-600 mb-4">Плануєте операцію для свого улюбленця? Отримайте безкоштовну консультацію хірурга при попередньому записі на хірургічне втручання.</p>
@@ -183,66 +225,74 @@
         <p class="text-sm text-gray-600"><span class="font-semibold">Тривалість:</span> 30 хвилин</p>
       </div>
       <p class="text-gray-500 text-sm mb-6">Кількість місць обмежена. Поспішайте записатися!</p>
-      <a href="#contact" onclick="closePromoModal('modal-promo-3')" class="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">Записатись на консультацію</a>
+      <a href="#contact" onclick="closePromoModal('modal-promo-3')" class="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-xl text-center transition-colors">
+        Записатись на консультацію
+      </a>
     </div>
   </div>
 </div>
 
-<!-- Лікарі -->
+<!-- Лікарі (горизонтальна карусель без стрілок, тільки свайп) -->
 <section id="doctors" class="py-12 md:py-16 bg-white section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6 md:mb-10">Наші фахівці</h2>
         <div class="overflow-x-auto pb-4 scrollbar-hide">
             <div class="flex gap-5 md:gap-6" style="width: max-content;">
-                <!-- Картки лікарів (без змін) -->
+                <!-- Лікар 1 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor1.jpg" alt="Катерина Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Плюта Катерина Володимірівна</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Головний лікар VetFuture</p>
-                    <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt loading="lazy"><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor1-detail.jpg" alt><p>Лікар терапевт, ендокринолог, візуальна діагностика.</p></div>
                 </div>
+                <!-- Лікар 2 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor2.jpg" alt="Артем Плюта" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Плюта Артем Сергійович</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Керівник клініки, лікар реанімації</p>
-                    <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt loading="lazy"><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor2-detail.jpg" alt><p>Досвід роботи у відділенні реанімації "Зоолюкс".</p></div>
                 </div>
+                <!-- Лікар 3 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor-placeholder.jpg" alt="Дар'я Жулега" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Жулега Дар'я Константинівна</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt loading="lazy"><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Досвід роботи з дрібними домашніми тваринами.</p></div>
                 </div>
+                <!-- Лікар 4 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor-placeholder.jpg" alt="Алевтина Юсіна" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Юсіна Алевтина Тимурівна</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Лікар-ординатор</p>
-                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt loading="lazy"><p>Асистент хірурга, допомога в стаціонарі.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Асистент хірурга, допомога в стаціонарі.</p></div>
                 </div>
+                <!-- Лікар 5 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor-placeholder.jpg" alt="Ангеліна Киричук" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Киричук Ангеліна</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Лікар-терапевт</p>
-                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt loading="lazy"><p>Діагностика, лікування терапевтичних захворювань.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Діагностика, лікування терапевтичних захворювань.</p></div>
                 </div>
+                <!-- Лікар 6 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor-placeholder.jpg" alt="Владислава Козленко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Козленко Владислава</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt loading="lazy"><p>Проведення оперативних втручань.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Проведення оперативних втручань.</p></div>
                 </div>
+                <!-- Лікар 7 -->
                 <div class="doctor-card w-[280px] md:w-[300px] flex-shrink-0 bg-white p-5 rounded-xl shadow-md text-center card-hover popup-card">
-                    <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" loading="lazy" onerror="this.src='https://placehold.co/128x128?text=Doc'">
+                    <img src="/static/images/doctor-placeholder.jpg" alt="Анна Шевченко" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-3 object-cover border-4 border-red-200" onerror="this.src='https://placehold.co/128x128?text=Doc'">
                     <h3 class="text-base md:text-xl font-semibold">Шевченко Анна</h3>
                     <p class="text-red-500 font-medium text-sm md:text-base">Хірург</p>
-                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt loading="lazy"><p>Спеціалізація: м'які тканини, онкологія.</p></div>
+                    <div class="popup-content"><img src="/static/images/doctor-placeholder.jpg" alt><p>Спеціалізація: м’які тканини, онкологія.</p></div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Карта та контакти -->
+<!-- Карта та контакти (без змін) -->
 <section id="map" class="py-12 md:py-16 bg-gray-50 section-fade">
     <div class="max-w-6xl mx-auto px-4">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-red-600 mb-6">Як нас знайти</h2>
@@ -281,6 +331,7 @@
 </div>
 
 <script>
+    // Той самий JavaScript, що й у вашому оригіналі (без змін)
     const servicesData = {
         surgery: {
             title: "Хірургія",
@@ -385,6 +436,7 @@
         }
     };
 
+    // Розгортання тексту "Про клініку"
     const aboutToggle = document.getElementById('aboutToggleBtn');
     const aboutFull = document.getElementById('aboutFullText');
     if (aboutToggle && aboutFull) {
@@ -395,30 +447,29 @@
     }
 
     function renderPrices(service) {
-        if (service.priceTable) {
-            let html = '<div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">';
-            html += '<table class="min-w-[600px] w-full border-collapse border border-gray-200 text-sm">';
-            html += '<thead><tr class="bg-red-100">';
-            service.priceTable.header.forEach(cell => html += `<th class="border border-gray-300 px-3 py-2 text-left">${cell}</th>`);
-            html += ' </tr></thead><tbody>';
-            service.priceTable.rows.forEach(row => {
-                html += '<tr>';
-                row.forEach(cell => html += `<td class="border border-gray-300 px-3 py-2">${cell}</td>`);
-                html += '</tr>';
-            });
-            html += '</tbody></table></div>';
-            if (service.priceTable.note) html += `<p class="text-xs text-gray-500 mt-2">${service.priceTable.note}</p>`;
-            return html;
-        } else if (service.priceList) {
-            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">';
-            service.priceList.forEach(item => {
-                html += `<div class="border border-gray-200 rounded-lg p-3 shadow-sm"><span class="font-medium">${item.name}</span><div class="text-red-600 font-bold mt-1">${item.price} грн</div></div>`;
-            });
-            html += '</div>';
-            return html;
-        } else return '<p class="text-gray-500">Уточнюйте ціни в клініці</p>';
-    }
-
+    if (service.priceTable) {
+        let html = '<div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">';
+        html += '<table class="min-w-[600px] w-full border-collapse border border-gray-200 text-sm">';
+        html += '<thead><tr class="bg-red-100">';
+        service.priceTable.header.forEach(cell => html += `<th class="border border-gray-300 px-3 py-2 text-left">${cell}</th>`);
+        html += ' </tr></thead><tbody>';
+        service.priceTable.rows.forEach(row => {
+            html += '<tr>';
+            row.forEach(cell => html += `<td class="border border-gray-300 px-3 py-2">${cell}</td>`);
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        if (service.priceTable.note) html += `<p class="text-xs text-gray-500 mt-2">${service.priceTable.note}</p>`;
+        return html;
+    } else if (service.priceList) {
+        let html = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">';
+        service.priceList.forEach(item => {
+            html += `<div class="border border-gray-200 rounded-lg p-3 shadow-sm"><span class="font-medium">${item.name}</span><div class="text-red-600 font-bold mt-1">${item.price} грн</div></div>`;
+        });
+        html += '</div>';
+        return html;
+    } else return '<p class="text-gray-500">Уточнюйте ціни в клініці</p>';
+}
     const loadingDiv = document.getElementById('service-loading');
     const displayDiv = document.getElementById('service-display');
     const btns = document.querySelectorAll('.service-btn');
@@ -437,7 +488,7 @@
                             <p class="text-gray-700 text-base leading-relaxed mt-4">${data.description}</p>
                         </div>
                         <div class="order-1 md:order-2">
-                           <img src="${data.img}" alt="${data.title}" style="max-width: 100%; height: auto;" class="w-full rounded-xl shadow-md" loading="lazy" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
+                           <img src="${data.img}" alt="${data.title}" style="max-width: 100%; height: auto;" class="w-full rounded-xl shadow-md" onerror="this.src='https://placehold.co/400x300?text=${encodeURIComponent(data.title)}'">
                         </div>
                     </div>
                 `;
@@ -479,42 +530,82 @@
 
     function closePwaBanner() { document.getElementById('pwaBanner').style.display = 'none'; localStorage.setItem('pwaBannerClosed', 'true'); }
     if (!localStorage.getItem('pwaBannerClosed')) { document.getElementById('pwaBanner').style.display = 'block'; }
-
-    function openPromoModal(modalId) {
-        const modal = document.getElementById(modalId);
-        const content = modal.querySelector('[id^="modal-content-"]');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(() => {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }, 50);
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closePromoModal(modalId) {
-        const modal = document.getElementById(modalId);
-        const content = modal.querySelector('[id^="modal-content-"]');
-        content.classList.remove('scale-100', 'opacity-100');
-        content.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = '';
-        }, 200);
-    }
-
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('promo-modal')) {
-            closePromoModal(event.target.id);
-        }
-    });
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            const visibleModal = document.querySelector('.promo-modal:not(.hidden)');
-            if (visibleModal) closePromoModal(visibleModal.id);
-        }
-    });
 </script>
 <style>.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }</style>
+<style>
+/* === Додаткові стилі для обмеження вилазання контенту на телефоні === */
+#service-content {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+#service-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    #service-content .grid {
+        display: block !important;
+    }
+    #service-content .grid > div {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+}
+</style>
+<script>
+  // Функція для відкриття модального вікна
+  function openPromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Невелика затримка для активації анімації
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+    
+    // Блокуємо скрол на основній сторінці
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Функція для закриття модального вікна
+  function closePromoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const content = modal.querySelector('[id^="modal-content-"]');
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      // Розблоковуємо скрол
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  // Закриття по кліку на фон (за межами модального вікна)
+  document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('promo-modal')) {
+      closePromoModal(event.target.id);
+    }
+  });
+
+  // Закриття по клавіші Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      const visibleModal = document.querySelector('.promo-modal:not(.hidden)');
+      if (visibleModal) {
+        closePromoModal(visibleModal.id);
+      }
+    }
+  });
+</script>
+
+
 {% endblock %}
