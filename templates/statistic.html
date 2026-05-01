@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Графік роботи | VetFuture{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <h2 class="text-3xl font-bold text-red-600 mb-6">Графік роботи лікарів</h2>
+  <div class="bg-white rounded-2xl shadow p-4 md:p-6">
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">Сьогодні</button>
+      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">3 дні</button>
+      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
+      <!-- кнопки перемикання періоду -->
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b text-gray-500 text-sm">
+            <th class="py-2 px-3">Лікар</th>
+            <th class="py-2 px-3">Пн 12.05</th>
+            <th class="py-2 px-3">Вт 13.05</th>
+            <th class="py-2 px-3">Ср 14.05</th>
+            <!-- додати дні динамічно -->
+          </tr>
+        </thead>
+        <tbody id="schedule-body">
+          <tr><td colspan="4" class="text-center py-8 text-gray-400">Завантаження...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  // Тимчасово – потім замінимо на fetch до API
+</script>
+{% endblock %}
