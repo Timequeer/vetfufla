@@ -30,14 +30,61 @@
 <script>
 let scheduleData = [];
 let currentPeriod = 'today';
-let customDate = null;   // якщо автоматично переключились на архів
+let customDate = null;
+
+// ========== КЕШУВАННЯ (localStorage) ==========
+const CACHE_KEY = 'vetfuture_schedule_cache';
+const CACHE_DURATION = 10 * 60 * 1000; // 10 хвилин
+
+function getCache() {
+    try {
+        const item = localStorage.getItem(CACHE_KEY);
+        if (!item) return null;
+        const parsed = JSON.parse(item);
+        if (Date.now() - parsed.timestamp > CACHE_DURATION) {
+            localStorage.removeItem(CACHE_KEY);
+            return null;
+        }
+        return parsed.data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setCache(data) {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            data: data
+        }));
+    } catch (e) { /* переповнений localStorage */ }
+}
 
 async function loadSchedule() {
   try {
+    // Спочатку пробуємо взяти з кешу
+    const cached = getCache();
+    if (cached) {
+        scheduleData = cached;
+        processLoadedData();
+        return;
+    }
+
+    // Якщо кешу немає — завантажуємо з API
     const res = await fetch('/api/schedule');
+    if (!res.ok) throw new Error('Network error');
     scheduleData = await res.json();
+    setCache(scheduleData);
+    processLoadedData();
+  } catch (e) {
+    document.getElementById('loading-msg').innerHTML = '<span class="text-red-500">Помилка завантаження даних</span>';
+  }
+}
+
+function processLoadedData() {
     document.getElementById('loading-msg').classList.add('hidden');
-    // Якщо сьогодні немає даних – показуємо останню дату, що є
+
+    // Якщо сьогодні немає даних — показуємо останню доступну дату
     const todayStr = formatDate(new Date());
     if (!scheduleData.some(item => item.date === todayStr && item.works)) {
       const allDates = [...new Set(scheduleData.map(item => item.date))].sort();
@@ -53,9 +100,6 @@ async function loadSchedule() {
       }
     }
     renderSchedule();
-  } catch (e) {
-    document.getElementById('loading-msg').innerHTML = '<span class="text-red-500">Помилка завантаження даних</span>';
-  }
 }
 
 function formatDate(date) {
@@ -95,7 +139,6 @@ function getDates(period) {
 }
 
 function renderScheduleForCustomDate(dateStr) {
-  // показуємо один день
   const dates = [dateStr];
   document.getElementById('date-range-label').textContent = formatDisplayDate(dateStr);
   renderTable(dates);
