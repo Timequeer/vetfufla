@@ -4,14 +4,12 @@
 <div class="container mx-auto px-4 py-6">
   <h2 class="text-3xl font-bold text-red-600 mb-4">Графік роботи лікарів</h2>
   
-  <!-- Перемикач періоду -->
   <div class="flex flex-wrap gap-2 mb-6">
     <button onclick="switchPeriod('today')" id="btn-today" class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">Сьогодні</button>
     <button onclick="switchPeriod('3days')" id="btn-3days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">3 дні</button>
     <button onclick="switchPeriod('week')" id="btn-week" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
   </div>
 
-  <!-- Таблиця -->
   <div class="bg-white rounded-2xl shadow overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse min-w-[600px]">
@@ -27,23 +25,28 @@
 let scheduleData = [];
 let currentPeriod = 'today';
 
-// Завантаження даних із сервера
 async function loadSchedule() {
   try {
     const res = await fetch('/api/schedule');
     scheduleData = await res.json();
     document.getElementById('loading-msg').classList.add('hidden');
+    // Якщо на сьогодні немає даних, пробуємо знайти найближчий день
+    const today = formatDate(new Date());
+    if (!scheduleData.some(e => e.date === today && e.works)) {
+      const futureDates = [...new Set(scheduleData.filter(e => e.works).map(e => e.date))].sort();
+      if (futureDates.length > 0) {
+        document.getElementById('loading-msg').innerHTML = `<span class="text-yellow-600">На сьогодні даних немає. Показано найближчий доступний день: ${futureDates[0]}</span>`;
+      }
+    }
     renderSchedule();
   } catch (e) {
     document.getElementById('loading-msg').innerHTML = '<span class="text-red-500">Помилка завантаження даних</span>';
   }
 }
 
-// Отримати масив дат для вибраного періоду
 function getDates(period) {
   const today = new Date();
   const dates = [];
-  
   if (period === 'today') {
     dates.push(formatDate(today));
   } else if (period === '3days') {
@@ -53,7 +56,7 @@ function getDates(period) {
       dates.push(formatDate(d));
     }
   } else if (period === 'week') {
-    const dayOfWeek = today.getDay();           // 0 – неділя
+    const dayOfWeek = today.getDay();
     const monday = new Date(today);
     monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
     for (let i = 0; i < 7; i++) {
@@ -65,15 +68,10 @@ function getDates(period) {
   return dates;
 }
 
-// Форматувати дату у YYYY-MM-DD
 function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return date.toISOString().slice(0,10);
 }
 
-// Відмалювати таблицю
 function renderSchedule() {
   const dates = getDates(currentPeriod);
   const daysOfWeek = dates.map(d => {
@@ -83,7 +81,6 @@ function renderSchedule() {
     return `${day} ${dayNum} ${month}`;
   });
 
-  // Шапка таблиці
   let header = '<tr>';
   header += '<th class="py-3 px-4 font-semibold w-40">Лікар</th>';
   daysOfWeek.forEach(day => {
@@ -92,23 +89,19 @@ function renderSchedule() {
   header += '</tr>';
   document.getElementById('schedule-header').innerHTML = header;
 
-  // Збираємо лікарів та їхні зміни за потрібні дати
   const doctorMap = new Map();
   scheduleData.forEach(item => {
     if (!dates.includes(item.date)) return;
-    if (!item.works) return;                 // показуємо тільки робочі слоти
-
+    if (!item.works) return;
     if (!doctorMap.has(item.doctor)) {
       doctorMap.set(item.doctor, new Map());
     }
-    // Зберігаємо години для цього лікаря на цю дату
     doctorMap.get(item.doctor).set(item.date, {
-      start: item.start ? item.start.slice(0,5) : '',
-      end: item.end ? item.end.slice(0,5) : ''
+      start: item.start,
+      end: item.end
     });
   });
 
-  // Формуємо рядки таблиці
   let body = '';
   if (doctorMap.size === 0) {
     body = `<tr><td colspan="${dates.length + 1}" class="py-8 text-center text-gray-400">Немає даних для вибраного періоду</td></tr>`;
@@ -129,21 +122,17 @@ function renderSchedule() {
   document.getElementById('schedule-body').innerHTML = body;
 }
 
-// Перемикання періоду
 function switchPeriod(period) {
   currentPeriod = period;
   ['today','3days','week'].forEach(p => {
     const btn = document.getElementById('btn-' + p);
-    if (p === period) {
-      btn.className = 'px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium';
-    } else {
-      btn.className = 'px-4 py-2 bg-gray-100 text-gray-700 rounded-full';
-    }
+    btn.className = p === period
+      ? 'px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium'
+      : 'px-4 py-2 bg-gray-100 text-gray-700 rounded-full';
   });
   renderSchedule();
 }
 
-// Старт
 loadSchedule();
 </script>
 {% endblock %}
