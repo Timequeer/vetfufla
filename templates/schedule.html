@@ -10,6 +10,8 @@
     <button onclick="switchPeriod('week')" id="btn-week" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full">Тиждень</button>
   </div>
 
+  <div id="archive-hint" class="hidden bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg mb-4 text-sm"></div>
+
   <div class="bg-white rounded-2xl shadow overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse min-w-[600px]">
@@ -30,18 +32,38 @@ async function loadSchedule() {
     const res = await fetch('/api/schedule');
     scheduleData = await res.json();
     document.getElementById('loading-msg').classList.add('hidden');
-    // Якщо на сьогодні немає даних, пробуємо знайти найближчий день
-    const today = formatDate(new Date());
-    if (!scheduleData.some(e => e.date === today && e.works)) {
-      const futureDates = [...new Set(scheduleData.filter(e => e.works).map(e => e.date))].sort();
-      if (futureDates.length > 0) {
-        document.getElementById('loading-msg').innerHTML = `<span class="text-yellow-600">На сьогодні даних немає. Показано найближчий доступний день: ${futureDates[0]}</span>`;
+    // Перевіряємо, чи є дані для сьогодні
+    const todayStr = formatDate(new Date());
+    if (!scheduleData.some(item => item.date === todayStr && item.works)) {
+      // Якщо сьогодні немає, шукаємо останню дату з даними
+      const allDates = [...new Set(scheduleData.map(item => item.date))].sort();
+      if (allDates.length > 0) {
+        const lastDate = allDates[allDates.length - 1];
+        document.getElementById('archive-hint').classList.remove('hidden');
+        document.getElementById('archive-hint').textContent = 
+          `Наразі графік недоступний для сьогодні. Показано архів за ${formatDisplayDate(lastDate)}.`;
+        // Перемикаємо період на останню дату
+        currentPeriod = 'custom';
+        renderScheduleForCustomDate(lastDate);
+        return;
       }
     }
     renderSchedule();
   } catch (e) {
     document.getElementById('loading-msg').innerHTML = '<span class="text-red-500">Помилка завантаження даних</span>';
   }
+}
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function formatDisplayDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('uk-UA', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 function getDates(period) {
@@ -68,12 +90,26 @@ function getDates(period) {
   return dates;
 }
 
-function formatDate(date) {
-  return date.toISOString().slice(0,10);
+function renderScheduleForCustomDate(dateStr) {
+  const dates = [dateStr];
+  renderTable(dates);
 }
 
 function renderSchedule() {
+  if (currentPeriod === 'custom') return;
   const dates = getDates(currentPeriod);
+  if (!scheduleData.some(item => dates.includes(item.date) && item.works)) {
+    document.getElementById('archive-hint').classList.remove('hidden');
+    document.getElementById('archive-hint').textContent = 'Немає даних для вибраного періоду.';
+    document.getElementById('schedule-body').innerHTML = '';
+    return;
+  } else {
+    document.getElementById('archive-hint').classList.add('hidden');
+  }
+  renderTable(dates);
+}
+
+function renderTable(dates) {
   const daysOfWeek = dates.map(d => {
     const day = new Date(d).toLocaleDateString('uk-UA', { weekday: 'short' });
     const dayNum = new Date(d).getDate();
@@ -96,15 +132,15 @@ function renderSchedule() {
     if (!doctorMap.has(item.doctor)) {
       doctorMap.set(item.doctor, new Map());
     }
-    doctorMap.get(item.doctor).set(item.date, {
-      start: item.start,
-      end: item.end
-    });
+    // Витягуємо лише години:хвилини з полів start/end
+    const startTime = item.start ? item.start.slice(11,16) : '';
+    const endTime = item.end ? item.end.slice(11,16) : '';
+    doctorMap.get(item.doctor).set(item.date, { start: startTime, end: endTime });
   });
 
   let body = '';
   if (doctorMap.size === 0) {
-    body = `<tr><td colspan="${dates.length + 1}" class="py-8 text-center text-gray-400">Немає даних для вибраного періоду</td></tr>`;
+    body = `<tr><td colspan="${dates.length + 1}" class="py-8 text-center text-gray-400">Немає даних</td></tr>`;
   } else {
     for (let [doctor, dateSlots] of doctorMap) {
       body += `<tr class="hover:bg-gray-50"><td class="py-3 px-4 font-medium text-gray-800">${doctor}</td>`;
@@ -126,10 +162,11 @@ function switchPeriod(period) {
   currentPeriod = period;
   ['today','3days','week'].forEach(p => {
     const btn = document.getElementById('btn-' + p);
-    btn.className = p === period
+    btn.className = p === period 
       ? 'px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium'
       : 'px-4 py-2 bg-gray-100 text-gray-700 rounded-full';
   });
+  document.getElementById('archive-hint').classList.add('hidden');
   renderSchedule();
 }
 
