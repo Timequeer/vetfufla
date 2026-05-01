@@ -114,7 +114,7 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Довідник лікарів (безпечний) ----------
+    # ---------- Довідник лікарів ----------
     def get_doctors(self):
         url = self._build_url("Catalog_ФизическиеЛица")
         try:
@@ -128,7 +128,7 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Довідник змін (безпечний) ----------
+    # ---------- Довідник змін ----------
     def get_shifts(self):
         url = self._build_url("Catalog_Смены")
         try:
@@ -147,23 +147,20 @@ class EnoteClient:
         return {}
 
     # ---------- Графік роботи (фінальний) ----------
-    def get_schedule(self, start_date=None, days=7):
+    def get_schedule(self):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {
-            "$orderby": "Period desc",
-            "$top": 5000,
+            "$top": 500,
             "$format": "json"
         }
-        result = []
         try:
-            r = self.session.get(url, params=params, timeout=30)
+            r = self.session.get(url, params=params, timeout=25)
             if r.ok:
-                raw_data = r.json().get('value', [])
-                if not raw_data:
-                    return []
+                data = r.json().get('value', [])
                 doctors = self.get_doctors()
                 shifts = self.get_shifts()
-                for entry in raw_data:
+                result = []
+                for entry in data:
                     period = entry.get('Period')
                     if not period:
                         continue
@@ -178,9 +175,10 @@ class EnoteClient:
                         'works': entry.get('Работает'),
                         'allow_online': entry.get('РазрешитьОнлайнЗапись')
                     })
-        except Exception as e:
-            print(f"Schedule error: {e}")
-        return result
+                return result
+        except Exception:
+            pass
+        return []
 
     # ---------- Пошук клієнта за телефоном ----------
     def find_client_by_phone(self, phone):
