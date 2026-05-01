@@ -140,6 +140,20 @@ def api_schedule():
     data = enote.get_schedule()
     return jsonify(data)
 
+@client_bp.route('/test-schedule-raw')
+def test_schedule_raw():
+    url = enote._build_url("InformationRegister_ГрафикРаботы")
+    params = {
+        "$orderby": "Period desc",
+        "$top": 10,
+        "$format": "json"
+    }
+    r = enote.session.get(url, params=params, timeout=30)
+    return jsonify({
+        "status": r.status_code,
+        "body": r.text[:600]
+    })
+
 
 @client_bp.route('/online-appointment')
 def online_appointment():
