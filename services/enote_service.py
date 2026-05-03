@@ -14,7 +14,7 @@ class EnoteClient:
         self._cache_ttl = 600
 
     def _api(self, path):
-        return f"{self.base_url}/{self.clinic_guid}/api/v2/{path}"
+        return f"{self.base_url}/api/v2/{path}"
 
     def _parse(self, r):
         try:
