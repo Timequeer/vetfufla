@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+import json
 
 class EnoteClient:
     def __init__(self):
@@ -15,11 +16,17 @@ class EnoteClient:
     def _api(self, path):
         return f"{self.base_url}/{self.clinic_guid}/api/v2/{path}"
 
+    def _parse(self, r):
+        try:
+            return json.loads(r.content.decode('utf-8-sig'))
+        except Exception:
+            return {}
+
     def _get(self, path, params=None):
         try:
             r = self.session.get(self._api(path), params=params or {}, timeout=25)
             if r.ok:
-                body = r.json()
+                body = self._parse(r)
                 if body.get('result'):
                     return body.get('data', [])
         except Exception as e:
@@ -35,7 +42,7 @@ class EnoteClient:
                 r = self.session.get(self._api(path), params=p, timeout=25)
                 if not r.ok:
                     break
-                body = r.json()
+                body = self._parse(r)
                 if not body.get('result'):
                     break
                 chunk = body.get('data', [])
