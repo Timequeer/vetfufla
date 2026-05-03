@@ -64,15 +64,13 @@ def my_profile():
         return jsonify({"error": "Не авторизовано"}), 401
     user = User.query.get(user_id)
     if not user or not user.enote_guid:
-        return jsonify({})
-    contact = enote.get_contact_by_owner(user.enote_guid)
-    if contact:
-        return jsonify({
-            "full_name": f"{contact.get('Фамилия', '')} {contact.get('Имя', '')}".strip(),
-            "phone": user.phone,
-            "email": user.email
-        })
-    return jsonify({"phone": user.phone, "email": user.email})
+        return jsonify({"phone": user.phone if user else ""})
+    profile = enote.get_client_profile(user.enote_guid)
+    return jsonify({
+        "full_name": profile.get('name', ''),
+        "phone": user.phone,
+        "email": user.email
+    })
 
 @client_bp.route('/api/clear-cache')
 def clear_cache():
