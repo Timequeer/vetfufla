@@ -11,19 +11,16 @@ class EnoteClient:
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
         self.api_key = os.getenv('ENOTE_API_KEY')
         self.session = requests.Session()
-        # Авторизація для OData
         self.session.auth = (self.user, self.password)
-        # Базовий URL для нового API v2 (без clinic_guid!)
-        self.api_v2_base = f"{self.base_url}/hs/api/v2"
+        self.api_v2_base = f"{self.base_url}/{self.clinic_guid}/hs/api/v2"
         self._cache = {}
         self._cache_ttl = 600
 
-    # ---------- OData-допоміжні (для тварин, графіка, довідників) ----------
     def _build_url(self, endpoint):
         encoded = quote(endpoint, safe='')
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{encoded}"
 
-    def _get_odata(self, url, params):
+    def _get(self, url, params):
         params.setdefault("$format", "json")
         try:
             r = self.session.get(url, params=params, timeout=30)
@@ -45,7 +42,6 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ---------- Новий API v2 ----------
     def _api_get(self, endpoint, params=None):
         if not self.api_key:
             return []
@@ -60,16 +56,37 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Тварини (OData – працює надійно) ----------
+    # ---------- Тварини (OData) ----------
     def get_pets_by_owner(self, owner_guid):
+        # Спочатку пробуємо новий API
+        if self.api_key:
+            try:
+                data = self._api_get('patients', {'page_size': 500})
+                if data:
+                    result = []
+                    for p in data:
+                        if p.get('ownerId') == owner_guid:
+                            result.append({
+                                'Ref_Key': p['id'],
+                                'Description': p.get('name', ''),
+                                'ДатаРождения': p.get('birthDate', ''),
+                                'Пол': 'Female' if p.get('gender') == 'FEMALE' else 'Male',
+                                'Кастрировано': p.get('isCastrated', False),
+                                'НомерЧипа': p.get('chipNumber', '')
+                            })
+                    if result:
+                        return result
+            except Exception:
+                pass
+        # Fallback OData
         url = self._build_url("Catalog_Карточки")
         def fetch():
-            data = self._get_odata(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
+            data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
             if data:
                 return data
             result, skip = [], 0
             while True:
-                batch = self._get_odata(url, {"$top": 100, "$skip": skip})
+                batch = self._get(url, {"$top": 100, "$skip": skip})
                 if not batch:
                     break
                 result += [p for p in batch if p.get('Хозяин_Key') == owner_guid]
@@ -77,12 +94,11 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Контактна особа (OData) ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
         while True:
-            batch = self._get_odata(url, {"$top": 100, "$skip": skip})
+            batch = self._get(url, {"$top": 100, "$skip": skip})
             if not batch:
                 return None
             for c in batch:
@@ -90,9 +106,8 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Візити (новий API, fallback – OData) ----------
+    # ---------- Візити (API v2 + OData fallback) ----------
     def get_visits_by_owner(self, owner_guid):
-        # Спроба через новий API
         if self.api_key:
             try:
                 pets = self.get_pets_by_owner(owner_guid)
@@ -113,7 +128,6 @@ class EnoteClient:
             except Exception:
                 pass
 
-        # Fallback OData
         url = self._build_url("Document_Посещение")
         params = {"$orderby": "Date desc", "$top": 2000, "$format": "json"}
         try:
@@ -131,7 +145,7 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Записи на прийом (новий API, fallback – OData) ----------
+    # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         if self.api_key:
             try:
@@ -167,7 +181,7 @@ class EnoteClient:
             pass
         return []
 
-    # ---------- Аналізи (новий API) ----------
+    # ---------- Аналізи (API v2) ----------
     def get_analyses_by_owner(self, owner_guid):
         if self.api_key:
             try:
@@ -190,7 +204,7 @@ class EnoteClient:
                 pass
         return []
 
-    # ---------- Графік роботи (OData) ----------
+    # ---------- Графік (OData) ----------
     def get_schedule(self):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {"$orderby": "Period desc", "$top": 500, "$format": "json"}
@@ -251,19 +265,29 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Пошук клієнта для входу ----------
+    # ---------- Пошук клієнта ----------
     def get_client_by_phone(self, phone):
-        # Спрощений пошук через OData (він надійний)
+        if self.api_key:
+            try:
+                digits = ''.join(filter(str.isdigit, phone))
+                if not digits.startswith('+'):
+                    digits = '+' + digits
+                data = self._api_get('clients', {'phone_number': digits})
+                if data and len(data) > 0:
+                    return data[0].get('id')
+            except Exception:
+                pass
+
         digits = ''.join(filter(str.isdigit, phone))
         if digits.startswith('38'):
             digits = digits[2:]
         url = self._build_url("Catalog_Клиенты")
-        data = self._get_odata(url, {
+        data = self._get(url, {
             "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
             "$top": 1
         })
         if data:
-            return data[0].get('Ref_Key')   # GUID клієнта
+            return data[0]['Ref_Key']
         return None
 
 enote = EnoteClient()
