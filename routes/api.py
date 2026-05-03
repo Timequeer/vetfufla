@@ -238,8 +238,3 @@ def unbind_telegram():
         db.session.commit()
     return jsonify({"message": "Telegram відв'язано"}), 200
 
-        user.enote_guid = new_guid
-        db.session.commit()
-        enote.clear_cache()
-        return jsonify({"ok": True, "new_guid": new_guid})
-    return jsonify({"ok": False, "message": "Не знайдено в ENOTE"})
