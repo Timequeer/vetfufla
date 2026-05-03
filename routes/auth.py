@@ -255,7 +255,7 @@ def debug_phone():
     api_key = os.getenv('ENOTE_API_KEY')
     clinic_guid = os.getenv('ENOTE_CLINIC_GUID')
     base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
-    url = f"{base_url}/{clinic_guid}/api/v2/clients"
+    url = f"{base_url}/{clinic_guid}/hs/api/v2/clients"
     r = req.get(url, headers={'apikey': api_key}, params={'phone_number': formatted}, timeout=25)
     try:
         response_data = json.loads(r.content.decode('utf-8-sig'))
