@@ -13,16 +13,16 @@ class EnoteClient:
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
         self.api_key = os.getenv('ENOTE_API_KEY')
         self.session = requests.Session()
-        self.session.auth = (self.user, self.password)  # OData fallback
+        self.session.auth = (self.user, self.password)  # для OData
 
-        # ✅ База API v2 — БЕЗ /api/v2 на кінці
+        # База API v2 — без /api/v2 на кінці
         self.api_v2_base = f"{self.base_url}/{self.clinic_guid}/hs"
 
         self._cache = {}
         self._cache_ttl = 600
 
     # ──────────────────────────────────────────────────────────────
-    # OData helpers (fallback)
+    # OData helpers
     # ──────────────────────────────────────────────────────────────
 
     def _build_url(self, endpoint):
@@ -66,7 +66,6 @@ class EnoteClient:
                 return [], None
             resp = r.json()
 
-            # data може бути списком або об'єктом з одним списком всередині
             data = resp.get('data', [])
             items = []
             if isinstance(data, list):
@@ -80,7 +79,6 @@ class EnoteClient:
             pagination = resp.get('pagination') or {}
             next_token = pagination.get('next_page_token') if isinstance(pagination, dict) else None
             return items, next_token
-
         except Exception:
             return [], None
 
@@ -101,10 +99,42 @@ class EnoteClient:
 
         return all_items
 
-    # Сумісність зі старим кодом
     def _api_get(self, endpoint, params=None) -> list:
+        """Сумісність зі старим кодом — без пагінації."""
         items, _ = self._api_get_page(endpoint, params)
         return items
+
+    # ──────────────────────────────────────────────────────────────
+    # Пошук клієнта
+    # ──────────────────────────────────────────────────────────────
+
+    def get_client_by_phone(self, phone: str):
+        """
+        Повертає mainContactSubjectId клієнта —
+        саме він є ownerId у пацієнтів (тварин).
+        """
+        if self.api_key:
+            try:
+                digits = ''.join(filter(str.isdigit, phone))
+                formatted = f"+{digits}" if not phone.startswith('+') else phone
+                items, _ = self._api_get_page('clients', {'phone_number': formatted})
+                if items:
+                    client = items[0]
+                    # mainContactSubjectId == ownerId у пацієнтів
+                    return client.get('mainContactSubjectId') or client.get('id')
+            except Exception:
+                pass
+
+        # OData fallback
+        digits = ''.join(filter(str.isdigit, phone))
+        if digits.startswith('38'):
+            digits = digits[2:]
+        url = self._build_url("Catalog_Клиенты")
+        data = self._get_odata(url, {
+            "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
+            "$top": 1
+        })
+        return data[0]['Ref_Key'] if data else None
 
     # ──────────────────────────────────────────────────────────────
     # Тварини (пацієнти)
@@ -114,10 +144,8 @@ class EnoteClient:
         if self.api_key:
             try:
                 all_patients = self._api_get_all('patients')
-
-                # ✅ ВИПРАВЛЕНО: поле contactSubjectId, а не ownerId
-                owner_pets = [p for p in all_patients
-                              if p.get('contactSubjectId') == owner_guid]
+                # owner_guid == mainContactSubjectId == ownerId у пацієнта
+                owner_pets = [p for p in all_patients if p.get('ownerId') == owner_guid]
 
                 return [{
                     'Ref_Key': p['id'],
@@ -127,6 +155,7 @@ class EnoteClient:
                     'Пол': 'Female' if p.get('gender') == 'FEMALE' else 'Male',
                     'Кастрировано': p.get('isCastrated', False),
                     'НомерЧипа': p.get('chipNumber', ''),
+                    'photoUrl': p.get('photoUrl', ''),
                 } for p in owner_pets]
 
             except Exception:
@@ -151,13 +180,16 @@ class EnoteClient:
     def get_contact_by_owner(self, owner_guid: str):
         if self.api_key:
             try:
-                items, _ = self._api_get_page('clients', {})
+                # owner_guid == mainContactSubjectId,
+                # шукаємо клієнта де цей id
+                items = self._api_get_all('clients')
                 for c in items:
-                    if c.get('id') == owner_guid:
+                    if c.get('mainContactSubjectId') == owner_guid:
                         return c
             except Exception:
                 pass
 
+        # OData fallback
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
         while True:
@@ -168,31 +200,6 @@ class EnoteClient:
                 if c.get('ОбъектВладелец') == owner_guid:
                     return c
             skip += 100
-
-    # ──────────────────────────────────────────────────────────────
-    # Пошук клієнта по телефону
-    # ──────────────────────────────────────────────────────────────
-
-    def get_client_by_phone(self, phone: str):
-        if self.api_key:
-            try:
-                digits = ''.join(filter(str.isdigit, phone))
-                formatted = f"+{digits}" if not phone.startswith('+') else phone
-                items, _ = self._api_get_page('clients', {'phone_number': formatted})
-                if items:
-                    return items[0].get('id')
-            except Exception:
-                pass
-
-        digits = ''.join(filter(str.isdigit, phone))
-        if digits.startswith('38'):
-            digits = digits[2:]
-        url = self._build_url("Catalog_Клиенты")
-        data = self._get_odata(url, {
-            "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
-            "$top": 1
-        })
-        return data[0]['Ref_Key'] if data else None
 
     # ──────────────────────────────────────────────────────────────
     # Минулі візити
@@ -210,7 +217,6 @@ class EnoteClient:
                 from_date = (date.today() - timedelta(days=730)).isoformat()
                 to_date = date.today().isoformat()
 
-                # Пагінація + фільтрація на стороні Python
                 all_visits = self._api_get_all('appointments', {
                     'from_date': from_date,
                     'to_date': to_date,
@@ -219,13 +225,12 @@ class EnoteClient:
                     {
                         'Date': a.get('eventDate', ''),
                         'Description': a.get('anamnesis') or a.get('diagnosisDescription') or 'Прийом',
-                        '_pet_name': pet_map.get(a['patientId'], ''),
+                        '_pet_name': pet_map.get(a.get('patientId', ''), ''),
                         'id': a.get('id', ''),
                     }
                     for a in all_visits if a.get('patientId') in pet_ids
                 ]
                 return sorted(result, key=lambda x: x['Date'], reverse=True)
-
             except Exception:
                 pass
 
@@ -275,10 +280,10 @@ class EnoteClient:
                     for b in bookings if b.get('patient', {}).get('patientId') in pet_ids
                 ]
                 return sorted(result, key=lambda x: x['ЗаписьНаДату'], reverse=True)
-
             except Exception:
                 pass
 
+        # OData fallback
         url = self._build_url("Task_ПредварительнаяЗапись")
         try:
             r = self.session.get(url, params={"$orderby": "ЗаписьНаДату desc", "$top": 2000, "$format": "json"}, timeout=30)
@@ -315,7 +320,7 @@ class EnoteClient:
             {
                 'Description': d.get('descriptionStudy') or 'Діагностика',
                 'Date': d.get('eventDate', ''),
-                '_pet_name': pet_map.get(d['patientId'], ''),
+                '_pet_name': pet_map.get(d.get('patientId', ''), ''),
                 'isCompleted': d.get('isCompleted', False),
                 'id': d.get('id', ''),
             }
@@ -324,7 +329,7 @@ class EnoteClient:
         return sorted(result, key=lambda x: x['Date'], reverse=True)
 
     # ──────────────────────────────────────────────────────────────
-    # Графік лікарів — переписано на API v2
+    # Графік лікарів
     # ──────────────────────────────────────────────────────────────
 
     def get_schedule(self) -> list:
@@ -335,11 +340,10 @@ class EnoteClient:
             from_date = date.today().isoformat()
             to_date = (date.today() + timedelta(days=30)).isoformat()
 
-            # Список лікарів
             doctors = self._api_get_all('employees')
             doctor_map = {d['id']: d.get('description') or d.get('name', '') for d in doctors}
 
-            # ✅ ВАЖЛИВО: параметри "from" і "to", а НЕ from_date/to_date
+            # ВАЖЛИВО: параметри "from"/"to", а НЕ "from_date"/"to_date"
             headers = {'apikey': self.api_key}
             url = f"{self.api_v2_base}/api/v2/bookings/available_days"
             r = self.session.get(url, headers=headers, params={
@@ -374,7 +378,6 @@ class EnoteClient:
                             })
 
             return result
-
         except Exception:
             pass
 
@@ -423,7 +426,11 @@ class EnoteClient:
             r = self.session.get(url, params={"$top": 200, "$format": "json"}, timeout=25)
             if r.ok:
                 return {
-                    s['Ref_Key']: {'name': s.get('Description', ''), 'start': s.get('Время1', ''), 'end': s.get('Время2', '')}
+                    s['Ref_Key']: {
+                        'name': s.get('Description', ''),
+                        'start': s.get('Время1', ''),
+                        'end': s.get('Время2', ''),
+                    }
                     for s in r.json().get('value', [])
                 }
         except Exception:
@@ -435,7 +442,6 @@ class EnoteClient:
     # ──────────────────────────────────────────────────────────────
 
     def debug_raw(self, endpoint: str, params: dict = None) -> dict:
-        """Повернути сиру відповідь — для /test-api."""
         headers = {'apikey': self.api_key}
         url = f"{self.api_v2_base}/api/v2/{endpoint}"
         try:
