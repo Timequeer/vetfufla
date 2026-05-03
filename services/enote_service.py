@@ -71,91 +71,53 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Візити (через контактну особу) ----------
+    # ---------- Візити (без фільтра, вибірка в Python) ----------
     def get_visits_by_owner(self, owner_guid):
-        contact = self.get_contact_by_owner(owner_guid)
-        if not contact:
-            return []
-        contact_guid = contact['Ref_Key']
-
         url = self._build_url("Document_Посещение")
         params = {
-            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
             "$orderby": "Date desc",
-            "$top": 500,
+            "$top": 2000,
             "$format": "json"
         }
         try:
             r = self.session.get(url, params=params, timeout=25)
             if r.ok:
-                visits = r.json().get('value', [])
-                # Додаємо ім'я тварини
+                all_visits = r.json().get('value', [])
                 pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-                for v in visits:
-                    v['_pet_name'] = pets.get(v.get('Карточка_Key'), '')
-                return visits
+                filtered = []
+                for v in all_visits:
+                    if v.get('Карточка_Key') in pets:
+                        v['_pet_name'] = pets[v.get('Карточка_Key')]
+                        filtered.append(v)
+                return filtered
         except Exception:
             pass
         return []
 
-    # ---------- Записи на прийом (через контактну особу) ----------
+    # ---------- Записи на прийом (без фільтра, вибірка в Python) ----------
     def get_appointments_by_owner(self, owner_guid):
-        contact = self.get_contact_by_owner(owner_guid)
-        if not contact:
-            return []
-        contact_guid = contact['Ref_Key']
-
-        # Спершу пробуємо OData з фільтром по контактній особі
         url = self._build_url("Task_ПредварительнаяЗапись")
         params = {
-            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
             "$orderby": "ЗаписьНаДату desc",
-            "$top": 500,
+            "$top": 2000,
             "$format": "json"
         }
         try:
             r = self.session.get(url, params=params, timeout=25)
             if r.ok:
-                appointments = r.json().get('value', [])
+                all_apps = r.json().get('value', [])
+                filtered = [a for a in all_apps if a.get('Хозяин_Key') == owner_guid]
                 pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-                for a in appointments:
+                for a in filtered:
                     a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-                self._cache[f"appointments:{owner_guid}"] = (time.time(), appointments)
-                return appointments
+                self._cache[f"appointments:{owner_guid}"] = (time.time(), filtered)
+                return filtered
         except Exception:
             pass
-
-        # Якщо OData не спрацював – спробуємо API v2 (заглушка)
-        # Тут буде код для /api/v2/appointments
         return []
 
-    # ---------- Аналізи (через контактну особу) ----------
+    # ---------- Аналізи (через візити) ----------
     def get_analyses_by_owner(self, owner_guid):
-        contact = self.get_contact_by_owner(owner_guid)
-        if not contact:
-            return []
-        contact_guid = contact['Ref_Key']
-
-        # Спроба OData з фільтром по контактній особі
-        url = self._build_url("Document_Анализы")
-        params = {
-            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
-            "$orderby": "Date desc",
-            "$top": 500,
-            "$format": "json"
-        }
-        try:
-            r = self.session.get(url, params=params, timeout=25)
-            if r.ok:
-                analyses = r.json().get('value', [])
-                pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-                for a in analyses:
-                    a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-                return analyses
-        except Exception:
-            pass
-
-        # Якщо OData не спрацював – збираємо через візити
         visits = self.get_visits_by_owner(owner_guid)
         analysis_keys = set()
         for v in visits:
@@ -173,7 +135,6 @@ class EnoteClient:
         if not analysis_keys:
             return []
 
-        # Завантажуємо документи аналізів за списком ключів
         filter_parts = [f"Ref_Key eq guid'{k}'" for k in analysis_keys]
         filter_str = " or ".join(filter_parts)
         url = self._build_url("Document_Анализы")
