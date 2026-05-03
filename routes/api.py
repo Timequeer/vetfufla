@@ -237,3 +237,22 @@ def unbind_telegram():
         setting.is_active = False
         db.session.commit()
     return jsonify({"message": "Telegram відв'язано"}), 200
+
+@auth_bp.route('/api/resync-enote')
+def resync_enote():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Не знайдено"}), 404
+    # Скидаємо старий guid і шукаємо заново
+    user.enote_guid = None
+    db.session.commit()
+    new_guid = enote.get_client_by_phone(user.phone)
+    if new_guid:
+        user.enote_guid = new_guid
+        db.session.commit()
+        enote.clear_cache()
+        return jsonify({"ok": True, "new_guid": new_guid})
+    return jsonify({"ok": False, "message": "Не знайдено в ENOTE"})
