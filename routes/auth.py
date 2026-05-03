@@ -499,6 +499,37 @@ def fix_enote():
     else:
         return jsonify({"error": "Не передано параметр guid. Пример: /api/fix-enote?guid=ТВОЙ_GUID"}), 400
 
+@auth_bp.route('/api/debug-phone')
+def debug_phone():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    phone = user.phone
+    
+    digits = ''.join(filter(str.isdigit, phone))
+    if not digits.startswith('380'):
+        digits = '380' + digits.lstrip('0')
+    formatted = '+' + digits
+    
+    import requests, os
+    api_key = os.getenv('ENOTE_API_KEY')
+    clinic_guid = os.getenv('ENOTE_CLINIC_GUID')
+    base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
+    
+    url = f"{base_url}/{clinic_guid}/api/v2/clients"
+    r = requests.get(url, 
+        headers={'apikey': api_key},
+        params={'phone_number': formatted},
+        timeout=25
+    )
+    return jsonify({
+        "phone_original": phone,
+        "phone_formatted": formatted,
+        "status": r.status_code,
+        "response": r.json()
+    })
+
 @auth_bp.route('/logout')
 def logout():
     session.clear()
