@@ -1,185 +1,142 @@
-import requests
-import logging
-from typing import Optional
+from flask import Blueprint, render_template, session, redirect, jsonify
+from models import User
+from services.enote_service import enote
 
-logger = logging.getLogger(__name__)
+client_bp = Blueprint('client', __name__)
 
+@client_bp.route('/dashboard')
+def dashboard():
+    if "user_id" not in session:
+        return redirect("/login")
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect("/login")
+    if user.is_doctor:
+        return redirect("/doctor")
+    return render_template("dashboard.html", user=user)
 
-class EnotClient:
-    """
-    HTTP-клієнт для Enote API v2.
-    Базовий URL: https://app.enote.vet/{clinic_id}/hs
-    Endpoints:   /api/v2/...
-    """
+@client_bp.route('/api/my-pets')
+def my_pets():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    return jsonify(enote.get_pets_by_owner(user.enote_guid))
 
-    def __init__(self, base_url: str, api_key: str):
-        # base_url = "https://app.enote.vet/YOUR_CLINIC_ID/hs"
-        # НЕ додавай /api/v2 сюди — він вже є в кожному endpoint
-        self.base_url = base_url.rstrip("/")
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
+@client_bp.route('/api/my-analyses')
+def my_analyses():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    return jsonify(enote.get_analyses_by_owner(user.enote_guid))
+
+@client_bp.route('/api/my-visits')
+def my_visits():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    visits = enote.get_visits_by_owner(user.enote_guid)
+    return jsonify(visits)
+
+@client_bp.route('/api/my-appointments')
+def my_appointments():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify([])
+    appointments = enote.get_appointments_by_owner(user.enote_guid)
+    return jsonify(appointments if appointments else [])
+
+@client_bp.route('/api/my-profile')
+def my_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify({})
+    contact = enote.get_contact_by_owner(user.enote_guid)
+    if contact:
+        return jsonify({
+            "full_name": f"{contact.get('Фамилия', '')} {contact.get('Имя', '')}".strip(),
+            "phone": user.phone,
+            "email": user.email
         })
+    return jsonify({"phone": user.phone, "email": user.email})
 
-    def _get(self, endpoint: str, params: Optional[dict] = None) -> dict:
-        """
-        Виконати GET-запит. endpoint починається з /api/v2/...
-        """
-        url = f"{self.base_url}{endpoint}"
-        params = {k: v for k, v in (params or {}).items() if v is not None}
+@client_bp.route('/api/clear-cache')
+def clear_cache():
+    enote.clear_cache()
+    return jsonify({"message": "Кеш очищено"})
+
+@client_bp.route('/api/schedule')
+def api_schedule():
+    data = enote.get_schedule()
+    return jsonify(data)
+
+@client_bp.route('/online-appointment')
+def online_appointment():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("schedule.html", user=User.query.get(session["user_id"]))
+
+@client_bp.route('/test-api-url')
+def test_api_url():
+    if not enote.api_key:
+        return jsonify({"error": "ENOTE_API_KEY not set"})
+    
+    endpoints_to_try = [
+        f"{enote.base_url}/enote9991/hs/api/v2",
+        f"{enote.base_url}/{enote.clinic_guid}/hs/api/v2",
+        f"{enote.base_url}/api/v2",                         # якщо раптом
+    ]
+    
+    results = {}
+    headers = {'apikey': enote.api_key}
+    for url in endpoints_to_try:
         try:
-            resp = self.session.get(url, params=params, timeout=15)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.exceptions.HTTPError as e:
-            logger.error("HTTP error %s for %s: %s", resp.status_code, url, resp.text)
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.error("Request failed for %s: %s", url, e)
-            raise
+            r = requests.get(f"{url}/clients?phone_number=%2B380685442567", headers=headers, timeout=15)
+            results[url] = {
+                "status": r.status_code,
+                "preview": r.text[:200]
+            }
+        except Exception as e:
+            results[url] = {"error": str(e)}
+    
+    return jsonify(results)
 
-    def _post(self, endpoint: str, body: dict) -> dict:
-        url = f"{self.base_url}{endpoint}"
-        try:
-            resp = self.session.post(url, json=body, timeout=15)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.exceptions.HTTPError as e:
-            logger.error("HTTP error %s for %s: %s", resp.status_code, url, resp.text)
-            raise
+@client_bp.route('/test-api')
+def test_api():
+    if not enote.api_key:
+        return jsonify({"error": "No API Key"})
+    
+    # Отримуємо клієнта
+    clients = enote._api_get('clients', {'phone_number': '+380685442567', 'page_size': 1})
+    client = clients[0] if clients else None
+    client_id = client.get('id') if client else None
+    
+    # Отримуємо перші 10 пацієнтів без фільтрації
+    all_patients = enote._api_get('patients', {'page_size': 10})
+    
+    return jsonify({
+        "client": client,
+        "client_id": client_id,
+        "patients_sample": all_patients[:5],
+        "owner_ids_in_sample": [p.get('ownerId') for p in all_patients[:5]]
+    })
 
-    def _patch(self, endpoint: str, body: dict) -> dict:
-        url = f"{self.base_url}{endpoint}"
-        try:
-            resp = self.session.patch(url, json=body, timeout=15)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.exceptions.HTTPError as e:
-            logger.error("HTTP error %s for %s: %s", resp.status_code, url, resp.text)
-            raise
-
-    # ─── Довідники ───────────────────────────────────────────────
-
-    def get_employees(self, next_page_token: str = None, page_size: int = 100) -> dict:
-        return self._get("/api/v2/employees", {
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    def get_clients(self, phone_number: str = None,
-                    next_page_token: str = None, page_size: int = 100) -> dict:
-        return self._get("/api/v2/clients", {
-            "phone_number": phone_number,
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    def get_client(self, client_id: str) -> dict:
-        return self._get(f"/api/v2/clients/{client_id}")
-
-    def get_patients(self, phone_number: str = None,
-                     next_page_token: str = None, page_size: int = 100) -> dict:
-        return self._get("/api/v2/patients", {
-            "phone_number": phone_number,
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    def get_patient(self, patient_id: str) -> dict:
-        return self._get(f"/api/v2/patients/{patient_id}")
-
-    def get_visit_kinds(self, next_page_token: str = None, page_size: int = 100) -> dict:
-        return self._get("/api/v2/visit_kinds", {
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    # ─── Амбулаторні записи (візити) ─────────────────────────────
-
-    def get_appointments(self, from_date: str = None, to_date: str = None,
-                         employee_id: str = None,
-                         next_page_token: str = None, page_size: int = 100) -> dict:
-        """
-        ВАЖЛИВО: API v2 НЕ підтримує фільтр по patient_id.
-        Фільтрувати по пацієнту треба після отримання даних.
-        """
-        return self._get("/api/v2/appointments", {
-            "from_date": from_date,
-            "to_date": to_date,
-            "employee_id": employee_id,
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    # ─── Діагностика (аналізи) ────────────────────────────────────
-
-    def get_diagnostic(self, from_date: str = None, to_date: str = None,
-                       employee_id: str = None,
-                       next_page_token: str = None, page_size: int = 100) -> dict:
-        """
-        ВАЖЛИВО: API v2 НЕ підтримує фільтр по patient_id.
-        Фільтрувати по пацієнту треба після отримання даних.
-        """
-        return self._get("/api/v2/diagnostic", {
-            "from_date": from_date,
-            "to_date": to_date,
-            "employee_id": employee_id,
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    # ─── Попередній запис / графік лікарів ───────────────────────
-
-    def get_bookings(self, from_date: str = None, to_date: str = None,
-                     employee_id: str = None,
-                     next_page_token: str = None, page_size: int = 100) -> dict:
-        return self._get("/api/v2/bookings", {
-            "from_date": from_date,
-            "to_date": to_date,
-            "employee_id": employee_id,
-            "next_page_token": next_page_token,
-            "page_size": page_size,
-        })
-
-    def get_available_days(self, from_date: str, to_date: str,
-                           entity_id: str = None,
-                           role_id: str = None,
-                           employee_id: str = None) -> dict:
-        """
-        Отримати дні прийому лікаря.
-        from_date, to_date — обов'язкові, формат YYYY-MM-DD.
-        """
-        return self._get("/api/v2/bookings/available_days", {
-            "from": from_date,   # НЕ from_date — параметр називається "from"
-            "to": to_date,       # НЕ to_date   — параметр називається "to"
-            "entity_id": entity_id,
-            "role_id": role_id,
-            "employee_id": employee_id,
-        })
-
-    def get_visit_times(self, visit_kind_id: str, date: str,
-                        entity_id: str = None,
-                        role_id: str = None,
-                        employee_id: str = None) -> dict:
-        """
-        Отримати вільні/зайняті слоти на конкретний день.
-        visit_kind_id і date — обов'язкові.
-        """
-        return self._get("/api/v2/bookings/visit_times", {
-            "visit_kind_id": visit_kind_id,
-            "date": date,
-            "entity_id": entity_id,
-            "role_id": role_id,
-            "employee_id": employee_id,
-        })
-
-    def create_booking(self, body: dict) -> dict:
-        return self._post("/api/v2/bookings", body)
-
-    def cancel_booking(self, booking_id: str) -> dict:
-        url = f"{self.base_url}/api/v2/bookings/{booking_id}/cancel"
-        resp = self.session.put(url, timeout=15)
-        resp.raise_for_status()
-        return resp.json()
+@client_bp.route('/settings')
+def settings():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("settings.html")
