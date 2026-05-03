@@ -9,16 +9,21 @@ class EnoteClient:
         self.clinic_guid = os.getenv('ENOTE_CLINIC_GUID')
         self.user = os.getenv('ENOTE_ODATA_USER')
         self.password = os.getenv('ENOTE_ODATA_PASSWORD')
+        self.api_key = os.getenv('ENOTE_API_KEY')
         self.session = requests.Session()
+        # Авторизація для OData
         self.session.auth = (self.user, self.password)
+        # Базовий URL для нового API v2 (без clinic_guid!)
+        self.api_v2_base = f"{self.base_url}/hs/api/v2"
         self._cache = {}
         self._cache_ttl = 600
 
+    # ---------- OData-допоміжні (для тварин, графіка, довідників) ----------
     def _build_url(self, endpoint):
         encoded = quote(endpoint, safe='')
         return f"{self.base_url}/{self.clinic_guid}/odata/standard.odata/{encoded}"
 
-    def _get(self, url, params):
+    def _get_odata(self, url, params):
         params.setdefault("$format", "json")
         try:
             r = self.session.get(url, params=params, timeout=30)
@@ -40,16 +45,31 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ---------- Тварини ----------
+    # ---------- Новий API v2 ----------
+    def _api_get(self, endpoint, params=None):
+        if not self.api_key:
+            return []
+        headers = {'apikey': self.api_key}
+        url = f"{self.api_v2_base}/{endpoint}"
+        try:
+            r = self.session.get(url, headers=headers, params=params, timeout=30)
+            if r.ok:
+                resp = r.json()
+                return resp.get('data', [])
+        except Exception:
+            pass
+        return []
+
+    # ---------- Тварини (OData – працює надійно) ----------
     def get_pets_by_owner(self, owner_guid):
         url = self._build_url("Catalog_Карточки")
         def fetch():
-            data = self._get(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
+            data = self._get_odata(url, {"$filter": f"Хозяин_Key eq guid'{owner_guid}'"})
             if data:
                 return data
             result, skip = [], 0
             while True:
-                batch = self._get(url, {"$top": 100, "$skip": skip})
+                batch = self._get_odata(url, {"$top": 100, "$skip": skip})
                 if not batch:
                     break
                 result += [p for p in batch if p.get('Хозяин_Key') == owner_guid]
@@ -57,12 +77,12 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Контактна особа ----------
+    # ---------- Контактна особа (OData) ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
         while True:
-            batch = self._get(url, {"$top": 100, "$skip": skip})
+            batch = self._get_odata(url, {"$top": 100, "$skip": skip})
             if not batch:
                 return None
             for c in batch:
@@ -70,10 +90,32 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Візити ----------
+    # ---------- Візити (новий API, fallback – OData) ----------
     def get_visits_by_owner(self, owner_guid):
+        # Спроба через новий API
+        if self.api_key:
+            try:
+                pets = self.get_pets_by_owner(owner_guid)
+                pet_ids = [p['Ref_Key'] for p in pets]
+                appointments = self._api_get('appointments', {'page_size': 2000})
+                if appointments:
+                    result = []
+                    for a in appointments:
+                        if a.get('patientId') in pet_ids:
+                            pet_name = next((p['Description'] for p in pets if p['Ref_Key'] == a.get('patientId')), '')
+                            result.append({
+                                'Date': a.get('eventDate', ''),
+                                'Description': a.get('anamnesis', '') or 'Прийом',
+                                '_pet_name': pet_name
+                            })
+                    if result:
+                        return sorted(result, key=lambda x: x['Date'], reverse=True)
+            except Exception:
+                pass
+
+        # Fallback OData
         url = self._build_url("Document_Посещение")
-        params = {"$orderby": "Date desc", "$top": 2500, "$format": "json"}
+        params = {"$orderby": "Date desc", "$top": 2000, "$format": "json"}
         try:
             r = self.session.get(url, params=params, timeout=30)
             if r.ok:
@@ -82,73 +124,78 @@ class EnoteClient:
                 filtered = []
                 for v in all_visits:
                     if v.get('Карточка_Key') in pets:
-                        v['_pet_name'] = pets[v.get('Карточка_Key')]
+                        v['_pet_name'] = pets[v['Карточка_Key']]
                         filtered.append(v)
                 return filtered
         except Exception:
             pass
         return []
 
-    # ---------- Записи на прийом ----------
+    # ---------- Записи на прийом (новий API, fallback – OData) ----------
     def get_appointments_by_owner(self, owner_guid):
+        if self.api_key:
+            try:
+                pets = self.get_pets_by_owner(owner_guid)
+                pet_ids = [p['Ref_Key'] for p in pets]
+                bookings = self._api_get('bookings', {'page_size': 2000})
+                if bookings:
+                    result = []
+                    for b in bookings:
+                        if b.get('patient', {}).get('patientId') in pet_ids:
+                            result.append({
+                                'ЗаписьНаДату': b.get('appointmentStartTime', ''),
+                                'Кличка': b.get('patient', {}).get('petName', ''),
+                                'Подтверждено': b.get('isConfirmed', False),
+                                'Executed': b.get('objectState') == 'ACCEPTED'
+                            })
+                    if result:
+                        return sorted(result, key=lambda x: x['ЗаписьНаДату'], reverse=True)
+            except Exception:
+                pass
+
         url = self._build_url("Task_ПредварительнаяЗапись")
-        params = {"$orderby": "ЗаписьНаДату desc", "$top": 2500, "$format": "json"}
+        params = {"$orderby": "ЗаписьНаДату desc", "$top": 2000, "$format": "json"}
         try:
             r = self.session.get(url, params=params, timeout=30)
             if r.ok:
                 all_apps = r.json().get('value', [])
                 filtered = [a for a in all_apps if a.get('Хозяин_Key') == owner_guid]
-                pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
                 for a in filtered:
-                    a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-                self._cache[f"appointments:{owner_guid}"] = (time.time(), filtered)
+                    a['_pet_name'] = ''
                 return filtered
         except Exception:
             pass
         return []
 
-    # ---------- Аналізи (через візити) ----------
+    # ---------- Аналізи (новий API) ----------
     def get_analyses_by_owner(self, owner_guid):
-        visits = self.get_visits_by_owner(owner_guid)
-        analysis_keys = set()
-        for v in visits:
-            url_sub = self._build_url("Document_Посещение_Анализы")
-            r_sub = self.session.get(url_sub, params={
-                "$filter": f"Ref_Key eq guid'{v['Ref_Key']}'",
-                "$format": "json"
-            }, timeout=25)
-            if r_sub.ok:
-                for item in r_sub.json().get('value', []):
-                    dok_key = item.get('Документ_Key')
-                    if dok_key:
-                        analysis_keys.add(dok_key)
-
-        if not analysis_keys:
-            return []
-
-        filter_parts = [f"Ref_Key eq guid'{k}'" for k in analysis_keys]
-        filter_str = " or ".join(filter_parts)
-        url = self._build_url("Document_Анализы")
-        r = self.session.get(url, params={
-            "$filter": filter_str,
-            "$orderby": "Date desc",
-            "$top": 200,
-            "$format": "json"
-        }, timeout=25)
-        if r.ok:
-            analyses = r.json().get('value', [])
-            pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-            for a in analyses:
-                a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-            return analyses
+        if self.api_key:
+            try:
+                pets = self.get_pets_by_owner(owner_guid)
+                pet_ids = [p['Ref_Key'] for p in pets]
+                diagnostics = self._api_get('diagnostic', {'page_size': 2000})
+                if diagnostics:
+                    result = []
+                    for d in diagnostics:
+                        if d.get('patientId') in pet_ids:
+                            pet_name = next((p['Description'] for p in pets if p['Ref_Key'] == d.get('patientId')), '')
+                            result.append({
+                                'Description': d.get('descriptionStudy', 'Дослідження'),
+                                'Date': d.get('eventDate', ''),
+                                '_pet_name': pet_name
+                            })
+                    if result:
+                        return sorted(result, key=lambda x: x['Date'], reverse=True)
+            except Exception:
+                pass
         return []
 
-    # ---------- Графік роботи ----------
+    # ---------- Графік роботи (OData) ----------
     def get_schedule(self):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {"$orderby": "Period desc", "$top": 500, "$format": "json"}
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params=params, timeout=30)
             if r.ok:
                 data = r.json().get('value', [])
                 doctors = self._get_doctors_odata()
@@ -204,18 +251,19 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Пошук клієнта ----------
+    # ---------- Пошук клієнта для входу ----------
     def get_client_by_phone(self, phone):
+        # Спрощений пошук через OData (він надійний)
         digits = ''.join(filter(str.isdigit, phone))
         if digits.startswith('38'):
             digits = digits[2:]
         url = self._build_url("Catalog_Клиенты")
-        data = self._get(url, {
+        data = self._get_odata(url, {
             "$filter": f"substringof('{digits}',КонтактнаяИнформация)",
             "$top": 1
         })
         if data:
-            return data[0]['Ref_Key']
+            return data[0].get('Ref_Key')   # GUID клієнта
         return None
 
 enote = EnoteClient()
