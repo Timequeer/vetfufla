@@ -58,24 +58,7 @@ class EnoteClient:
             return result
         return self._cached(f"pets:{owner_guid}", fetch)
 
-    # ---------- Візити ----------
-    def get_visits_by_pet(self, pet_guid):
-        url = self._build_url("Document_Посещение")
-        params = {
-            "$orderby": "Date desc",
-            "$top": 500,
-            "$format": "json"
-        }
-        try:
-            r = self.session.get(url, params=params, timeout=25)
-            if r.ok:
-                all_data = r.json().get('value', [])
-                return [v for v in all_data if v.get('Карточка_Key') == pet_guid]
-        except Exception:
-            pass
-        return []
-
-    # ---------- Контакти ----------
+    # ---------- Контактна особа ----------
     def get_contact_by_owner(self, owner_guid):
         url = self._build_url("Catalog_КонтактныеЛица")
         skip = 0
@@ -88,14 +71,44 @@ class EnoteClient:
                     return c
             skip += 100
 
-    # ---------- Аналізи ----------
-    def get_analyses_by_owner(self, owner_guid):
+    # ---------- Візити (через контактну особу) ----------
+    def get_visits_by_owner(self, owner_guid):
+        contact = self.get_contact_by_owner(owner_guid)
+        if not contact:
+            return []
+        contact_guid = contact['Ref_Key']
+
+        url = self._build_url("Document_Посещение")
+        params = {
+            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
+            "$orderby": "Date desc",
+            "$top": 500,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                visits = r.json().get('value', [])
+                # Додаємо ім'я тварини
+                pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
+                for v in visits:
+                    v['_pet_name'] = pets.get(v.get('Карточка_Key'), '')
+                return visits
+        except Exception:
+            pass
         return []
 
-    # ---------- Записи на прийом ----------
+    # ---------- Записи на прийом (через контактну особу) ----------
     def get_appointments_by_owner(self, owner_guid):
+        contact = self.get_contact_by_owner(owner_guid)
+        if not contact:
+            return []
+        contact_guid = contact['Ref_Key']
+
+        # Спершу пробуємо OData з фільтром по контактній особі
         url = self._build_url("Task_ПредварительнаяЗапись")
         params = {
+            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
             "$orderby": "ЗаписьНаДату desc",
             "$top": 500,
             "$format": "json"
@@ -103,21 +116,83 @@ class EnoteClient:
         try:
             r = self.session.get(url, params=params, timeout=25)
             if r.ok:
-                all_data = r.json().get('value', [])
-                filtered = [a for a in all_data if a.get('Хозяин_Key') == owner_guid]
+                appointments = r.json().get('value', [])
                 pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
-                for a in filtered:
+                for a in appointments:
                     a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
-                self._cache[f"appointments:{owner_guid}"] = (time.time(), filtered)
-                return filtered
+                self._cache[f"appointments:{owner_guid}"] = (time.time(), appointments)
+                return appointments
         except Exception:
             pass
+
+        # Якщо OData не спрацював – спробуємо API v2 (заглушка)
+        # Тут буде код для /api/v2/appointments
         return []
 
-    # ---------- Довідник лікарів (з простим кешуванням) ----------
+    # ---------- Аналізи (через контактну особу) ----------
+    def get_analyses_by_owner(self, owner_guid):
+        contact = self.get_contact_by_owner(owner_guid)
+        if not contact:
+            return []
+        contact_guid = contact['Ref_Key']
+
+        # Спроба OData з фільтром по контактній особі
+        url = self._build_url("Document_Анализы")
+        params = {
+            "$filter": f"КонтактноеЛицо_Key eq guid'{contact_guid}'",
+            "$orderby": "Date desc",
+            "$top": 500,
+            "$format": "json"
+        }
+        try:
+            r = self.session.get(url, params=params, timeout=25)
+            if r.ok:
+                analyses = r.json().get('value', [])
+                pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
+                for a in analyses:
+                    a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
+                return analyses
+        except Exception:
+            pass
+
+        # Якщо OData не спрацював – збираємо через візити
+        visits = self.get_visits_by_owner(owner_guid)
+        analysis_keys = set()
+        for v in visits:
+            url_sub = self._build_url("Document_Посещение_Анализы")
+            r_sub = self.session.get(url_sub, params={
+                "$filter": f"Ref_Key eq guid'{v['Ref_Key']}'",
+                "$format": "json"
+            }, timeout=25)
+            if r_sub.ok:
+                for item in r_sub.json().get('value', []):
+                    dok_key = item.get('Документ_Key')
+                    if dok_key:
+                        analysis_keys.add(dok_key)
+
+        if not analysis_keys:
+            return []
+
+        # Завантажуємо документи аналізів за списком ключів
+        filter_parts = [f"Ref_Key eq guid'{k}'" for k in analysis_keys]
+        filter_str = " or ".join(filter_parts)
+        url = self._build_url("Document_Анализы")
+        r = self.session.get(url, params={
+            "$filter": filter_str,
+            "$orderby": "Date desc",
+            "$top": 200,
+            "$format": "json"
+        }, timeout=25)
+        if r.ok:
+            analyses = r.json().get('value', [])
+            pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
+            for a in analyses:
+                a['_pet_name'] = pets.get(a.get('Карточка_Key'), '')
+            return analyses
+        return []
+
+    # ---------- Довідник лікарів ----------
     def get_doctors(self):
-        if 'doctors' in self._cache:
-            return self._cache['doctors']
         url = self._build_url("Catalog_ФизическиеЛица")
         try:
             r = self.session.get(url, params={"$top": 200, "$format": "json"}, timeout=25)
@@ -125,16 +200,13 @@ class EnoteClient:
                 doctors = {}
                 for d in r.json().get('value', []):
                     doctors[d['Ref_Key']] = d.get('Description', '')
-                self._cache['doctors'] = doctors
                 return doctors
         except Exception:
             pass
         return {}
 
-    # ---------- Довідник змін (з простим кешуванням) ----------
+    # ---------- Довідник змін ----------
     def get_shifts(self):
-        if 'shifts' in self._cache:
-            return self._cache['shifts']
         url = self._build_url("Catalog_Смены")
         try:
             r = self.session.get(url, params={"$top": 200, "$format": "json"}, timeout=25)
@@ -146,13 +218,12 @@ class EnoteClient:
                         'start': s.get('Время1', ''),
                         'end': s.get('Время2', '')
                     }
-                self._cache['shifts'] = shifts
                 return shifts
         except Exception:
             pass
         return {}
 
-    # ---------- Графік роботи (збалансований) ----------
+    # ---------- Графік роботи ----------
     def get_schedule(self):
         url = self._build_url("InformationRegister_ГрафикРаботы")
         params = {
