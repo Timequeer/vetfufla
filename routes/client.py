@@ -90,6 +90,31 @@ def online_appointment():
         return redirect("/login")
     return render_template("schedule.html", user=User.query.get(session["user_id"]))
 
+@client_bp.route('/test-api-url')
+def test_api_url():
+    if not enote.api_key:
+        return jsonify({"error": "ENOTE_API_KEY not set"})
+    
+    endpoints_to_try = [
+        f"{enote.base_url}/enote9991/hs/api/v2",
+        f"{enote.base_url}/{enote.clinic_guid}/hs/api/v2",
+        f"{enote.base_url}/api/v2",                         # якщо раптом
+    ]
+    
+    results = {}
+    headers = {'apikey': enote.api_key}
+    for url in endpoints_to_try:
+        try:
+            r = requests.get(f"{url}/clients?phone_number=%2B380685442567", headers=headers, timeout=15)
+            results[url] = {
+                "status": r.status_code,
+                "preview": r.text[:200]
+            }
+        except Exception as e:
+            results[url] = {"error": str(e)}
+    
+    return jsonify(results)
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
