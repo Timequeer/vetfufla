@@ -21,7 +21,7 @@ class EnoteClient:
     def _get(self, url, params):
         params.setdefault("$format", "json")
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params=params, timeout=30)
             if r.ok:
                 return r.json().get('value', [])
         except Exception:
@@ -73,9 +73,9 @@ class EnoteClient:
     # ---------- Візити ----------
     def get_visits_by_owner(self, owner_guid):
         url = self._build_url("Document_Посещение")
-        params = {"$orderby": "Date desc", "$top": 2000, "$format": "json"}
+        params = {"$orderby": "Date desc", "$top": 2500, "$format": "json"}
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params=params, timeout=30)
             if r.ok:
                 all_visits = r.json().get('value', [])
                 pets = {p['Ref_Key']: p.get('Description', '') for p in self.get_pets_by_owner(owner_guid)}
@@ -92,9 +92,9 @@ class EnoteClient:
     # ---------- Записи на прийом ----------
     def get_appointments_by_owner(self, owner_guid):
         url = self._build_url("Task_ПредварительнаяЗапись")
-        params = {"$orderby": "ЗаписьНаДату desc", "$top": 2000, "$format": "json"}
+        params = {"$orderby": "ЗаписьНаДату desc", "$top": 2500, "$format": "json"}
         try:
-            r = self.session.get(url, params=params, timeout=25)
+            r = self.session.get(url, params=params, timeout=30)
             if r.ok:
                 all_apps = r.json().get('value', [])
                 filtered = [a for a in all_apps if a.get('Хозяин_Key') == owner_guid]
@@ -204,11 +204,8 @@ class EnoteClient:
             pass
         return {}
 
-    # ---------- Пошук клієнта (потрібен для входу) ----------
+    # ---------- Пошук клієнта ----------
     def get_client_by_phone(self, phone):
-        return self.find_client_by_phone(phone)
-
-    def find_client_by_phone(self, phone):
         digits = ''.join(filter(str.isdigit, phone))
         if digits.startswith('38'):
             digits = digits[2:]
@@ -218,7 +215,7 @@ class EnoteClient:
             "$top": 1
         })
         if data:
-            return data[0]['Ref_Key']   # Повертаємо сам GUID
+            return data[0]['Ref_Key']
         return None
 
 enote = EnoteClient()
