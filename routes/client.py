@@ -120,33 +120,19 @@ def test_api():
     if not enote.api_key:
         return jsonify({"error": "No API Key"})
     
-    # Спробуємо отримати клієнта за вашим номером
+    # Отримуємо клієнта
     clients = enote._api_get('clients', {'phone_number': '+380685442567', 'page_size': 1})
     client = clients[0] if clients else None
+    client_id = client.get('id') if client else None
     
-    if not client:
-        return jsonify({"error": "Client not found"})
-    
-    client_id = client.get('id')
-    
-    # Отримуємо пацієнтів (тварин) цього клієнта
-    patients = enote._api_get('patients', {'page_size': 20})
-    my_patients = [p for p in patients if p.get('ownerId') == client_id]
-    
-    if not my_patients:
-        return jsonify({"error": "No patients found"})
-    
-    # Беремо першу тварину і запитуємо її діагностику
-    pet_id = my_patients[0]['id']
-    diagnostic = enote._api_get('diagnostic', {'page_size': 5})
-    pet_diagnostic = [d for d in diagnostic if d.get('patientId') == pet_id]
+    # Отримуємо перші 10 пацієнтів без фільтрації
+    all_patients = enote._api_get('patients', {'page_size': 10})
     
     return jsonify({
-        "client": client_id,
-        "patients_count": len(my_patients),
-        "first_pet_id": pet_id,
-        "diagnostic_count": len(pet_diagnostic),
-        "diagnostic_preview": pet_diagnostic[:2]
+        "client": client,
+        "client_id": client_id,
+        "patients_sample": all_patients[:5],
+        "owner_ids_in_sample": [p.get('ownerId') for p in all_patients[:5]]
     })
 
 @client_bp.route('/settings')
