@@ -1,8 +1,20 @@
 import os
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import List, Optional, Dict, Any
 import requests
+
+
+# ── допоміжна функція форматування дати ──────────────────────────
+def _format_datetime(dt_str: str) -> str:
+    """Перетворює ISO8601 рядок у звичний формат 'YYYY-MM-DD HH:MM'"""
+    if not dt_str:
+        return ''
+    try:
+        clean = dt_str[:19]  # '2023-03-10T09:10:00'
+        return datetime.strptime(clean, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
+    except:
+        return dt_str
 
 
 class EnoteClient:
@@ -12,7 +24,7 @@ class EnoteClient:
         self.clinic_guid = os.getenv('ENOTE_CLINIC_GUID', '38174e48-16f0-11ee-6d89-2ae983d8a0f0')
         self.api_key = os.getenv('ENOTE_API_KEY', 'e1d15077-3bcc-491b-839b-8ef83b5f9eb8')
 
-        # Повна базова адреса API v2(як у прикладах підтримки)
+        # Повна базова адреса API v2 (як у прикладах підтримки)
         self.api_v2_base = f"{self.base_url}/{self.clinic_guid}/hs/api/v2"
 
         # HTTP‑сесія тільки для API v2 (з apikey у заголовку)
@@ -97,7 +109,6 @@ class EnoteClient:
         items, _ = self._api_get_page('clients', {'phone_number': formatted})
         if items:
             client = items[0]
-            # mainContactSubjectId = ідентифікатор контактної особи, який є власником
             return client.get('mainContactSubjectId') or client.get('id')
         return None
 
@@ -109,27 +120,49 @@ class EnoteClient:
         return items[0]['id'] if items else None
 
     # ──────────────────────────────────────────────────────────────
+    # Універсальний ідентифікатор власника
+    # ──────────────────────────────────────────────────────────────
+
+    def _resolve_owner_id(self, owner_guid: str) -> str:
+        """
+        Повертає mainContactSubjectId для даного owner_guid.
+        Якщо owner_guid вже є mainContactSubjectId, поверне його без змін.
+        Інакше знайде справжній mainContactSubjectId за id клієнта.
+        """
+        clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
+        # Спочатку перевіряємо, чи є owner_guid серед mainContactSubjectId
+        for c in clients:
+            if c.get('mainContactSubjectId') == owner_guid:
+                return owner_guid
+        # Якщо ні – можливо owner_guid це id клієнта
+        for c in clients:
+            if c['id'] == owner_guid:
+                return c.get('mainContactSubjectId') or c['id']
+        # Нічого не знайдено – повертаємо як є
+        return owner_guid
+
+    # ──────────────────────────────────────────────────────────────
     # Тварини (пацієнти) власника
     # ──────────────────────────────────────────────────────────────
 
     def get_pets_by_owner(self, owner_guid: str) -> list:
         """
-        Повертає список тварин для власника (owner_guid = mainContactSubjectId клієнта).
-        Використовує прямий фільтр по client_id, якщо API його підтримує,
-        інакше — завантажує всіх і фільтрує локально.
+        Повертає список тварин для власника.
+        owner_guid може бути як mainContactSubjectId, так і звичайним id клієнта.
         """
-        # Спроба прямого фільтру
+        resolved = self._resolve_owner_id(owner_guid)
+
+        # Пробуємо прямий фільтр, якщо API підтримує client_id
         try:
-            pets = self._api_get_page('patients', {'client_id': owner_guid})[0]
+            pets, _ = self._api_get_page('patients', {'client_id': resolved})
             if pets:
                 return self._format_pets(pets)
         except Exception:
             pass
 
-        # Fallback: завантажуємо всіх і фільтруємо по ownerId
-        # (цей шлях залишений для сумісності)
+        # Fallback: завантажуємо всіх пацієнтів і фільтруємо за ownerId
         all_patients = self._api_get_all('patients')
-        owner_pets = [p for p in all_patients if p.get('ownerId') == owner_guid]
+        owner_pets = [p for p in all_patients if p.get('ownerId') == resolved]
         return self._format_pets(owner_pets)
 
     def _format_pets(self, raw_pets: list) -> list:
@@ -154,9 +187,10 @@ class EnoteClient:
         Знаходить клієнта за його mainContactSubjectId.
         Повертає дані клієнта (ім'я, телефон тощо).
         """
+        resolved = self._resolve_owner_id(owner_guid)
         all_clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
         for c in all_clients:
-            if c.get('mainContactSubjectId') == owner_guid:
+            if c.get('mainContactSubjectId') == resolved:
                 return c
         return None
 
@@ -169,7 +203,8 @@ class EnoteClient:
         Повертає всі минулі візити для ВСІХ тварин власника.
         Використовує для кожної тварини прямий запит ?patient_id=...
         """
-        pets = self.get_pets_by_owner(owner_guid)
+        resolved = self._resolve_owner_id(owner_guid)
+        pets = self.get_pets_by_owner(resolved)
         if not pets:
             return []
 
@@ -182,7 +217,7 @@ class EnoteClient:
 
         # Форматуємо для фронтенду
         result = [{
-            'Date': v.get('eventDate', ''),
+            'Date': _format_datetime(v.get('eventDate', '')),
             'Description': v.get('diagnosisDescription') or v.get('anamnesis', '') or 'Прийом',
             '_pet_name': v.get('_pet_name', ''),
             'id': v.get('id', ''),
@@ -199,7 +234,8 @@ class EnoteClient:
         Повертає майбутні (та всі) записи на прийом для всіх тварин власника.
         Використовує ?patient_id=...
         """
-        pets = self.get_pets_by_owner(owner_guid)
+        resolved = self._resolve_owner_id(owner_guid)
+        pets = self.get_pets_by_owner(resolved)
         if not pets:
             return []
 
@@ -211,7 +247,7 @@ class EnoteClient:
             all_bookings.extend(pet_bookings)
 
         result = [{
-            'ЗаписьНаДату': b.get('appointmentStartTime', ''),
+            'ЗаписьНаДату': _format_datetime(b.get('appointmentStartTime', '')),
             'Кличка': b.get('patient', {}).get('petName') or b.get('_pet_name', ''),
             'Подтверждено': b.get('isConfirmed', False),
             'Executed': b.get('objectState') == 'ACCEPTED',
@@ -229,9 +265,10 @@ class EnoteClient:
         Отримує всі діагностики для клієнта через ?client_id=...
         Потребує id самого клієнта, а не mainContactSubjectId.
         """
-        # Спочатку шукаємо id клієнта по owner_guid
+        resolved = self._resolve_owner_id(owner_guid)
+        # Знаходимо id клієнта за mainContactSubjectId
         all_clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
-        client = next((c for c in all_clients if c.get('mainContactSubjectId') == owner_guid), None)
+        client = next((c for c in all_clients if c.get('mainContactSubjectId') == resolved), None)
         if not client:
             return []
 
@@ -239,12 +276,12 @@ class EnoteClient:
         diagnostics = self._api_get_all('diagnostic', {'client_id': client_id})
 
         # Додаємо кличку тварини (можна взяти з patientId, але у відповіді її немає)
-        pets = self.get_pets_by_owner(owner_guid)
+        pets = self.get_pets_by_owner(resolved)
         pet_map = {p['id']: p['Description'] for p in pets}
 
         result = [{
             'Description': d.get('descriptionStudy') or 'Діагностика',
-            'Date': d.get('eventDate', ''),
+            'Date': _format_datetime(d.get('eventDate', '')),
             '_pet_name': pet_map.get(d.get('patientId', ''), ''),
             'isCompleted': d.get('isCompleted', False),
             'id': d.get('id', ''),
@@ -253,10 +290,10 @@ class EnoteClient:
         return sorted(result, key=lambda x: x['Date'], reverse=True)
 
     # ──────────────────────────────────────────────────────────────
-    # Графік роботи лікаря
+    # Графік роботи лікаря (новий універсальний метод)
     # ──────────────────────────────────────────────────────────────
 
-    def get_schedule(self, date_str: str, entity_id: str, employee_id: str) -> dict:
+    def get_schedule_for_doctor(self, date_str: str, entity_id: str, employee_id: str) -> dict:
         """
         Отримує графік конкретного лікаря на конкретну дату.
         Використовує новий endpoint /schedules.
@@ -293,6 +330,44 @@ class EnoteClient:
         if org_id:
             return org_id
         raise Exception("Не вдалося отримати entity_id (організацію/підрозділ)")
+
+    def get_schedule(self) -> list:
+        """
+        Повертає графік роботи лікарів на найближчі 7 днів.
+        Формат, подібний до старого OData.
+        """
+        from_date = date.today().isoformat()
+        to_date = (date.today() + timedelta(days=7)).isoformat()
+
+        entity_id = self.get_entity_id()
+        doctors = self.get_doctors_list()
+        result = []
+
+        current = date.fromisoformat(from_date)
+        end = date.fromisoformat(to_date)
+        while current <= end:
+            date_str = current.isoformat()
+            for doc in doctors:
+                if not doc.get('id'):
+                    continue
+                try:
+                    sched = self.get_schedule_for_doctor(date_str, entity_id, doc['id'])
+                    if sched:
+                        result.append({
+                            'date': date_str,
+                            'doctor': f"{doc.get('firstName', '')} {doc.get('surname', '')}".strip(),
+                            'doctor_id': doc['id'],
+                            # Поля нижче залежать від реальної відповіді API /schedules
+                            # Якщо там інші назви – замініть після діагностики
+                            'start': sched.get('shiftStart', ''),
+                            'end': sched.get('shiftEnd', ''),
+                            'works': sched.get('works', True),
+                            'allow_online': sched.get('allowOnline', False)
+                        })
+                except Exception:
+                    continue
+            current += timedelta(days=1)
+        return result
 
     # ──────────────────────────────────────────────────────────────
     # Debug
