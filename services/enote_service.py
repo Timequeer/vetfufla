@@ -5,13 +5,12 @@ from typing import Optional
 import requests
 
 
-# ── допоміжна функція форматування дати ──────────────────────────
 def _format_datetime(dt_str: str) -> str:
-    """Перетворює ISO8601 рядок у звичний формат 'YYYY-MM-DD HH:MM'"""
+    """ISO8601 → 'YYYY-MM-DD HH:MM'"""
     if not dt_str:
         return ''
     try:
-        clean = dt_str[:19]  # '2023-03-10T09:10:00'
+        clean = dt_str[:19]
         return datetime.strptime(clean, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
     except:
         return dt_str
@@ -22,7 +21,6 @@ class EnoteClient:
         self.base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
         self.clinic_guid = os.getenv('ENOTE_CLINIC_GUID', '38174e48-16f0-11ee-6d89-2ae983d8a0f0')
         self.api_key = os.getenv('ENOTE_API_KEY', 'e1d15077-3bcc-491b-839b-8ef83b5f9eb8')
-
         self.api_v2_base = f"{self.base_url}/{self.clinic_guid}/hs/api/v2"
 
         self.session = requests.Session()
@@ -31,7 +29,7 @@ class EnoteClient:
         self._cache = {}
         self._cache_ttl = 600
 
-    # ── Базові методи ────────────────────────────────────────────
+    # ─── Базові методи ─────────────────────────────────────────
     def _api_get_page(self, endpoint: str, params: dict = None) -> tuple:
         url = f"{self.api_v2_base}/{endpoint}"
         params = {k: v for k, v in (params or {}).items() if v is not None}
@@ -78,9 +76,9 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ── Пошук клієнта ────────────────────────────────────────────
+    # ─── Клієнт ────────────────────────────────────────────────
     def get_client_by_phone(self, phone: str) -> Optional[str]:
-        """Повертає звичайний id клієнта для збереження в user.enote_guid."""
+        """Повертає id клієнта (звичайний GUID)."""
         digits = ''.join(filter(str.isdigit, phone))
         formatted = f"+{digits}" if not phone.startswith('+') else phone
         items, _ = self._api_get_page('clients', {'phone_number': formatted})
@@ -88,9 +86,9 @@ class EnoteClient:
             return items[0].get('id')
         return None
 
-    # ── Тварини власника ────────────────────────────────────────
+    # ─── Тварини ───────────────────────────────────────────────
     def get_pets_by_owner(self, owner_guid: str) -> list:
-        """Повертає тварин клієнта за його id (client_id)."""
+        """owner_guid = id клієнта. Використовує прямий фільтр client_id."""
         pets, _ = self._api_get_page('patients', {'client_id': owner_guid})
         if pets:
             return self._format_pets(pets)
@@ -108,7 +106,7 @@ class EnoteClient:
             'photoUrl': p.get('photoUrl', ''),
         } for p in raw_pets]
 
-    # ── Профіль ─────────────────────────────────────────────────
+    # ─── Профіль ────────────────────────────────────────────────
     def get_contact_by_owner(self, owner_guid: str) -> Optional[dict]:
         all_clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
         for c in all_clients:
@@ -116,7 +114,7 @@ class EnoteClient:
                 return c
         return None
 
-    # ── Візити ──────────────────────────────────────────────────
+    # ─── Візити ─────────────────────────────────────────────────
     def get_visits_by_owner(self, owner_guid: str) -> list:
         pets = self.get_pets_by_owner(owner_guid)
         if not pets:
@@ -135,7 +133,7 @@ class EnoteClient:
         } for v in all_visits]
         return sorted(result, key=lambda x: x['Date'], reverse=True)
 
-    # ── Майбутні записи ─────────────────────────────────────────
+    # ─── Майбутні записи ────────────────────────────────────────
     def get_appointments_by_owner(self, owner_guid: str) -> list:
         pets = self.get_pets_by_owner(owner_guid)
         if not pets:
@@ -155,7 +153,7 @@ class EnoteClient:
         } for b in all_bookings]
         return sorted(result, key=lambda x: x['ЗаписьНаДату'], reverse=True)
 
-    # ── Аналізи ─────────────────────────────────────────────────
+    # ─── Аналізи ────────────────────────────────────────────────
     def get_analyses_by_owner(self, owner_guid: str) -> list:
         diagnostics = self._api_get_all('diagnostic', {'client_id': owner_guid})
         pets = self.get_pets_by_owner(owner_guid)
@@ -169,13 +167,8 @@ class EnoteClient:
         } for d in diagnostics]
         return sorted(result, key=lambda x: x['Date'], reverse=True)
 
-    # ── Графік роботи ───────────────────────────────────────────
-    def get_visit_kinds(self) -> list:
-        """Список видів прийому (потрібен для отримання графіка)."""
-        return self._cached('visit_kinds', lambda: self._api_get_all('visit_kinds'))
-
+    # ─── Графік (через available_slots) ────────────────────────
     def get_entity_id(self) -> str:
-        """Повертає entity_id (організацію або підрозділ)."""
         def fetch_dep():
             deps = self._api_get_all('departments')
             return deps[0]['id'] if deps else None
@@ -194,54 +187,47 @@ class EnoteClient:
         return self._cached('doctors_list', lambda: self._api_get_all('employees'))
 
     def get_schedule(self) -> list:
-        """
-        Повертає графік роботи лікарів на найближчі 7 днів.
-        Використовує /bookings/visit_times.
-        """
-        # Беремо перший вид прийому (можна змінити, якщо потрібен конкретний)
-        visit_kinds = self.get_visit_kinds()
-        if not visit_kinds:
-            return []
-        visit_kind_id = visit_kinds[0]['id']
-
+        """Графік на 7 днів: список записів на прийом."""
+        from_date = date.today().isoformat()
+        to_date = (date.today() + timedelta(days=7)).isoformat()
         entity_id = self.get_entity_id()
         doctors = self.get_doctors_list()
         doctor_map = {d['id']: f"{d.get('firstName', '')} {d.get('surname', '')}".strip() for d in doctors}
 
-        from_date = date.today().isoformat()
-        to_date = (date.today() + timedelta(days=7)).isoformat()
         result = []
-
         current = date.fromisoformat(from_date)
         end = date.fromisoformat(to_date)
         while current <= end:
             date_str = current.isoformat()
-            # Один запит на день для всіх лікарів (не фільтруємо за employee_id)
-            items, _ = self._api_get_page('bookings/visit_times', {
-                'visit_kind_id': visit_kind_id,
-                'date': date_str,
-                'entity_id': entity_id
-            })
-            for item in items:
-                emp_id = item.get('employeeId')
-                if not emp_id:
-                    continue
-                for slot in item.get('schedule', []):
-                    # Фіксуємо тільки робочі проміжки, де є години
-                    if slot.get('isWorkingTime') and slot.get('from') and slot.get('to'):
-                        result.append({
-                            'date': date_str,
-                            'doctor': doctor_map.get(emp_id, emp_id),
-                            'doctor_id': emp_id,
-                            'start': slot['from'][:16],   # "2026-05-07T09:00"
-                            'end': slot['to'][:16],
-                            'works': True,
-                            'allow_online': slot.get('isPreBookingAllowed', False)
-                        })
+            for doc_id, doc_name in doctor_map.items():
+                items, _ = self._api_get_page('bookings/available_slots', {
+                    'date': date_str,
+                    'entity_id': entity_id,
+                    'employee_id': doc_id
+                })
+                for slot in items:
+                    start = slot.get('startTime', '')
+                    status = ''
+                    history = slot.get('bookingStatusHistory')
+                    if history and isinstance(history, list):
+                        status = history[-1].get('bookingStatus', '')
+                    client_info = slot.get('client', {})
+                    patient_info = slot.get('patient', {})
+                    result.append({
+                        'date': date_str,
+                        'doctor': doc_name,
+                        'doctor_id': doc_id,
+                        'patient': patient_info.get('petName', ''),
+                        'client': client_info.get('clientFullName', ''),
+                        'start': _format_datetime(start),
+                        'duration': slot.get('duration', 0),
+                        'status': status,
+                        'comment': slot.get('comment', '')
+                    })
             current += timedelta(days=1)
         return result
 
-    # ── Debug ────────────────────────────────────────────────────
+    # ─── Debug ───────────────────────────────────────────────────
     def debug_raw(self, endpoint: str, params: dict = None) -> dict:
         url = f"{self.api_v2_base}/{endpoint}"
         try:
