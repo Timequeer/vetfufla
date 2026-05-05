@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 import requests
 
 
-# ── допоміжна функція форматування дати ──────────────────────────
+# ── допоміжна функція форматування ати ──────────────────────────
 def _format_datetime(dt_str: str) -> str:
     """Перетворює ISO8601 рядок у звичний формат 'YYYY-MM-DD HH:MM'"""
     if not dt_str:
