@@ -135,6 +135,20 @@ def test_api():
         "owner_ids_in_sample": [p.get('ownerId') for p in patients[:5]]
     })
 
+from flask import jsonify
+from models import db
+
+@client_bp.route('/fix-my-guid')
+def fix_my_guid():
+    from flask import session
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    user = User.query.get(user_id)
+    user.enote_guid = "b16f5e7e-9f89-11f0-944d-2ae983d8a0f0"
+    db.session.commit()
+    return jsonify({"status": "ok", "new_guid": user.enote_guid})
+
 @client_bp.route('/debug-schedule')
 def debug_schedule():
     date_str = request.args.get('date', date.today().isoformat())
