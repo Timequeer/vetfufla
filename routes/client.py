@@ -1,5 +1,7 @@
-from flask import Blueprint, render_template, session, redirect, jsonify
-from models import User
+import requests
+from datetime import date, timedelta
+from flask import Blueprint, render_template, session, redirect, jsonify, request
+from models import User, db
 from services.enote_service import enote
 
 client_bp = Blueprint('client', __name__)
@@ -94,13 +96,13 @@ def online_appointment():
 def test_api_url():
     if not enote.api_key:
         return jsonify({"error": "ENOTE_API_KEY not set"})
-    
+
     endpoints_to_try = [
         f"{enote.base_url}/enote9991/hs/api/v2",
         f"{enote.base_url}/{enote.clinic_guid}/hs/api/v2",
-        f"{enote.base_url}/api/v2",                         # якщо раптом
+        f"{enote.base_url}/api/v2",
     ]
-    
+
     results = {}
     headers = {'apikey': enote.api_key}
     for url in endpoints_to_try:
@@ -112,27 +114,25 @@ def test_api_url():
             }
         except Exception as e:
             results[url] = {"error": str(e)}
-    
+
     return jsonify(results)
 
 @client_bp.route('/test-api')
 def test_api():
     if not enote.api_key:
         return jsonify({"error": "No API Key"})
-    
-    # Отримуємо клієнта
-    clients = enote._api_get('clients', {'phone_number': '+380685442567', 'page_size': 1})
+
+    clients, _ = enote._api_get_page('clients', {'phone_number': '+380685442567', 'page_size': 1})
     client = clients[0] if clients else None
     client_id = client.get('id') if client else None
-    
-    # Отримуємо перші 10 пацієнтів без фільтрації
-    all_patients = enote._api_get('patients', {'page_size': 10})
-    
+
+    patients, _ = enote._api_get_page('patients', {'page_size': 10})
+
     return jsonify({
         "client": client,
         "client_id": client_id,
-        "patients_sample": all_patients[:5],
-        "owner_ids_in_sample": [p.get('ownerId') for p in all_patients[:5]]
+        "patients_sample": patients[:5],
+        "owner_ids_in_sample": [p.get('ownerId') for p in patients[:5]]
     })
 
 @client_bp.route('/debug-schedule')
@@ -143,54 +143,12 @@ def debug_schedule():
     if not doctors:
         return jsonify({'error': 'no doctors'})
     emp_id = doctors[0]['id']
-    raw = enote.debug_raw('schedules', {'date': date_str, 'entity_id': entity_id, 'employee_id': emp_id})
-    return jsonify(raw)
-
-# Тимчасовий маршрут для діагностики
-@client_bp.route('/debug-owner')
-def debug_owner():
-    from flask import jsonify
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Не авторизовано"}), 401
-    user = User.query.get(user_id)
-    if not user or not user.enote_guid:
-        return jsonify({"error": "Немає enote_guid"}), 404
-
-    # Отримуємо всіх клієнтів для пошуку
-    all_clients = enote._api_get_all('clients')
-    
-    # Шукаємо клієнта за номером телефону
-    client_by_phone = enote.get_client_by_phone(user.phone)
-    
-    # Збираємо mainContactSubjectId всіх клієнтів
-    main_contact_ids = [c.get('mainContactSubjectId') for c in all_clients]
-    
-    # Знаходимо клієнта, де id збігається з user.enote_guid
-    client_by_id = next((c for c in all_clients if c['id'] == user.enote_guid), None)
-
-    from flask import jsonify
-from models import db   # переконайтеся, що db імпортовано
-
-@client_bp.route('/fix-my-guid')
-def fix_my_guid():
-    from flask import session
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-    user = User.query.get(user_id)
-    user.enote_guid = "b1750020-9f89-11f0-944d-2ae983d8a0f0"
-    db.session.commit()
-    return jsonify({"status": "ok", "new_guid": user.enote_guid})
-    
-    return jsonify({
-        "user_enote_guid": user.enote_guid,
-        "client_by_phone_main_contact": client_by_phone,
-        "client_by_id_main_contact": client_by_id.get('mainContactSubjectId') if client_by_id else None,
-        "all_main_contact_ids": main_contact_ids[:10], # Покажемо перші 10
-        "total_clients": len(all_clients)
+    raw = enote.debug_raw('bookings/available_slots', {
+        'date': date_str,
+        'entity_id': entity_id,
+        'employee_id': emp_id
     })
-    
+    return jsonify(raw)
 
 @client_bp.route('/settings')
 def settings():
