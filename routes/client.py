@@ -168,6 +168,20 @@ def debug_owner():
     
     # Знаходимо клієнта, де id збігається з user.enote_guid
     client_by_id = next((c for c in all_clients if c['id'] == user.enote_guid), None)
+
+    from flask import jsonify
+from models import db   # переконайтеся, що db імпортовано
+
+@client_bp.route('/fix-my-guid')
+def fix_my_guid():
+    from flask import session
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    user = User.query.get(user_id)
+    user.enote_guid = "b1750020-9f89-11f0-944d-2ae983d8a0f0"
+    db.session.commit()
+    return jsonify({"status": "ok", "new_guid": user.enote_guid})
     
     return jsonify({
         "user_enote_guid": user.enote_guid,
