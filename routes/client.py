@@ -135,6 +135,17 @@ def test_api():
         "owner_ids_in_sample": [p.get('ownerId') for p in all_patients[:5]]
     })
 
+@client_bp.route('/debug-schedule')
+def debug_schedule():
+    date_str = request.args.get('date', date.today().isoformat())
+    entity_id = enote.get_entity_id()
+    doctors = enote.get_doctors_list()
+    if not doctors:
+        return jsonify({'error': 'no doctors'})
+    emp_id = doctors[0]['id']
+    raw = enote.debug_raw('schedules', {'date': date_str, 'entity_id': entity_id, 'employee_id': emp_id})
+    return jsonify(raw)
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
