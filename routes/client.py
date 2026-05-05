@@ -176,6 +176,7 @@ def debug_owner():
         "all_main_contact_ids": main_contact_ids[:10], # Покажемо перші 10
         "total_clients": len(all_clients)
     })
+    
 
 @client_bp.route('/settings')
 def settings():
