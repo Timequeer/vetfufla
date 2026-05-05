@@ -146,6 +146,37 @@ def debug_schedule():
     raw = enote.debug_raw('schedules', {'date': date_str, 'entity_id': entity_id, 'employee_id': emp_id})
     return jsonify(raw)
 
+# Тимчасовий маршрут для діагностики
+@client_bp.route('/debug-owner')
+def debug_owner():
+    from flask import jsonify
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Не авторизовано"}), 401
+    user = User.query.get(user_id)
+    if not user or not user.enote_guid:
+        return jsonify({"error": "Немає enote_guid"}), 404
+
+    # Отримуємо всіх клієнтів для пошуку
+    all_clients = enote._api_get_all('clients')
+    
+    # Шукаємо клієнта за номером телефону
+    client_by_phone = enote.get_client_by_phone(user.phone)
+    
+    # Збираємо mainContactSubjectId всіх клієнтів
+    main_contact_ids = [c.get('mainContactSubjectId') for c in all_clients]
+    
+    # Знаходимо клієнта, де id збігається з user.enote_guid
+    client_by_id = next((c for c in all_clients if c['id'] == user.enote_guid), None)
+    
+    return jsonify({
+        "user_enote_guid": user.enote_guid,
+        "client_by_phone_main_contact": client_by_phone,
+        "client_by_id_main_contact": client_by_id.get('mainContactSubjectId') if client_by_id else None,
+        "all_main_contact_ids": main_contact_ids[:10], # Покажемо перші 10
+        "total_clients": len(all_clients)
+    })
+
 @client_bp.route('/settings')
 def settings():
     if "user_id" not in session:
