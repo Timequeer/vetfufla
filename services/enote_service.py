@@ -257,29 +257,59 @@ class EnoteClient:
             'id': v.get('id', ''),
         } for v in all_visits]
         return sorted(result, key=lambda x: x['Date'], reverse=True)
-
     # ─── Майбутні записи ────────────────────────────────────────
     def get_appointments_by_owner(self, owner_guid: str) -> list:
-        pets = self.get_pets_by_owner(owner_guid)
-        if not pets:
-            return []
-        all_bookings = []
-        for pet in pets:
-            pet_bookings = self._api_get_all('bookings', {'patient_id': pet['id']})
-            for b in pet_bookings:
-                b['_pet_name'] = pet['Description']
-            all_bookings.extend(pet_bookings)
-        result = [{
-            'ЗаписьНаДату': _format_datetime(
-                b.get('startTime') or b.get('eventDate') or b.get('appointmentStartTime') or ''
-            ),
-            'Кличка': b.get('patient', {}).get('petName') or b.get('_pet_name', ''),
+    """
+    Отримує майбутні записи клієнта.
+
+    Стратегія:
+    1. Беремо ВСІ bookings
+    2. Фільтруємо по client.clientId
+    3. Беремо тільки майбутні дати
+    """
+
+    all_bookings = self._api_get_all('bookings')
+
+    result = []
+    now = datetime.now()
+
+    for b in all_bookings:
+        client = b.get("client") or {}
+        client_id = client.get("clientId")
+
+        if not client_id:
+            continue
+
+        if client_id != owner_guid:
+            continue
+
+        raw_date = b.get('startTime') or b.get('eventDate')
+        if not raw_date:
+            continue
+
+        try:
+            dt = datetime.fromisoformat(raw_date[:19])
+        except Exception:
+            continue
+
+        # тільки майбутні записи
+        if dt < now:
+            continue
+
+        status = ''
+        history = b.get("bookingStatusHistory")
+        if history and isinstance(history, list):
+            status = history[-1].get("bookingStatus", '')
+
+        result.append({
+            'ЗаписьНаДату': _format_datetime(raw_date),
+            'Кличка': b.get('patient', {}).get('petName', ''),
             'Подтверждено': b.get('isConfirmed', False),
-            'Executed': b.get('objectState') == 'ACCEPTED',
-            'status': (b.get('bookingStatusHistory') or [{}])[-1].get('bookingStatus', '') if b.get('bookingStatusHistory') else '',
+            'status': status,
             'id': b.get('id', ''),
-        } for b in all_bookings]
-        return sorted(result, key=lambda x: x['ЗаписьНаДату'], reverse=True)
+        })
+
+    return sorted(result, key=lambda x: x['ЗаписьНаДату'])
 
     # ─── Аналізи ────────────────────────────────────────────────
     def get_analyses_by_owner(self, owner_guid: str) -> list:
