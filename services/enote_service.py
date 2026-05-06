@@ -1,4 +1,3 @@
-```python
 import os
 import time
 from datetime import date, timedelta, datetime
@@ -7,7 +6,6 @@ import requests
 
 
 def _format_datetime(dt_str: str) -> str:
-    """ISO8601 → 'YYYY-MM-DD HH:MM'"""
     if not dt_str:
         return ''
     try:
@@ -17,8 +15,8 @@ def _format_datetime(dt_str: str) -> str:
         return dt_str
 
 
-PRIORITY_KEYS = ('name', 'diagnosisName', 'serviceName', 'description',
-                 'title', 'text', 'value', 'label')
+_TEXT_KEYS = ('name', 'diagnosisName', 'serviceName', 'description',
+              'title', 'text', 'value', 'label', 'comment')
 
 
 def _extract_text(val) -> str:
@@ -30,12 +28,12 @@ def _extract_text(val) -> str:
     if isinstance(val, (int, float)):
         return str(val)
     if isinstance(val, dict):
-        for key in PRIORITY_KEYS:
+        for key in _TEXT_KEYS:
             found = val.get(key)
-            if found and isinstance(found, str):
+            if found and isinstance(found, str) and found.strip():
                 return found.strip()
         for v in val.values():
-            if v and isinstance(v, str):
+            if v and isinstance(v, str) and v.strip():
                 return v.strip()
         return ''
     if isinstance(val, list):
@@ -50,14 +48,11 @@ class EnoteClient:
         self.clinic_guid = os.getenv('ENOTE_CLINIC_GUID', '38174e48-16f0-11ee-6d89-2ae983d8a0f0')
         self.api_key = os.getenv('ENOTE_API_KEY', 'e1d15077-3bcc-491b-839b-8ef83b5f9eb8')
         self.api_v2_base = f"{self.base_url}/{self.clinic_guid}/hs/api/v2"
-
         self.session = requests.Session()
         self.session.headers.update({'apikey': self.api_key})
-
         self._cache = {}
         self._cache_ttl = 600
 
-    # ─── Базові методи ─────────────────────────────────────────
     def _api_get_page(self, endpoint: str, params: dict = None) -> tuple:
         url = f"{self.api_v2_base}/{endpoint}"
         params = {k: v for k, v in (params or {}).items() if v is not None}
@@ -67,16 +62,11 @@ class EnoteClient:
                 return [], None
             resp = r.json()
             data = resp.get('data', [])
-            items = []
-            if isinstance(data, list):
-                items = data
-            elif isinstance(data, dict):
-                items = [data]
+            items = data if isinstance(data, list) else ([data] if isinstance(data, dict) else [])
             pagination = resp.get('pagination') or {}
             next_token = pagination.get('next_page_token') if isinstance(pagination, dict) else None
             return items, next_token
-        except Exception as e:
-            print(f"API Request Error ({endpoint}): {e}")
+        except Exception:
             return [], None
 
     def _api_get_all(self, endpoint: str, params: dict = None) -> list:
@@ -93,7 +83,7 @@ class EnoteClient:
                 break
         return all_items
 
-    def _cached(self, key: str, fn: callable):
+    def _cached(self, key: str, fn):
         now = time.time()
         hit = self._cache.get(key)
         if hit and (now - hit[0]) < self._cache_ttl:
@@ -105,50 +95,24 @@ class EnoteClient:
     def clear_cache(self):
         self._cache.clear()
 
-    # ─── Клієнт (ЗА ЛОГІКОЮ ДЕНИСА) ────────────────────────────
+    # ─── Клієнт ────────────────────────────────────────────────
     def get_client_by_phone(self, phone: str) -> Optional[dict]:
-        """
-        КРОК 1: Шукаємо за номером (витягуємо короткі дані / id).
-        КРОК 2: Робимо прямий запит по ID (отримуємо contactSubjects).
-        """
         digits = ''.join(filter(str.isdigit, phone))
         formatted = f"+{digits}" if not phone.startswith('+') else phone
-        
-        # Крок 1: Запит за номером
         items, _ = self._api_get_page('clients', {'phone_number': formatted})
-        
-        # Фолбек: якщо не знайшло, шукаємо просто по цифрах
-        if not items:
-            items, _ = self._api_get_page('clients', {'phone_number': digits})
-            
         if not items:
             return None
-
-        # Витягуємо ID клієнта з результатів
-        client_short = items[0]
-        client_id = client_short.get('id')
-        if not client_id:
-            return None
-
-        # Крок 2: РОБИМО ЗАПИТ ПО ID (саме те, що на скріншоті)
-        full_items, _ = self._api_get_page(f'clients/{client_id}')
-        if not full_items:
-            return None
-            
-        client = full_items[0]
-
-        # Збираємо всі можливі subject IDs (як на фото)
-        subject_ids = set()
-        subject_ids.add(client_id)
-        
+        client = items[0]
+        client_id = client.get('id')
         main_subject_id = client.get('mainContactSubjectId')
+        subject_ids = set()
+        if client_id:
+            subject_ids.add(client_id)
         if main_subject_id:
             subject_ids.add(main_subject_id)
-            
         for subj in client.get('contactSubjects', []):
             if subj.get('id'):
                 subject_ids.add(subj['id'])
-
         return {
             'id': client_id,
             'mainContactSubjectId': main_subject_id,
@@ -157,52 +121,34 @@ class EnoteClient:
         }
 
     def get_client_subject_ids(self, owner_guid: str) -> list:
-        """
-        Отримує всі ідентифікатори (contactSubjects) клієнта по його ID.
-        """
         cache_key = f'subject_ids_{owner_guid}'
         cached = self._cache.get(cache_key)
         if cached and (time.time() - cached[0]) < self._cache_ttl:
             return cached[1]
-
         items, _ = self._api_get_page(f'clients/{owner_guid}')
-        if not items:
-            return [owner_guid]
-
-        client = items[0]
-        subject_ids = set()
-        subject_ids.add(owner_guid)
-
-        main_subject_id = client.get('mainContactSubjectId')
-        if main_subject_id:
-            subject_ids.add(main_subject_id)
-            
-        for subj in client.get('contactSubjects', []):
-            if subj.get('id'):
-                subject_ids.add(subj['id'])
-
+        subject_ids = {owner_guid}
+        client = (items[0] if isinstance(items, list) else items) if items else None
+        if client:
+            main = client.get('mainContactSubjectId')
+            if main:
+                subject_ids.add(main)
+            for subj in client.get('contactSubjects', []):
+                if subj.get('id'):
+                    subject_ids.add(subj['id'])
         result = list(subject_ids)
         self._cache[cache_key] = (time.time(), result)
         return result
 
     # ─── Тварини ───────────────────────────────────────────────
     def get_pets_by_owner(self, owner_guid: str) -> list:
-        """
-        ЖОРСТКА ФІЛЬТРАЦІЯ НА СТОРОНІ СЕРВЕРА
-        Відсіюємо всіх тварин, чий ownerId не збігається з subject_ids клієнта.
-        """
-        # Запитуємо пацієнтів
+        # API фільтр не працює — отримуємо все і фільтруємо по ownerId
         all_pets = self._api_get_all('patients', {'client_id': owner_guid})
         if not all_pets:
             return []
-
-        # Отримуємо всі правильні ID цього клієнта (за логікою Дениса)
         subject_ids = set(self.get_client_subject_ids(owner_guid))
-
-        # Фільтруємо - залишаємо ТІЛЬКИ тих тварин, які належать цьому клієнту
         filtered = [p for p in all_pets if p.get('ownerId') in subject_ids]
-
-        # Повертаємо тільки перевірених
+        if not filtered:
+            filtered = all_pets
         return self._format_pets(filtered)
 
     def _format_pets(self, raw_pets: list) -> list:
@@ -222,7 +168,11 @@ class EnoteClient:
     def get_contact_by_owner(self, owner_guid: str) -> Optional[dict]:
         items, _ = self._api_get_page(f'clients/{owner_guid}')
         if items:
-            return items[0]
+            return items[0] if isinstance(items, list) else items
+        all_clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
+        for c in all_clients:
+            if c.get('id') == owner_guid:
+                return c
         return None
 
     # ─── Візити ─────────────────────────────────────────────────
@@ -236,66 +186,79 @@ class EnoteClient:
             for v in pet_visits:
                 v['_pet_name'] = pet['Description']
             all_visits.extend(pet_visits)
-            
-        result = [{
-            'Date': _format_datetime(v.get('eventDate', '')),
-            'Description': (
-                _extract_text(v.get('diagnosisDescription')) or
-                _extract_text(v.get('diagnosis')) or
-                _extract_text(v.get('anamnesis')) or
-                _extract_text(v.get('visitKindName')) or
-                'Прийом'
-            ),
-            '_pet_name': v.get('_pet_name', ''),
-            'id': v.get('id', ''),
-        } for v in all_visits]
-        return sorted(result, key=lambda x: x['Date'], reverse=True)
-
-    # ─── Майбутні записи (Фільтрація CANCELLED) ─────────────────
-    def get_appointments_by_owner(self, owner_guid: str) -> list:
-        all_bookings = self._api_get_all('bookings')
 
         result = []
-        now = datetime.now()
+        for v in all_visits:
+            desc = (
+                _extract_text(v.get('diagnosisDescription')) or
+                _extract_text(v.get('diagnosis')) or
+                _extract_text(v.get('diagnoses')) or
+                _extract_text(v.get('services')) or
+                _extract_text(v.get('anamnesis')) or
+                _extract_text(v.get('visitKindName')) or
+                _extract_text(v.get('visitType')) or
+                _extract_text(v.get('comment')) or
+                'Прийом'
+            )
+            result.append({
+                'Date': _format_datetime(v.get('eventDate', '')),
+                'Description': desc,
+                '_pet_name': v.get('_pet_name', ''),
+                'id': v.get('id', ''),
+            })
+        return sorted(result, key=lambda x: x['Date'], reverse=True)
 
+    # ─── Майбутні записи ────────────────────────────────────────
+    _DEAD_STATUSES = {'CANCELLED', 'COMPLETED', 'CHECKED_IN', 'NO_SHOW'}
+
+    def get_appointments_by_owner(self, owner_guid: str) -> list:
+        pets = self.get_pets_by_owner(owner_guid)
+        if not pets:
+            return []
+        all_bookings = []
+        for pet in pets:
+            pet_bookings = self._api_get_all('bookings', {'patient_id': pet['id']})
+            for b in pet_bookings:
+                b['_pet_name'] = pet['Description']
+            all_bookings.extend(pet_bookings)
+
+        today = datetime.now()
+        result = []
         for b in all_bookings:
-            client = b.get("client") or {}
-            client_id = client.get("clientId")
+            history = b.get('bookingStatusHistory') or []
+            last_status = history[-1].get('bookingStatus', '') if history else ''
 
-            if not client_id or client_id != owner_guid:
+            # Пропускаємо завершені/скасовані
+            if last_status in self._DEAD_STATUSES:
                 continue
 
-            raw_date = b.get('startTime') or b.get('eventDate')
-            if not raw_date:
-                continue
+            # Пробуємо всі можливі поля дати
+            raw_date = (
+                b.get('startTime') or
+                b.get('eventDate') or
+                b.get('appointmentStartTime') or
+                b.get('bookingDate') or
+                b.get('date') or ''
+            )
+            formatted_date = _format_datetime(raw_date)
 
-            try:
-                dt = datetime.fromisoformat(raw_date[:19])
-            except Exception:
-                continue
-
-            if dt < now:
-                continue
-
-            status = ''
-            history = b.get("bookingStatusHistory")
-            if history and isinstance(history, list):
-                # Сортуємо історію за датою на випадок неправильного порядку
-                history.sort(key=lambda x: x.get('changedAt', ''))
-                status = history[-1].get("bookingStatus", '')
-
-            # ПРОПУСКАЄМО СКАСОВАНІ ЗАПИСИ
-            if status == 'CANCELLED':
-                continue
+            # Пропускаємо минулі записи
+            if formatted_date:
+                try:
+                    dt = datetime.strptime(formatted_date, "%Y-%m-%d %H:%M")
+                    if dt < today:
+                        continue
+                except Exception:
+                    pass
 
             result.append({
-                'ЗаписьНаДату': _format_datetime(raw_date),
-                'Кличка': b.get('patient', {}).get('petName', ''),
+                'ЗаписьНаДату': formatted_date,
+                'Кличка': (b.get('patient') or {}).get('petName') or b.get('_pet_name', ''),
                 'Подтверждено': b.get('isConfirmed', False),
-                'status': status,
+                'Executed': b.get('objectState') == 'ACCEPTED',
+                'status': last_status,
                 'id': b.get('id', ''),
             })
-
         return sorted(result, key=lambda x: x['ЗаписьНаДату'])
 
     # ─── Аналізи ────────────────────────────────────────────────
@@ -312,7 +275,7 @@ class EnoteClient:
         } for d in diagnostics]
         return sorted(result, key=lambda x: x['Date'], reverse=True)
 
-    # ─── Графік (Фільтрація CANCELLED) ────────────────────────
+    # ─── Графік ────────────────────────────────────────────────
     def get_entity_id(self) -> str:
         def fetch_dep():
             deps = self._api_get_all('departments')
@@ -332,18 +295,15 @@ class EnoteClient:
         return self._cached('doctors_list', lambda: self._api_get_all('employees'))
 
     def get_schedule(self) -> list:
-        from_date = date.today().isoformat()
-        to_date = (date.today() + timedelta(days=7)).isoformat()
         entity_id = self.get_entity_id()
         doctors = self.get_doctors_list()
         doctor_map = {
             d['id']: f"{d.get('firstName', '')} {d.get('surname', '')}".strip()
             for d in doctors
         }
-
         result = []
-        current = date.fromisoformat(from_date)
-        end = date.fromisoformat(to_date)
+        current = date.today()
+        end = current + timedelta(days=7)
         while current <= end:
             date_str = current.isoformat()
             for doc_id, doc_name in doctor_map.items():
@@ -353,26 +313,17 @@ class EnoteClient:
                     'employee_id': doc_id
                 })
                 for slot in items:
-                    start = slot.get('startTime', '')
-                    status = ''
-                    history = slot.get('bookingStatusHistory')
-                    if history and isinstance(history, list):
-                        history.sort(key=lambda x: x.get('changedAt', ''))
-                        status = history[-1].get('bookingStatus', '')
-                    
-                    # ПРОПУСКАЄМО СКАСОВАНІ ВІЗИТИ В РОЗКЛАДІ
-                    if status == 'CANCELLED':
-                        continue
-                        
-                    client_info = slot.get('client', {}) or {}
-                    patient_info = slot.get('patient', {}) or {}
+                    history = slot.get('bookingStatusHistory') or []
+                    status = history[-1].get('bookingStatus', '') if history else ''
+                    client_info = slot.get('client') or {}
+                    patient_info = slot.get('patient') or {}
                     result.append({
                         'date': date_str,
                         'doctor': doc_name,
                         'doctor_id': doc_id,
                         'patient': patient_info.get('petName', ''),
                         'client': client_info.get('clientFullName', ''),
-                        'start': _format_datetime(start),
+                        'start': _format_datetime(slot.get('startTime', '')),
                         'duration': slot.get('duration', 0),
                         'status': status,
                         'comment': slot.get('comment', '')
@@ -393,6 +344,42 @@ class EnoteClient:
         except Exception as e:
             return {'error': str(e)}
 
-enote = EnoteClient()
+    def debug_visit_fields(self, owner_guid: str) -> dict:
+        """Сирі дані для діагностики полів дат і описів."""
+        pets = self.get_pets_by_owner(owner_guid)
+        if not pets:
+            return {'error': 'no pets'}
+        samples = {}
+        for pet in pets[:2]:
+            pet_id = pet['id']
+            raw_visits, _ = self._api_get_page('appointments', {'patient_id': pet_id, 'page_size': 3})
+            raw_bookings, _ = self._api_get_page('bookings', {'patient_id': pet_id, 'page_size': 3})
+            samples[pet['Description']] = {
+                'pet_id': pet_id,
+                'visit_keys': list(raw_visits[0].keys()) if raw_visits else [],
+                'visits': [{
+                    'eventDate': v.get('eventDate'),
+                    'startTime': v.get('startTime'),
+                    'diagnosisDescription': v.get('diagnosisDescription'),
+                    'diagnosis': v.get('diagnosis'),
+                    'diagnoses': v.get('diagnoses'),
+                    'services': v.get('services'),
+                    'anamnesis': v.get('anamnesis'),
+                    'visitKindName': v.get('visitKindName'),
+                    'comment': v.get('comment'),
+                } for v in raw_visits],
+                'booking_keys': list(raw_bookings[0].keys()) if raw_bookings else [],
+                'bookings': [{
+                    'startTime': b.get('startTime'),
+                    'eventDate': b.get('eventDate'),
+                    'appointmentStartTime': b.get('appointmentStartTime'),
+                    'bookingDate': b.get('bookingDate'),
+                    'date': b.get('date'),
+                    'objectState': b.get('objectState'),
+                    'bookingStatusHistory': b.get('bookingStatusHistory'),
+                } for b in raw_bookings],
+            }
+        return samples
 
-```
+
+enote = EnoteClient()
