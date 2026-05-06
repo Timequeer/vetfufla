@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, session, redirect, jsonify, reques
 from models import User, db
 from services.enote_service import enote
 
-client_bp = Blueprint(‘client’, **name**)
+client_bp = Blueprint('client', **name**)
 
 # ─── Утиліта: автооновлення enote_guid ─────────────────────────
 
