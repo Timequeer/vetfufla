@@ -154,8 +154,6 @@ class EnoteClient:
         # Завантажуємо повні дані клієнта по його id
         items, _ = self._api_get_page(f'clients/{owner_guid}')
         if not items:
-            # Якщо ендпоінт /clients/{id} повертає список, беремо перший
-            # Якщо повертає dict — вже є в items як [dict]
             result = [owner_guid]
             self._cache[cache_key] = (time.time(), result)
             return result
@@ -257,59 +255,59 @@ class EnoteClient:
             'id': v.get('id', ''),
         } for v in all_visits]
         return sorted(result, key=lambda x: x['Date'], reverse=True)
+
     # ─── Майбутні записи ────────────────────────────────────────
     def get_appointments_by_owner(self, owner_guid: str) -> list:
-    """
-    Отримує майбутні записи клієнта.
+        """
+        Отримує майбутні записи клієнта.
 
-    Стратегія:
-    1. Беремо ВСІ bookings
-    2. Фільтруємо по client.clientId
-    3. Беремо тільки майбутні дати
-    """
+        Стратегія:
+        1. Беремо ВСІ bookings
+        2. Фільтруємо по client.clientId
+        3. Беремо тільки майбутні дати
+        """
+        all_bookings = self._api_get_all('bookings')
 
-    all_bookings = self._api_get_all('bookings')
+        result = []
+        now = datetime.now()
 
-    result = []
-    now = datetime.now()
+        for b in all_bookings:
+            client = b.get("client") or {}
+            client_id = client.get("clientId")
 
-    for b in all_bookings:
-        client = b.get("client") or {}
-        client_id = client.get("clientId")
+            if not client_id:
+                continue
 
-        if not client_id:
-            continue
+            if client_id != owner_guid:
+                continue
 
-        if client_id != owner_guid:
-            continue
+            raw_date = b.get('startTime') or b.get('eventDate')
+            if not raw_date:
+                continue
 
-        raw_date = b.get('startTime') or b.get('eventDate')
-        if not raw_date:
-            continue
+            try:
+                dt = datetime.fromisoformat(raw_date[:19])
+            except Exception:
+                continue
 
-        try:
-            dt = datetime.fromisoformat(raw_date[:19])
-        except Exception:
-            continue
+            # тільки майбутні записи
+            if dt < now:
+                continue
 
-        # тільки майбутні записи
-        if dt < now:
-            continue
+            status = ''
+            history = b.get("bookingStatusHistory")
+            if history and isinstance(history, list):
+                status = history[-1].get("bookingStatus", '')
 
-        status = ''
-        history = b.get("bookingStatusHistory")
-        if history and isinstance(history, list):
-            status = history[-1].get("bookingStatus", '')
+            result.append({
+                'ЗаписьНаДату': _format_datetime(raw_date),
+                'Кличка': b.get('patient', {}).get('petName', ''),
+                'Подтверждено': b.get('isConfirmed', False),
+                'status': status,
+                'id': b.get('id', ''),
+            })
 
-        result.append({
-            'ЗаписьНаДату': _format_datetime(raw_date),
-            'Кличка': b.get('patient', {}).get('petName', ''),
-            'Подтверждено': b.get('isConfirmed', False),
-            'status': status,
-            'id': b.get('id', ''),
-        })
-
-    return sorted(result, key=lambda x: x['ЗаписьНаДату'])
+        return sorted(result, key=lambda x: x['ЗаписьНаДату'])
 
     # ─── Аналізи ────────────────────────────────────────────────
     def get_analyses_by_owner(self, owner_guid: str) -> list:
