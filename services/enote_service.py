@@ -16,6 +16,33 @@ def _format_datetime(dt_str: str) -> str:
         return dt_str
 
 
+PRIORITY_KEYS = ('name', 'diagnosisName', 'serviceName', 'description',
+                 'title', 'text', 'value', 'label')
+
+
+def _extract_text(val) -> str:
+    """Рекурсивно витягує текст з будь-якої структури. Захист від [object Object]."""
+    if not val and val != 0:
+        return ''
+    if isinstance(val, str):
+        return val.strip()
+    if isinstance(val, (int, float)):
+        return str(val)
+    if isinstance(val, dict):
+        for key in PRIORITY_KEYS:
+            found = val.get(key)
+            if found and isinstance(found, str):
+                return found.strip()
+        for v in val.values():
+            if v and isinstance(v, str):
+                return v.strip()
+        return ''
+    if isinstance(val, list):
+        parts = [_extract_text(item) for item in val]
+        return ', '.join(p for p in parts if p)
+    return ''
+
+
 class EnoteClient:
     def __init__(self):
         self.base_url = os.getenv('ENOTE_BASE_URL', 'https://app.enote.vet')
@@ -219,7 +246,13 @@ class EnoteClient:
             all_visits.extend(pet_visits)
         result = [{
             'Date': _format_datetime(v.get('eventDate', '')),
-            'Description': v.get('diagnosisDescription') or v.get('anamnesis', '') or 'Прийом',
+            'Description': (
+                _extract_text(v.get('diagnosisDescription')) or
+                _extract_text(v.get('diagnosis')) or
+                _extract_text(v.get('anamnesis')) or
+                _extract_text(v.get('visitKindName')) or
+                'Прийом'
+            ),
             '_pet_name': v.get('_pet_name', ''),
             'id': v.get('id', ''),
         } for v in all_visits]
@@ -237,10 +270,13 @@ class EnoteClient:
                 b['_pet_name'] = pet['Description']
             all_bookings.extend(pet_bookings)
         result = [{
-            'ЗаписьНаДату': _format_datetime(b.get('appointmentStartTime', '')),
+            'ЗаписьНаДату': _format_datetime(
+                b.get('startTime') or b.get('eventDate') or b.get('appointmentStartTime') or ''
+            ),
             'Кличка': b.get('patient', {}).get('petName') or b.get('_pet_name', ''),
             'Подтверждено': b.get('isConfirmed', False),
             'Executed': b.get('objectState') == 'ACCEPTED',
+            'status': (b.get('bookingStatusHistory') or [{}])[-1].get('bookingStatus', '') if b.get('bookingStatusHistory') else '',
             'id': b.get('id', ''),
         } for b in all_bookings]
         return sorted(result, key=lambda x: x['ЗаписьНаДату'], reverse=True)
@@ -334,6 +370,24 @@ class EnoteClient:
             }
         except Exception as e:
             return {'error': str(e)}
+
+    def debug_visit_fields(self, owner_guid: str) -> dict:
+        """Показує сирі поля першого візиту і першого запису — для діагностики дат і описів."""
+        pets = self.get_pets_by_owner(owner_guid)
+        if not pets:
+            return {'error': 'no pets'}
+        pet_id = pets[0]['id']
+
+        raw_visits, _ = self._api_get_page('appointments', {'patient_id': pet_id, 'page_size': 1})
+        raw_bookings, _ = self._api_get_page('bookings', {'patient_id': pet_id, 'page_size': 1})
+
+        return {
+            'pet_id': pet_id,
+            'visit_keys': list(raw_visits[0].keys()) if raw_visits else [],
+            'visit_sample': raw_visits[0] if raw_visits else None,
+            'booking_keys': list(raw_bookings[0].keys()) if raw_bookings else [],
+            'booking_sample': raw_bookings[0] if raw_bookings else None,
+        }
 
 
 enote = EnoteClient()
