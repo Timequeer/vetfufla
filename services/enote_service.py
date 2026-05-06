@@ -12,7 +12,7 @@ def _format_datetime(dt_str: str) -> str:
     try:
         clean = dt_str[:19]
         return datetime.strptime(clean, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
-    except:
+    except Exception:
         return dt_str
 
 
@@ -77,22 +77,109 @@ class EnoteClient:
         self._cache.clear()
 
     # ─── Клієнт ────────────────────────────────────────────────
-    def get_client_by_phone(self, phone: str) -> Optional[str]:
-        """Повертає id клієнта (звичайний GUID)."""
+    def get_client_by_phone(self, phone: str) -> Optional[dict]:
+        """
+        Повертає словник з даними клієнта:
+          {
+            'id': '...',                    # головний GUID клієнта
+            'mainContactSubjectId': '...',  # GUID контактного суб'єкта (ownerId у тварин)
+            'subject_ids': [...],           # усі subject IDs клієнта
+          }
+        Або None якщо клієнта не знайдено.
+        """
         digits = ''.join(filter(str.isdigit, phone))
         formatted = f"+{digits}" if not phone.startswith('+') else phone
         items, _ = self._api_get_page('clients', {'phone_number': formatted})
-        if items:
-            return items[0].get('id')
-        return None
+        if not items:
+            return None
+
+        client = items[0]
+        client_id = client.get('id')
+        main_subject_id = client.get('mainContactSubjectId')
+
+        # Збираємо всі subject IDs (вони можуть використовуватись як ownerId у тварин)
+        subject_ids = set()
+        if client_id:
+            subject_ids.add(client_id)
+        if main_subject_id:
+            subject_ids.add(main_subject_id)
+        for subj in client.get('contactSubjects', []):
+            if subj.get('id'):
+                subject_ids.add(subj['id'])
+
+        return {
+            'id': client_id,
+            'mainContactSubjectId': main_subject_id,
+            'subject_ids': list(subject_ids),
+            'raw': client,
+        }
+
+    def get_client_subject_ids(self, owner_guid: str) -> list:
+        """
+        Повертає список усіх subject IDs для клієнта з ID = owner_guid.
+        Використовується для фільтрації тварин на стороні сервера.
+        """
+        cache_key = f'subject_ids_{owner_guid}'
+        cached = self._cache.get(cache_key)
+        if cached and (time.time() - cached[0]) < self._cache_ttl:
+            return cached[1]
+
+        # Завантажуємо повні дані клієнта по його id
+        items, _ = self._api_get_page(f'clients/{owner_guid}')
+        if not items:
+            # Якщо ендпоінт /clients/{id} повертає список, беремо перший
+            # Якщо повертає dict — вже є в items як [dict]
+            result = [owner_guid]
+            self._cache[cache_key] = (time.time(), result)
+            return result
+
+        client = items[0] if isinstance(items, list) else items
+        subject_ids = set()
+        subject_ids.add(owner_guid)
+
+        main_subject_id = client.get('mainContactSubjectId')
+        if main_subject_id:
+            subject_ids.add(main_subject_id)
+        for subj in client.get('contactSubjects', []):
+            if subj.get('id'):
+                subject_ids.add(subj['id'])
+
+        result = list(subject_ids)
+        self._cache[cache_key] = (time.time(), result)
+        return result
 
     # ─── Тварини ───────────────────────────────────────────────
     def get_pets_by_owner(self, owner_guid: str) -> list:
-        """owner_guid = id клієнта. Використовує прямий фільтр client_id."""
-        pets, _ = self._api_get_page('patients', {'client_id': owner_guid})
-        if pets:
-            return self._format_pets(pets)
-        return []
+        """
+        Отримує тварин клієнта.
+
+        Стратегія (захист від неправильної фільтрації API):
+        1. Запитуємо /patients?client_id=owner_guid
+        2. Отримуємо всі subject IDs клієнта (id + mainContactSubjectId + contactSubjects)
+        3. Фільтруємо результат на стороні сервера — залишаємо тільки тих тварин,
+           у яких ownerId є в множині subject_ids клієнта.
+
+        Якщо після фільтрації нічого немає — повертаємо нефільтрований результат
+        (на випадок якщо API справді фільтрує, але ownerId не збігається через зміну власника).
+        """
+        # Крок 1: запит до API з client_id
+        all_pets = self._api_get_all('patients', {'client_id': owner_guid})
+
+        if not all_pets:
+            return []
+
+        # Крок 2: отримуємо всі subject IDs клієнта
+        subject_ids = set(self.get_client_subject_ids(owner_guid))
+
+        # Крок 3: фільтрація
+        filtered = [p for p in all_pets if p.get('ownerId') in subject_ids]
+
+        # Якщо фільтр прибрав усе — API, мабуть, уже фільтрував правильно,
+        # або ownerId зберігається інакше. Повертаємо нефільтровані дані.
+        if not filtered:
+            filtered = all_pets
+
+        return self._format_pets(filtered)
 
     def _format_pets(self, raw_pets: list) -> list:
         return [{
@@ -104,13 +191,18 @@ class EnoteClient:
             'Кастрировано': p.get('isCastrated', False),
             'НомерЧипа': p.get('chipNumber', ''),
             'photoUrl': p.get('photoUrl', ''),
+            'ownerId': p.get('ownerId', ''),
         } for p in raw_pets]
 
     # ─── Профіль ────────────────────────────────────────────────
     def get_contact_by_owner(self, owner_guid: str) -> Optional[dict]:
+        items, _ = self._api_get_page(f'clients/{owner_guid}')
+        if items:
+            return items[0] if isinstance(items, list) else items
+        # fallback: шукаємо серед всіх (повільно, тільки якщо /clients/{id} не працює)
         all_clients = self._cached('all_clients', lambda: self._api_get_all('clients'))
         for c in all_clients:
-            if c['id'] == owner_guid:
+            if c.get('id') == owner_guid:
                 return c
         return None
 
@@ -192,7 +284,10 @@ class EnoteClient:
         to_date = (date.today() + timedelta(days=7)).isoformat()
         entity_id = self.get_entity_id()
         doctors = self.get_doctors_list()
-        doctor_map = {d['id']: f"{d.get('firstName', '')} {d.get('surname', '')}".strip() for d in doctors}
+        doctor_map = {
+            d['id']: f"{d.get('firstName', '')} {d.get('surname', '')}".strip()
+            for d in doctors
+        }
 
         result = []
         current = date.fromisoformat(from_date)
@@ -211,8 +306,8 @@ class EnoteClient:
                     history = slot.get('bookingStatusHistory')
                     if history and isinstance(history, list):
                         status = history[-1].get('bookingStatus', '')
-                    client_info = slot.get('client', {})
-                    patient_info = slot.get('patient', {})
+                    client_info = slot.get('client', {}) or {}
+                    patient_info = slot.get('patient', {}) or {}
                     result.append({
                         'date': date_str,
                         'doctor': doc_name,
