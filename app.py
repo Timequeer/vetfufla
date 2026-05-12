@@ -9,8 +9,10 @@ from routes.admin import admin_bp
 from services.notification_service import start_scheduler
 from services.telegram.bot import init_bot
 from services.telegram.handlers import handle_webhook
+from routes.analytics import analytics_bp
 import traceback
 
+app.register_blueprint(analytics_bp)
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"] = Config.DATABASE_URL
